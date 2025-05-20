@@ -24,6 +24,47 @@ Connection::~Connection() {
   }
 }
 
+Result<Nothing> Connection::actual_insert(
+    const std::vector<std::vector<std::optional<std::string>>>& _data,
+    sqlite3_stmt* _stmt) const noexcept {
+  for (const auto& row : _data) {
+    const auto num_cols = static_cast<int>(row.size());
+
+    for (int i = 0; i < num_cols; ++i) {
+      if (row[i]) {
+        const auto res =
+            sqlite3_bind_text(_stmt, i + 1, row[i]->c_str(),
+                              static_cast<int>(row[i]->size()), SQLITE_STATIC);
+        if (res != SQLITE_OK) {
+          return error(sqlite3_errmsg(conn_.get()));
+        }
+      } else {
+        const auto res = sqlite3_bind_null(_stmt, i + 1);
+        if (res != SQLITE_OK) {
+          return error(sqlite3_errmsg(conn_.get()));
+        }
+      }
+    }
+
+    auto res = sqlite3_step(_stmt);
+    if (res != SQLITE_OK && res != SQLITE_ROW && res != SQLITE_DONE) {
+      return error(sqlite3_errmsg(conn_.get()));
+    }
+
+    res = sqlite3_reset(_stmt);
+    if (res != SQLITE_OK) {
+      return error(sqlite3_errmsg(conn_.get()));
+    }
+  }
+
+  const auto res = sqlite3_clear_bindings(_stmt);
+  if (res != SQLITE_OK) {
+    return error(sqlite3_errmsg(conn_.get()));
+  }
+
+  return Nothing{};
+}
+
 Result<Nothing> Connection::begin_transaction() noexcept {
   if (transaction_started_) {
     return error(
@@ -59,6 +100,15 @@ Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
     return err;
   }
   return Nothing{};
+}
+
+Result<Nothing> Connection::insert(
+    const dynamic::Insert& _stmt,
+    const std::vector<std::vector<std::optional<std::string>>>&
+        _data) noexcept {
+  const auto sql = to_sql_impl(_stmt);
+  return prepare_statement(sql).and_then(
+      [&](auto _p_stmt) { return actual_insert(_data, _p_stmt.get()); });
 }
 
 typename Connection::ConnPtr Connection::make_conn(const std::string& _fname) {
@@ -107,6 +157,25 @@ Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
       });
 }
 
+Result<Connection::StmtPtr> Connection::prepare_statement(
+    const std::string& _sql) const noexcept {
+  sqlite3_stmt* p_stmt = nullptr;
+
+  sqlite3_prepare(conn_.get(),  /* Database handle */
+                  _sql.c_str(), /* SQL statement, UTF-8 encoded */
+                  _sql.size(),  /* Maximum length of zSql in bytes. */
+                  &p_stmt,      /* OUT: Statement handle */
+                  nullptr       /* OUT: Pointer to unused portion of zSql */
+  );
+
+  if (!p_stmt) {
+    return error("Preparing the following statement failed: " + _sql +
+                 " Reason: " + sqlite3_errmsg(conn_.get()));
+  }
+
+  return StmtPtr(p_stmt, &sqlite3_finalize);
+}
+
 Result<Nothing> Connection::rollback() noexcept {
   if (!transaction_started_) {
     return error("Cannot ROLLBACK - no transaction has been started.");
@@ -124,22 +193,12 @@ Result<Nothing> Connection::start_write(const dynamic::Insert& _stmt) {
 
   const auto sql = to_sql_impl(_stmt);
 
-  sqlite3_stmt* p_stmt = nullptr;
-
-  sqlite3_prepare(conn_.get(), /* Database handle */
-                  sql.c_str(), /* SQL statement, UTF-8 encoded */
-                  sql.size(),  /* Maximum length of zSql in bytes. */
-                  &p_stmt,     /* OUT: Statement handle */
-                  nullptr      /* OUT: Pointer to unused portion of zSql */
-  );
-
-  if (!p_stmt) {
-    return error(sqlite3_errmsg(conn_.get()));
-  }
-
-  stmt_ = StmtPtr(p_stmt, &sqlite3_finalize);
-
-  return Nothing{};
+  return prepare_statement(sql)
+      .transform([&](auto&& _stmt) {
+        stmt_ = std::move(_stmt);
+        return Nothing{};
+      })
+      .and_then([&](const auto&) { return begin_transaction(); });
 }
 
 Result<Nothing> Connection::write(
@@ -150,49 +209,7 @@ Result<Nothing> Connection::write(
         ".write(...).");
   }
 
-  const auto write = [&](const auto&) -> Result<Nothing> {
-    for (const auto& row : _data) {
-      const auto num_cols = static_cast<int>(row.size());
-
-      for (int i = 0; i < num_cols; ++i) {
-        if (row[i]) {
-          const auto res = sqlite3_bind_text(
-              stmt_.get(), i + 1, row[i]->c_str(),
-              static_cast<int>(row[i]->size()), SQLITE_STATIC);
-          if (res != SQLITE_OK) {
-            return error(sqlite3_errmsg(conn_.get()));
-          }
-        } else {
-          const auto res = sqlite3_bind_null(stmt_.get(), i + 1);
-          if (res != SQLITE_OK) {
-            return error(sqlite3_errmsg(conn_.get()));
-          }
-        }
-      }
-
-      auto res = sqlite3_step(stmt_.get());
-      if (res != SQLITE_OK && res != SQLITE_ROW && res != SQLITE_DONE) {
-        return error(sqlite3_errmsg(conn_.get()));
-      }
-
-      res = sqlite3_reset(stmt_.get());
-      if (res != SQLITE_OK) {
-        return error(sqlite3_errmsg(conn_.get()));
-      }
-    }
-
-    // We need to reset the statement to avoid segfaults.
-    const auto res = sqlite3_clear_bindings(stmt_.get());
-    if (res != SQLITE_OK) {
-      return error(sqlite3_errmsg(conn_.get()));
-    }
-
-    return Nothing{};
-  };
-
-  return begin_transaction()
-      .and_then(write)
-      .and_then([&](const auto&) { return commit(); })
+  return actual_insert(_data, stmt_.get())
       .or_else([&](const auto& err) -> Result<Nothing> {
         rollback();
         return error(err.what());
@@ -206,7 +223,10 @@ Result<Nothing> Connection::end_write() {
         ".end_write().");
   }
   stmt_ = nullptr;
-  return Nothing{};
+  return commit().or_else([&](const auto& err) -> Result<Nothing> {
+    rollback();
+    return error(err.what());
+  });
 }
 
 }  // namespace sqlgen::sqlite
