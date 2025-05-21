@@ -65,7 +65,8 @@ Insert data using a reference wrapper to avoid copying:
 const auto people = std::vector<Person>(/* ... */);
 sqlgen::sqlite::connect("database.db")
     .and_then(sqlgen::insert(std::ref(people)))
-    .value();```
+    .value();
+```
 
 ## Example: Full Transaction Usage
 
