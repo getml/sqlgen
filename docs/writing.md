@@ -68,6 +68,36 @@ sqlgen::write(conn, people.begin(), people.end());
 
 This also generates the same SQL, adapted to the specific database dialect.
 
+### Curried Write
+
+You can also use a curried version of `write` that takes the data first and returns a function that accepts the connection. This is useful for chaining operations:
+
+```cpp
+const auto people = std::vector<Person>({
+    Person{.id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
+    Person{.id = 1, .first_name = "Bart", .last_name = "Simpson", .age = 10}
+});
+
+// Using with a connection reference
+const auto conn = sqlgen::sqlite::connect();
+sqlgen::write(people)(conn);  // Creates a deep copy of people
+
+// To avoid deep copy, use std::ref
+sqlgen::write(std::ref(people))(conn);  // Passes people by reference
+
+// Or in a chain with other operations
+sqlgen::sqlite::connect()
+    .and_then(sqlgen::write(std::ref(people)))  // Pass data by reference
+    .and_then(sqlgen::read<std::vector<Person>>)
+    .value();
+```
+
+Note that by default, the curried `write` will create a deep copy of your data. If you want to avoid this overhead, wrap your data in `std::ref` when passing it to `write`. This is especially important for large datasets.
+
+The curried version is particularly useful when you want to:
+- Chain multiple database operations together
+- Pass the write operation as a function to other operations
+
 ## How It Works
 
 The `write` function performs the following operations in sequence:
