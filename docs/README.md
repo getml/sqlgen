@@ -14,11 +14,14 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 - [sqlgen::read](reading.md) - How to read data from a database
 - [sqlgen::write](writing.md) - How to write data to a database
+
+- [sqlgen::create_index](create_index.md) - How to create an index on a table
 - [sqlgen::create_table](create_table.md) - How to create a new table
-- [sqlgen::update](update.md) - How to update data in a table
 - [sqlgen::delete_from](delete_from.md) - How to delete data from a table
 - [sqlgen::drop](drop.md) - How to drop a table
-- [sqlgen::create_index](create_index.md) - How to create an index on a table
+- [sqlgen::insert](insert.md) - How to insert data within transactions
+- [sqlgen::update](update.md) - How to update data in a table
+
 - [Transactions](transactions.md) - How to use transactions for atomic operations
 
 ## Data Types and Validation
