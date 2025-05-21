@@ -20,7 +20,7 @@ TEST(postgres, test_timestamp_with_tz) {
       std::vector<Person>({Person{.id = 0,
                                   .first_name = "Homer",
                                   .last_name = "Simpson",
-                                  .ts = "2000-01-01 01:00:00+0100"}});
+                                  .ts = "2000-01-01 01:00:00+0000"}});
 
   using namespace sqlgen;
 

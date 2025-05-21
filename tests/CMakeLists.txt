@@ -1,7 +1,7 @@
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std:c++20")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Werror -ggdb -fconcepts-diagnostics-depth=5")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Werror -ggdb")
 endif()
 
 if (SQLGEN_BUILD_DRY_TESTS_ONLY)
