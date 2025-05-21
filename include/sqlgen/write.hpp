@@ -12,10 +12,11 @@
 #include "Connection.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
+#include "dynamic/Write.hpp"
 #include "internal/batch_size.hpp"
 #include "internal/to_str_vec.hpp"
 #include "transpilation/to_create_table.hpp"
-#include "transpilation/to_insert.hpp"
+#include "transpilation/to_insert_or_write.hpp"
 
 namespace sqlgen {
 
@@ -26,8 +27,9 @@ Result<Ref<Connection>> write(const Ref<Connection>& _conn, ItBegin _begin,
       std::remove_cvref_t<typename std::iterator_traits<ItBegin>::value_type>;
 
   const auto start_write = [&](const auto&) -> Result<Nothing> {
-    const auto insert_stmt = transpilation::to_insert<T>();
-    return _conn->start_write(insert_stmt);
+    const auto write_stmt =
+        transpilation::to_insert_or_write<T, dynamic::Write>();
+    return _conn->start_write(write_stmt);
   };
 
   const auto write = [&](const auto&) -> Result<Nothing> {

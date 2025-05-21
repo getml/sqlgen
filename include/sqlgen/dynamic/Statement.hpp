@@ -10,11 +10,12 @@
 #include "Insert.hpp"
 #include "SelectFrom.hpp"
 #include "Update.hpp"
+#include "Write.hpp"
 
 namespace sqlgen::dynamic {
 
 using Statement = rfl::TaggedUnion<"stmt", CreateIndex, CreateTable, DeleteFrom,
-                                   Drop, Insert, SelectFrom, Update>;
+                                   Drop, Insert, SelectFrom, Update, Write>;
 
 }  // namespace sqlgen::dynamic
 

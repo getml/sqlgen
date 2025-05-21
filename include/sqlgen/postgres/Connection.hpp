@@ -14,6 +14,7 @@
 #include "../Result.hpp"
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Statement.hpp"
+#include "../dynamic/Write.hpp"
 #include "Credentials.hpp"
 #include "exec.hpp"
 #include "to_sql.hpp"
@@ -58,7 +59,7 @@ class Connection : public sqlgen::Connection {
     return postgres::to_sql_impl(_stmt);
   }
 
-  Result<Nothing> start_write(const dynamic::Insert& _stmt) final {
+  Result<Nothing> start_write(const dynamic::Write& _stmt) final {
     return execute(postgres::to_sql_impl(_stmt));
   }
 

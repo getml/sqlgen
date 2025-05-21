@@ -184,7 +184,7 @@ Result<Nothing> Connection::rollback() noexcept {
   return execute("ROLLBACK;");
 }
 
-Result<Nothing> Connection::start_write(const dynamic::Insert& _stmt) {
+Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
   if (stmt_) {
     return error(
         "A write operation has already been launched. You need to call "

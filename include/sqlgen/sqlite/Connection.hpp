@@ -13,6 +13,7 @@
 #include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../dynamic/Write.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::sqlite {
@@ -57,7 +58,7 @@ class Connection : public sqlgen::Connection {
     return sqlite::to_sql_impl(_stmt);
   }
 
-  Result<Nothing> start_write(const dynamic::Insert& _stmt) final;
+  Result<Nothing> start_write(const dynamic::Write& _stmt) final;
 
   Result<Nothing> end_write() final;
 

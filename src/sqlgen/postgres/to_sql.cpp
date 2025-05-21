@@ -41,6 +41,8 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept;
 
 std::string update_to_sql(const dynamic::Update& _stmt) noexcept;
 
+std::string write_to_sql(const dynamic::Write& _stmt) noexcept;
+
 // ----------------------------------------------------------------------------
 
 inline std::string get_name(const dynamic::Column& _col) { return _col.name; }
@@ -260,13 +262,32 @@ std::vector<std::string> get_primary_keys(
 
 std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
   using namespace std::ranges::views;
-  const auto schema = wrap_in_quotes(_stmt.table.schema.value_or("public"));
-  const auto table = wrap_in_quotes(_stmt.table.name);
-  const auto colnames = internal::strings::join(
+
+  const auto to_placeholder = [](const size_t _i) -> std::string {
+    return "$" + std::to_string(_i + 1);
+  };
+
+  std::stringstream stream;
+  stream << "INSERT INTO ";
+  if (_stmt.table.schema) {
+    stream << "\"" << *_stmt.table.schema << "\".";
+  }
+  stream << "\"" << _stmt.table.name << "\"";
+
+  stream << " (";
+  stream << internal::strings::join(
       ", ",
       internal::collect::vector(_stmt.columns | transform(wrap_in_quotes)));
-  return "COPY " + schema + "." + table + "(" + colnames +
-         ") FROM STDIN WITH DELIMITER '\t' NULL '\e' CSV QUOTE '\a';";
+  stream << ")";
+
+  stream << " VALUES (";
+  stream << internal::strings::join(
+      ", ", internal::collect::vector(
+                iota(static_cast<size_t>(0), _stmt.columns.size()) |
+                transform(to_placeholder)));
+  stream << ");";
+
+  return stream.str();
 }
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
@@ -332,6 +353,9 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<S, dynamic::Update>) {
       return update_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<S, dynamic::Write>) {
+      return write_to_sql(_s);
 
     } else {
       static_assert(rfl::always_false_v<S>, "Unsupported type.");
@@ -404,6 +428,17 @@ std::string update_to_sql(const dynamic::Update& _stmt) noexcept {
   stream << ";";
 
   return stream.str();
+}
+
+std::string write_to_sql(const dynamic::Write& _stmt) noexcept {
+  using namespace std::ranges::views;
+  const auto schema = wrap_in_quotes(_stmt.table.schema.value_or("public"));
+  const auto table = wrap_in_quotes(_stmt.table.name);
+  const auto colnames = internal::strings::join(
+      ", ",
+      internal::collect::vector(_stmt.columns | transform(wrap_in_quotes)));
+  return "COPY " + schema + "." + table + "(" + colnames +
+         ") FROM STDIN WITH DELIMITER '\t' NULL '\e' CSV QUOTE '\a';";
 }
 
 }  // namespace sqlgen::postgres

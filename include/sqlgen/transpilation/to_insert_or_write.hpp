@@ -1,5 +1,5 @@
-#ifndef SQLGEN_TRANSPILATION_TO_INSERT_HPP_
-#define SQLGEN_TRANSPILATION_TO_INSERT_HPP_
+#ifndef SQLGEN_TRANSPILATION_TO_INSERT_OR_WRITE_HPP_
+#define SQLGEN_TRANSPILATION_TO_INSERT_OR_WRITE_HPP_
 
 #include <ranges>
 #include <rfl.hpp>
@@ -8,7 +8,6 @@
 #include <utility>
 #include <vector>
 
-#include "../dynamic/Insert.hpp"
 #include "../dynamic/Table.hpp"
 #include "../internal/collect/vector.hpp"
 #include "get_schema.hpp"
@@ -17,10 +16,10 @@
 
 namespace sqlgen::transpilation {
 
-template <class T>
+template <class T, class InsertOrWrite>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
-dynamic::Insert to_insert() {
+InsertOrWrite to_insert_or_write() {
   using namespace std::ranges::views;
 
   using NamedTupleType = rfl::named_tuple_t<std::remove_cvref_t<T>>;
@@ -31,10 +30,10 @@ dynamic::Insert to_insert() {
 
   const auto get_name = [](const auto& _col) { return _col.name; };
 
-  return dynamic::Insert{.table = dynamic::Table{.name = get_tablename<T>(),
-                                                 .schema = get_schema<T>()},
-                         .columns = sqlgen::internal::collect::vector(
-                             columns | transform(get_name))};
+  return InsertOrWrite{.table = dynamic::Table{.name = get_tablename<T>(),
+                                               .schema = get_schema<T>()},
+                       .columns = sqlgen::internal::collect::vector(
+                           columns | transform(get_name))};
 }
 
 }  // namespace sqlgen::transpilation

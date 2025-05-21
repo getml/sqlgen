@@ -16,8 +16,7 @@ TEST(postgres, test_insert_dry) {
   const auto query = sqlgen::Insert<TestTable>{};
 
   const auto expected =
-      "COPY \"public\".\"TestTable\"(\"field1\", \"field2\", \"id\", "
-      "\"nullable\") FROM STDIN WITH DELIMITER '\t' NULL '\e' CSV QUOTE '\a';";
+      R"(INSERT INTO "TestTable" ("field1", "field2", "id", "nullable") VALUES ($1, $2, $3, $4);)";
 
   EXPECT_EQ(sqlgen::postgres::to_sql(query), expected);
 }

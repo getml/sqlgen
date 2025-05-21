@@ -26,7 +26,8 @@ std::string delete_from_to_sql(const dynamic::DeleteFrom& _stmt) noexcept;
 
 std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept;
 
-std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept;
+template <class InsertOrWrite>
+std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept;
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept;
 
@@ -219,7 +220,8 @@ std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept {
   return stream.str();
 }
 
-std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
+template <class InsertOrWrite>
+std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   using namespace std::ranges::views;
 
   const auto in_quotes = [](const std::string& _str) -> std::string {
@@ -314,13 +316,16 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
       return drop_to_sql(_s);
 
     } else if constexpr (std::is_same_v<S, dynamic::Insert>) {
-      return insert_to_sql(_s);
+      return insert_or_write_to_sql(_s);
 
     } else if constexpr (std::is_same_v<S, dynamic::SelectFrom>) {
       return select_from_to_sql(_s);
 
     } else if constexpr (std::is_same_v<S, dynamic::Update>) {
       return update_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<S, dynamic::Write>) {
+      return insert_or_write_to_sql(_s);
 
     } else {
       static_assert(rfl::always_false_v<S>, "Unsupported type.");

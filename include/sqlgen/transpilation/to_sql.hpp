@@ -16,7 +16,7 @@
 #include "to_create_table.hpp"
 #include "to_delete_from.hpp"
 #include "to_drop.hpp"
-#include "to_insert.hpp"
+#include "to_insert_or_write.hpp"
 #include "to_select_from.hpp"
 #include "to_update.hpp"
 #include "value_t.hpp"
@@ -60,7 +60,9 @@ struct ToSQL<Drop<T>> {
 
 template <class T>
 struct ToSQL<Insert<T>> {
-  dynamic::Statement operator()(const auto&) const { return to_insert<T>(); }
+  dynamic::Statement operator()(const auto&) const {
+    return to_insert_or_write<T, dynamic::Insert>();
+  }
 };
 
 template <class ContainerType, class WhereType, class OrderByType,

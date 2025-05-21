@@ -8,9 +8,9 @@
 #include "IteratorBase.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
-#include "dynamic/Insert.hpp"
 #include "dynamic/SelectFrom.hpp"
 #include "dynamic/Statement.hpp"
+#include "dynamic/Write.hpp"
 
 namespace sqlgen {
 
@@ -39,7 +39,7 @@ struct Connection {
   virtual std::string to_sql(const dynamic::Statement& _stmt) = 0;
 
   /// Starts the write operation.
-  virtual Result<Nothing> start_write(const dynamic::Insert& _stmt) = 0;
+  virtual Result<Nothing> start_write(const dynamic::Write& _stmt) = 0;
 
   /// Ends the write operation and thus commits the results.
   virtual Result<Nothing> end_write() = 0;
