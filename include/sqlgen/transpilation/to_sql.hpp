@@ -3,12 +3,12 @@
 
 #include <vector>
 
-#include "../Insert.hpp"
 #include "../create_index.hpp"
 #include "../create_table.hpp"
 #include "../delete_from.hpp"
 #include "../drop.hpp"
 #include "../dynamic/Statement.hpp"
+#include "../insert.hpp"
 #include "../read.hpp"
 #include "../update.hpp"
 #include "columns_t.hpp"

@@ -44,7 +44,7 @@ class Connection : public sqlgen::Connection {
   Result<Nothing> insert(
       const dynamic::Insert& _stmt,
       const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept;
+          _data) noexcept final;
 
   Connection& operator=(const Connection& _other) = delete;
 

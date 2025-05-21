@@ -29,6 +29,12 @@ struct Connection {
   /// you must call .commit() afterwards.
   virtual Result<Nothing> execute(const std::string& _sql) = 0;
 
+  /// Inserts data into the database using the INSERT statement.
+  /// More minimal approach than write, but can be used inside transactions.
+  virtual Result<Nothing> insert(
+      const dynamic::Insert& _stmt,
+      const std::vector<std::vector<std::optional<std::string>>>& _data) = 0;
+
   /// Reads the results of a SelectFrom statement.
   virtual Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query) = 0;
 

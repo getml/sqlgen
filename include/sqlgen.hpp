@@ -3,7 +3,6 @@
 
 #include "sqlgen/Connection.hpp"
 #include "sqlgen/Flatten.hpp"
-#include "sqlgen/Insert.hpp"
 #include "sqlgen/Iterator.hpp"
 #include "sqlgen/IteratorBase.hpp"
 #include "sqlgen/Literal.hpp"
@@ -23,6 +22,7 @@
 #include "sqlgen/drop.hpp"
 #include "sqlgen/if_exists.hpp"
 #include "sqlgen/if_not_exists.hpp"
+#include "sqlgen/insert.hpp"
 #include "sqlgen/limit.hpp"
 #include "sqlgen/order_by.hpp"
 #include "sqlgen/patterns.hpp"

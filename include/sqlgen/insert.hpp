@@ -1,0 +1,80 @@
+#ifndef SQLGEN_INSERT_HPP_
+#define SQLGEN_INSERT_HPP_
+
+#include <functional>
+#include <iterator>
+#include <optional>
+#include <rfl.hpp>
+#include <string>
+#include <type_traits>
+#include <vector>
+
+#include "internal/batch_size.hpp"
+#include "internal/to_str_vec.hpp"
+#include "transpilation/to_insert_or_write.hpp"
+
+namespace sqlgen {
+
+template <class ItBegin, class ItEnd>
+Result<Ref<Connection>> insert(const Ref<Connection>& _conn, ItBegin _begin,
+                               ItEnd _end) {
+  using T =
+      std::remove_cvref_t<typename std::iterator_traits<ItBegin>::value_type>;
+
+  const auto insert_stmt =
+      transpilation::to_insert_or_write<T, dynamic::Insert>();
+
+  std::vector<std::vector<std::optional<std::string>>> data;
+  for (auto it = _begin; it != _end; ++it) {
+    data.emplace_back(internal::to_str_vec(*it));
+  }
+
+  return _conn->insert(insert_stmt, data).transform([&](const auto&) {
+    return _conn;
+  });
+}
+
+template <class ItBegin, class ItEnd>
+Result<Ref<Connection>> insert(const Result<Ref<Connection>>& _res,
+                               ItBegin _begin, ItEnd _end) {
+  return _res.and_then(
+      [&](const auto& _conn) { return insert(_conn, _begin, _end); });
+}
+
+template <class ContainerType>
+Result<Ref<Connection>> insert(const auto& _conn, const ContainerType& _data) {
+  if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
+    return insert(_conn, _data.begin(), _data.end());
+  } else {
+    return insert(_conn, &_data, &_data + 1);
+  }
+}
+
+template <class ContainerType>
+Result<Ref<Connection>> insert(
+    const auto& _conn, const std::reference_wrapper<ContainerType>& _data) {
+  return insert(_conn, _data.get());
+}
+
+template <class ContainerType>
+struct Insert {
+  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
+    try {
+      return insert(_conn, data_);
+    } catch (std::exception& e) {
+      return error(e.what());
+    }
+  }
+
+  ContainerType data_;
+};
+
+template <class ContainerType>
+Insert<ContainerType> insert(const ContainerType& _data) {
+  return Insert<ContainerType>{.data_ = _data};
+}
+
+};  // namespace sqlgen
+
+#endif
+
