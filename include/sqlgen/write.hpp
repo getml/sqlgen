@@ -1,6 +1,7 @@
 #ifndef SQLGEN_WRITE_HPP_
 #define SQLGEN_WRITE_HPP_
 
+#include <functional>
 #include <iterator>
 #include <optional>
 #include <ranges>
@@ -66,20 +67,45 @@ Result<Ref<Connection>> write(const Ref<Connection>& _conn, ItBegin _begin,
 }
 
 template <class ItBegin, class ItEnd>
-auto write(const Result<Ref<Connection>>& _res, ItBegin _begin,
-           ItEnd _end) noexcept {
+Result<Ref<Connection>> write(const Result<Ref<Connection>>& _res,
+                              ItBegin _begin, ItEnd _end) noexcept {
   return _res.and_then(
       [&](const auto& _conn) { return write(_conn, _begin, _end); });
 }
 
 template <class ConnectionType, class ContainerType>
-auto write(const ConnectionType& _conn,
-           const ContainerType& _container) noexcept {
+Result<Ref<Connection>> write(const ConnectionType& _conn,
+                              const ContainerType& _container) noexcept {
   if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
     return write(_conn, _container.begin(), _container.end());
   } else {
     return write(_conn, &_container, &_container + 1);
   }
+}
+
+template <class ConnectionType, class ContainerType>
+Result<Ref<Connection>> write(
+    const ConnectionType& _conn,
+    const std::reference_wrapper<ContainerType>& _data) {
+  return write(_conn, _data.get());
+}
+
+template <class ContainerType>
+struct Write {
+  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
+    try {
+      return write(_conn, data_);
+    } catch (std::exception& e) {
+      return error(e.what());
+    }
+  }
+
+  ContainerType data_;
+};
+
+template <class ContainerType>
+Write<ContainerType> write(const ContainerType& _data) {
+  return Write<ContainerType>{.data_ = _data};
 }
 
 }  // namespace sqlgen
