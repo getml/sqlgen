@@ -20,6 +20,7 @@
 #include "sqlgen/create_table.hpp"
 #include "sqlgen/delete_from.hpp"
 #include "sqlgen/drop.hpp"
+#include "sqlgen/exec.hpp"
 #include "sqlgen/if_exists.hpp"
 #include "sqlgen/if_not_exists.hpp"
 #include "sqlgen/insert.hpp"

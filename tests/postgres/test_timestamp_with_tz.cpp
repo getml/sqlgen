@@ -29,10 +29,10 @@ TEST(postgres, test_timestamp_with_tz) {
                                                  .host = "localhost",
                                                  .dbname = "postgres"};
 
-  const auto conn =
-      postgres::connect(credentials).and_then(drop<Person> | if_exists);
-
-  const auto people2 = sqlgen::write(conn, people1)
+  const auto people2 = postgres::connect(credentials)
+                           .and_then(exec("SET TIME ZONE 'UTC';"))
+                           .and_then(drop<Person> | if_exists)
+                           .and_then(write(people1))
                            .and_then(sqlgen::read<std::vector<Person>>)
                            .value();
 
