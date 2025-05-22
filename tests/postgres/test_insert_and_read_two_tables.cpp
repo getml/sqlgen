@@ -1,3 +1,5 @@
+#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
+
 #include <gtest/gtest.h>
 
 #include <rfl.hpp>
@@ -60,3 +62,5 @@ TEST(postgres, test_insert_and_read_two_tables) {
 }
 
 }  // namespace test_insert_and_read_two_tables
+
+#endif

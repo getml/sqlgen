@@ -1,3 +1,5 @@
+#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
+
 #include <gtest/gtest.h>
 
 #include <rfl.hpp>
@@ -6,7 +8,7 @@
 #include <sqlgen/postgres.hpp>
 #include <vector>
 
-namespace test_update {
+namespace test_transaction {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
@@ -59,4 +61,6 @@ TEST(postgres, test_transaction) {
   EXPECT_EQ(rfl::json::write(people2), expected);
 }
 
-}  // namespace test_update
+}  // namespace test_transaction
+
+#endif
