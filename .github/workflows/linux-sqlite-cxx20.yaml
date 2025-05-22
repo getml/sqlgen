@@ -1,11 +1,6 @@
 name: linux-sqlite-cxx20
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-  push:
-    branches:
-      - master
+on: [push, pull_request]
 
 env: 
     VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
@@ -65,7 +60,7 @@ jobs:
           sudo ln -s $(which ccache) /usr/local/bin/$CXX
           $CXX --version
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF 
-          cmake --build build
+          cmake --build build -j4
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure

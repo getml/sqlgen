@@ -1,11 +1,6 @@
 name: windows-sqlite-cxx20 
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
-  push:
-    branches:
-      - master
+on: [push, pull_request]
 
 env: 
     VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
