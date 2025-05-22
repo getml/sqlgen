@@ -5,6 +5,7 @@
 [![Generic badge](https://img.shields.io/badge/C++-20-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/gcc-11+-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/clang-14+-blue.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://shields.io/)
 
 sqlgen is a modern, type-safe ORM and SQL query generator for C++20, inspired by Python's [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy)/[SQLModel](https://github.com/fastapi/sqlmodel) and Rust's [Diesel](https://github.com/diesel-rs/diesel). It provides a fluent, composable interface for database operations with compile-time type checking and SQL injection protection.
 
@@ -22,7 +23,7 @@ sqlgen is a modern, type-safe ORM and SQL query generator for C++20, inspired by
 
 ### Installation
 
-1. Install required dependencies:
+1. Install required dependencies (skip this step on Windows):
 ```bash
 sudo apt-get install autoconf bison flex
 ```
