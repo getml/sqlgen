@@ -76,6 +76,7 @@ Result<Nothing> Connection::insert(
     const auto& d = _data[i];
 
     if (d.size() != current_row.size()) {
+      execute("DEALLOCATE sqlgen_insert_into_table;");
       return error("Error in entry " + std::to_string(i) + ": Expected " +
                    std::to_string(current_row.size()) + " entries, got " +
                    std::to_string(d.size()));
