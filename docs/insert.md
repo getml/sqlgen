@@ -38,7 +38,7 @@ const auto result = sqlgen::sqlite::connect("database.db").and_then(
 
 Please refer to the documentation on `sqlgen::Result<...>` for more information on error handling.
 
-### With Result<Ref<Connection>>
+### With `Result<Ref<Connection>>`
 
 Handle connection creation and insertion in a single chain:
 
@@ -170,7 +170,6 @@ While both `insert` and `write` can be used to add data to a database, they serv
 ### `sqlgen::write`
 - Automatically creates tables if they don't exist
 - Uses optimized bulk insert methods (e.g., PostgreSQL's COPY command)
-- Handles batching automatically
 - More convenient for simple use cases
 - Faster for bulk inserts
 - Cannot be used within transactions

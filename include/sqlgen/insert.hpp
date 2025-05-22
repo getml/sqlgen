@@ -25,13 +25,26 @@ Result<Ref<Connection>> insert(const Ref<Connection>& _conn, ItBegin _begin,
       transpilation::to_insert_or_write<T, dynamic::Insert>();
 
   std::vector<std::vector<std::optional<std::string>>> data;
+
   for (auto it = _begin; it != _end; ++it) {
     data.emplace_back(internal::to_str_vec(*it));
+    if (data.size() == SQLGEN_BATCH_SIZE) {
+      const auto res = _conn->insert(insert_stmt, data);
+      if (!res) {
+        return error(res.error().what());
+      }
+      data.clear();
+    }
   }
 
-  return _conn->insert(insert_stmt, data).transform([&](const auto&) {
-    return _conn;
-  });
+  if (data.size() != 0) {
+    const auto res = _conn->insert(insert_stmt, data);
+    if (!res) {
+      return error(res.error().what());
+    }
+  }
+
+  return _conn;
 }
 
 template <class ItBegin, class ItEnd>
