@@ -23,9 +23,10 @@ sqlgen is a modern, type-safe ORM and SQL query generator for C++20, inspired by
 
 ### Installation
 
-1. Install required dependencies (skip this step on Windows):
+1. Make sure you have the required dependencies installed (skip this step on Windows):
 ```bash
-sudo apt-get install autoconf bison flex
+sudo apt-get install autoconf bison flex # Linux (Ubuntu, Debian, ...)
+brew install autoconf bison flex # macOS
 ```
 
 2. Set up vcpkg:
