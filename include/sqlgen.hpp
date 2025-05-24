@@ -1,6 +1,7 @@
 #ifndef SQLGEN_HPP_
 #define SQLGEN_HPP_
 
+#include "sqlgen/ConnectionPool.hpp"
 #include "sqlgen/Flatten.hpp"
 #include "sqlgen/Iterator.hpp"
 #include "sqlgen/IteratorBase.hpp"
@@ -10,6 +11,7 @@
 #include "sqlgen/Range.hpp"
 #include "sqlgen/Ref.hpp"
 #include "sqlgen/Result.hpp"
+#include "sqlgen/Session.hpp"
 #include "sqlgen/Timestamp.hpp"
 #include "sqlgen/Varchar.hpp"
 #include "sqlgen/begin_transaction.hpp"

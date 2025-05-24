@@ -67,7 +67,7 @@ class Transaction {
     if (this == &_other) {
       return *this;
     }
-    conn_ = _other.conn;
+    conn_ = _other.conn_;
     transaction_ended_ = _other.transaction_ended_;
     _other.transaction_ended_ = true;
     return *this;
@@ -92,7 +92,7 @@ class Transaction {
   }
 
   Result<Nothing> start_write(const dynamic::Write& _stmt) {
-    return conn_->to_sql(_stmt);
+    return conn_->start_write(_stmt);
   }
 
   Result<Nothing> end_write() { return conn_->end_write(); }
