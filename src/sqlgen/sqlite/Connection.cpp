@@ -11,19 +11,6 @@
 
 namespace sqlgen::sqlite {
 
-Connection::Connection(Connection&& _other) noexcept
-    : stmt_(std::move(_other.stmt_)),
-      conn_(std::move(_other.conn_)),
-      transaction_started_(_other.transaction_started_) {
-  _other.transaction_started_ = false;
-}
-
-Connection::~Connection() {
-  if (transaction_started_) {
-    rollback();
-  }
-}
-
 Result<Nothing> Connection::actual_insert(
     const std::vector<std::vector<std::optional<std::string>>>& _data,
     sqlite3_stmt* _stmt) const noexcept {
@@ -66,21 +53,10 @@ Result<Nothing> Connection::actual_insert(
 }
 
 Result<Nothing> Connection::begin_transaction() noexcept {
-  if (transaction_started_) {
-    return error(
-        "Cannot BEGIN TRANSACTION - another transaction has been started.");
-  }
-  transaction_started_ = true;
   return execute("BEGIN TRANSACTION;");
 }
 
-Result<Nothing> Connection::commit() noexcept {
-  if (!transaction_started_) {
-    return error("Cannot COMMIT - no transaction has been started.");
-  }
-  transaction_started_ = false;
-  return execute("COMMIT;");
-}
+Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
 
 rfl::Result<Ref<Connection>> Connection::make(
     const std::string& _fname) noexcept {
@@ -119,20 +95,6 @@ typename Connection::ConnPtr Connection::make_conn(const std::string& _fname) {
                              std::string(sqlite3_errmsg(conn)));
   }
   return ConnPtr::make(std::shared_ptr<sqlite3>(conn, &sqlite3_close)).value();
-}
-
-Connection& Connection::operator=(Connection&& _other) noexcept {
-  if (this == &_other) {
-    return *this;
-  }
-  if (transaction_started_) {
-    rollback();
-  }
-  stmt_ = std::move(_other.stmt_);
-  conn_ = std::move(_other.conn_);
-  transaction_started_ = _other.transaction_started_;
-  _other.transaction_started_ = false;
-  return *this;
 }
 
 Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
@@ -176,13 +138,7 @@ Result<Connection::StmtPtr> Connection::prepare_statement(
   return StmtPtr(p_stmt, &sqlite3_finalize);
 }
 
-Result<Nothing> Connection::rollback() noexcept {
-  if (!transaction_started_) {
-    return error("Cannot ROLLBACK - no transaction has been started.");
-  }
-  transaction_started_ = false;
-  return execute("ROLLBACK;");
-}
+Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
 
 Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
   if (stmt_) {

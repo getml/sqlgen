@@ -8,7 +8,7 @@ Transactions in sqlgen are managed through three main functions:
 
 - `sqlgen::begin_transaction` - Starts a new transaction
 - `sqlgen::commit` - Commits the current transaction
-- `sqlgen::rollback` - Rolls back the current transaction
+- `sqlgen::rollback` - Rolls back the current transaction 
 
 Here's a basic example of how to use transactions:
 
@@ -27,7 +27,7 @@ auto conn = sqlite::connect("database.db")
 
 ## Automatic Rollback
 
-sqlgen provides automatic rollback protection through RAII (Resource Acquisition Is Initialization). If a transaction is not explicitly committed, it will be automatically rolled back when the connection object goes out of scope. This helps ensure database consistency.
+sqlgen provides automatic rollback protection through RAII (Resource Acquisition Is Initialization). `begin_transaction` creates a `sqlgen::Transaction` object. If a transaction is not explicitly committed, it will be automatically rolled back when the transaction object goes out of scope. This helps ensure database consistency.
 
 ## Error Handling
 

@@ -11,35 +11,11 @@
 
 namespace sqlgen::postgres {
 
-Connection::Connection(Connection&& _other) noexcept
-    : conn_(std::move(_other.conn_)),
-      credentials_(std::move(_other.credentials_)),
-      transaction_started_(_other.transaction_started_) {
-  _other.transaction_started_ = false;
-}
-
-Connection::~Connection() {
-  if (transaction_started_) {
-    rollback();
-  }
-}
-
 Result<Nothing> Connection::begin_transaction() noexcept {
-  if (transaction_started_) {
-    return error(
-        "Cannot BEGIN TRANSACTION - another transaction has been started.");
-  }
-  transaction_started_ = true;
   return execute("BEGIN TRANSACTION;");
 }
 
-Result<Nothing> Connection::commit() noexcept {
-  if (!transaction_started_) {
-    return error("Cannot COMMIT - no transaction has been started.");
-  }
-  transaction_started_ = false;
-  return execute("COMMIT;");
-}
+Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
 
 Result<Nothing> Connection::end_write() {
   if (PQputCopyEnd(conn_.get(), NULL) == -1) {
@@ -131,20 +107,6 @@ typename Connection::ConnPtr Connection::make_conn(
   return ConnPtr::make(std::shared_ptr<PGconn>(raw_ptr, &PQfinish)).value();
 }
 
-Connection& Connection::operator=(Connection&& _other) noexcept {
-  if (this == &_other) {
-    return *this;
-  }
-  if (transaction_started_) {
-    rollback();
-  }
-  conn_ = std::move(_other.conn_);
-  credentials_ = std::move(_other.credentials_);
-  transaction_started_ = _other.transaction_started_;
-  _other.transaction_started_ = false;
-  return *this;
-}
-
 Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
   const auto sql = postgres::to_sql_impl(_query);
   try {
@@ -154,13 +116,7 @@ Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
   }
 }
 
-Result<Nothing> Connection::rollback() noexcept {
-  if (!transaction_started_) {
-    return error("Cannot ROLLBACK - no transaction has been started.");
-  }
-  transaction_started_ = false;
-  return execute("ROLLBACK;");
-}
+Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
 
 std::string Connection::to_buffer(
     const std::vector<std::optional<std::string>>& _line) const noexcept {

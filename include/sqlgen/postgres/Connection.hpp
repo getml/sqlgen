@@ -11,6 +11,7 @@
 #include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../Transaction.hpp"
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Statement.hpp"
 #include "../dynamic/Write.hpp"
@@ -26,18 +27,12 @@ class Connection {
 
  public:
   Connection(const Credentials& _credentials)
-      : conn_(make_conn(_credentials.to_str())),
-        credentials_(_credentials),
-        transaction_started_(false) {}
+      : conn_(make_conn(_credentials.to_str())), credentials_(_credentials) {}
 
   static rfl::Result<Ref<Connection>> make(
       const Credentials& _credentials) noexcept;
 
-  Connection(const Connection& _other) = delete;
-
-  Connection(Connection&& _other) noexcept;
-
-  ~Connection();
+  ~Connection() = default;
 
   Result<Nothing> begin_transaction() noexcept;
 
@@ -51,10 +46,6 @@ class Connection {
       const dynamic::Insert& _stmt,
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
-
-  Connection& operator=(const Connection& _other) = delete;
-
-  Connection& operator=(Connection&& _other) noexcept;
 
   Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
 
@@ -83,11 +74,11 @@ class Connection {
   ConnPtr conn_;
 
   Credentials credentials_;
-
-  bool transaction_started_;
 };
 
 static_assert(is_connection<Connection>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Transaction<Connection>>,
               "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::postgres

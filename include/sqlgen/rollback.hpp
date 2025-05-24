@@ -11,13 +11,14 @@ namespace sqlgen {
 
 template <class Connection>
   requires is_connection<Connection>
-Result<Ref<Connection>> rollback_impl(const Ref<Connection>& _conn) {
-  return _conn->rollback().transform([&](const auto&) { return _conn; });
+Result<Ref<Connection>> rollback_impl(const Ref<Transaction<Connection>>& _t) {
+  return _t->conn();
 }
 
 template <class Connection>
   requires is_connection<Connection>
-Result<Ref<Connection>> rollback_impl(const Result<Ref<Connection>>& _res) {
+Result<Ref<Connection>> rollback_impl(
+    const Result<Ref<Transaction<Connection>>>& _res) {
   return _res.and_then([&](const auto& _conn) { return rollback_impl(_conn); });
 }
 
