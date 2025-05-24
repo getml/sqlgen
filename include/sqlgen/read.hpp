@@ -4,18 +4,19 @@
 #include <ranges>
 #include <type_traits>
 
-#include "Connection.hpp"
 #include "Range.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "internal/is_range.hpp"
+#include "is_connection.hpp"
 #include "transpilation/to_select_from.hpp"
 #include "transpilation/value_t.hpp"
 
 namespace sqlgen {
 
 template <class ContainerType, class WhereType, class OrderByType,
-          class LimitType>
+          class LimitType, class Connection>
+  requires is_connection<Connection>
 Result<ContainerType> read_impl(const Ref<Connection>& _conn,
                                 const WhereType& _where,
                                 const LimitType& _limit) {
@@ -47,7 +48,8 @@ Result<ContainerType> read_impl(const Ref<Connection>& _conn,
 }
 
 template <class ContainerType, class WhereType, class OrderByType,
-          class LimitType>
+          class LimitType, class Connection>
+  requires is_connection<Connection>
 Result<ContainerType> read_impl(const Result<Ref<Connection>>& _res,
                                 const WhereType& _where,
                                 const LimitType& _limit) {
@@ -60,30 +62,25 @@ Result<ContainerType> read_impl(const Result<Ref<Connection>>& _res,
 template <class Type, class WhereType = Nothing, class OrderByType = Nothing,
           class LimitType = Nothing>
 struct Read {
-  Result<Type> operator()(const auto& _conn) const noexcept {
-    try {
-      if constexpr (std::ranges::input_range<std::remove_cvref_t<Type>>) {
-        return read_impl<Type, WhereType, OrderByType, LimitType>(_conn, where_,
-                                                                  limit_);
+  Result<Type> operator()(const auto& _conn) const {
+    if constexpr (std::ranges::input_range<std::remove_cvref_t<Type>>) {
+      return read_impl<Type, WhereType, OrderByType, LimitType>(_conn, where_,
+                                                                limit_);
 
-      } else {
-        const auto extract_result = [](auto&& _vec) -> Result<Type> {
-          if (_vec.size() != 1) {
-            return error(
-                "Because the provided type was not a container, the query "
-                "needs to return exactly one result, but it did return " +
-                std::to_string(_vec.size()) + " results.");
-          }
-          return std::move(_vec[0]);
-        };
+    } else {
+      const auto extract_result = [](auto&& _vec) -> Result<Type> {
+        if (_vec.size() != 1) {
+          return error(
+              "Because the provided type was not a container, the query "
+              "needs to return exactly one result, but it did return " +
+              std::to_string(_vec.size()) + " results.");
+        }
+        return std::move(_vec[0]);
+      };
 
-        return read_impl<std::vector<Type>, WhereType, OrderByType, LimitType>(
-                   _conn, where_, limit_)
-            .and_then(extract_result);
-      }
-
-    } catch (std::exception& e) {
-      return error(e.what());
+      return read_impl<std::vector<Type>, WhereType, OrderByType, LimitType>(
+                 _conn, where_, limit_)
+          .and_then(extract_result);
     }
   }
 

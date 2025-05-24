@@ -5,6 +5,7 @@
 #include <memory>
 #include <ranges>
 
+#include "IteratorBase.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "internal/batch_size.hpp"

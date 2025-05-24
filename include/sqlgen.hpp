@@ -1,7 +1,6 @@
 #ifndef SQLGEN_HPP_
 #define SQLGEN_HPP_
 
-#include "sqlgen/Connection.hpp"
 #include "sqlgen/Flatten.hpp"
 #include "sqlgen/Iterator.hpp"
 #include "sqlgen/IteratorBase.hpp"
@@ -24,6 +23,7 @@
 #include "sqlgen/if_exists.hpp"
 #include "sqlgen/if_not_exists.hpp"
 #include "sqlgen/insert.hpp"
+#include "sqlgen/is_connection.hpp"
 #include "sqlgen/limit.hpp"
 #include "sqlgen/order_by.hpp"
 #include "sqlgen/patterns.hpp"

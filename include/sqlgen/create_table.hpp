@@ -3,11 +3,13 @@
 
 #include <rfl.hpp>
 
+#include "is_connection.hpp"
 #include "transpilation/to_create_table.hpp"
 
 namespace sqlgen {
 
-template <class ValueType>
+template <class ValueType, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> create_table_impl(const Ref<Connection>& _conn,
                                           const bool _if_not_exists) {
   const auto query = transpilation::to_create_table<ValueType>(_if_not_exists);
@@ -16,7 +18,8 @@ Result<Ref<Connection>> create_table_impl(const Ref<Connection>& _conn,
   });
 }
 
-template <class ValueType>
+template <class ValueType, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> create_table_impl(const Result<Ref<Connection>>& _res,
                                           const bool _if_not_exists) {
   return _res.and_then([&](const auto& _conn) {
@@ -26,12 +29,8 @@ Result<Ref<Connection>> create_table_impl(const Result<Ref<Connection>>& _res,
 
 template <class ValueType>
 struct CreateTable {
-  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
-    try {
-      return create_table_impl<ValueType>(_conn, if_not_exists_);
-    } catch (std::exception& e) {
-      return error(e.what());
-    }
+  auto operator()(const auto& _conn) const {
+    return create_table_impl<ValueType>(_conn, if_not_exists_);
   }
 
   bool if_not_exists_;

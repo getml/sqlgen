@@ -108,10 +108,10 @@ Result<Nothing> Connection::insert(
   return execute("DEALLOCATE sqlgen_insert_into_table;");
 }
 
-rfl::Result<Ref<sqlgen::Connection>> Connection::make(
+rfl::Result<Ref<Connection>> Connection::make(
     const Credentials& _credentials) noexcept {
   try {
-    return Ref<sqlgen::Connection>(Ref<Connection>::make(_credentials));
+    return Ref<Connection>::make(_credentials);
   } catch (std::exception& e) {
     return error(e.what());
   }

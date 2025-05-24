@@ -82,10 +82,10 @@ Result<Nothing> Connection::commit() noexcept {
   return execute("COMMIT;");
 }
 
-rfl::Result<Ref<sqlgen::Connection>> Connection::make(
+rfl::Result<Ref<Connection>> Connection::make(
     const std::string& _fname) noexcept {
   try {
-    return Ref<sqlgen::Connection>(Ref<Connection>::make(_fname));
+    return Ref<Connection>::make(_fname);
   } catch (std::exception& e) {
     return error(e.what());
   }

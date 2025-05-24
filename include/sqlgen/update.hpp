@@ -4,14 +4,15 @@
 #include <rfl.hpp>
 #include <type_traits>
 
-#include "Connection.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
+#include "is_connection.hpp"
 #include "transpilation/to_update.hpp"
 
 namespace sqlgen {
 
-template <class ValueType, class SetsType, class WhereType>
+template <class ValueType, class SetsType, class WhereType, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> update_impl(const Ref<Connection>& _conn,
                                     const SetsType& _sets,
                                     const WhereType& _where) {
@@ -22,7 +23,8 @@ Result<Ref<Connection>> update_impl(const Ref<Connection>& _conn,
   });
 }
 
-template <class ValueType, class SetsType, class WhereType>
+template <class ValueType, class SetsType, class WhereType, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> update_impl(const Result<Ref<Connection>>& _res,
                                     const SetsType& _sets,
                                     const WhereType& _where) {
@@ -33,12 +35,8 @@ Result<Ref<Connection>> update_impl(const Result<Ref<Connection>>& _res,
 
 template <class ValueType, class SetsType, class WhereType = Nothing>
 struct Update {
-  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
-    try {
-      return update_impl<ValueType, SetsType, WhereType>(_conn, sets_, where_);
-    } catch (std::exception& e) {
-      return error(e.what());
-    }
+  auto operator()(const auto& _conn) const {
+    return update_impl<ValueType, SetsType, WhereType>(_conn, sets_, where_);
   }
 
   SetsType sets_;
@@ -47,7 +45,7 @@ struct Update {
 };
 
 template <class ValueType, class... SetsType>
-inline auto update(const SetsType&... _sets) {
+auto update(const SetsType&... _sets) {
   static_assert(sizeof...(_sets) > 0, "You must update at least one column.");
   using TupleType = rfl::Tuple<std::remove_cvref_t<SetsType>...>;
   return Update<ValueType, TupleType>{.sets_ = TupleType(_sets...)};

@@ -9,16 +9,16 @@
 #include <stdexcept>
 #include <string>
 
-#include "../Connection.hpp"
 #include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../dynamic/Write.hpp"
+#include "../is_connection.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::sqlite {
 
-class Connection : public sqlgen::Connection {
+class Connection {
   using ConnPtr = Ref<sqlite3>;
   using StmtPtr = std::shared_ptr<sqlite3_stmt>;
 
@@ -26,8 +26,7 @@ class Connection : public sqlgen::Connection {
   Connection(const std::string& _fname)
       : stmt_(nullptr), conn_(make_conn(_fname)), transaction_started_(false) {}
 
-  static rfl::Result<Ref<sqlgen::Connection>> make(
-      const std::string& _fname) noexcept;
+  static rfl::Result<Ref<Connection>> make(const std::string& _fname) noexcept;
 
   Connection(const Connection& _other) = delete;
 
@@ -35,35 +34,35 @@ class Connection : public sqlgen::Connection {
 
   ~Connection();
 
-  Result<Nothing> begin_transaction() noexcept final;
+  Result<Nothing> begin_transaction() noexcept;
 
-  Result<Nothing> commit() noexcept final;
+  Result<Nothing> commit() noexcept;
 
-  Result<Nothing> execute(const std::string& _sql) noexcept final;
+  Result<Nothing> execute(const std::string& _sql) noexcept;
 
   Result<Nothing> insert(
       const dynamic::Insert& _stmt,
       const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept final;
+          _data) noexcept;
 
   Connection& operator=(const Connection& _other) = delete;
 
   Connection& operator=(Connection&& _other) noexcept;
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query) final;
+  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
 
-  Result<Nothing> rollback() noexcept final;
+  Result<Nothing> rollback() noexcept;
 
-  std::string to_sql(const dynamic::Statement& _stmt) noexcept final {
+  std::string to_sql(const dynamic::Statement& _stmt) noexcept {
     return sqlite::to_sql_impl(_stmt);
   }
 
-  Result<Nothing> start_write(const dynamic::Write& _stmt) final;
+  Result<Nothing> start_write(const dynamic::Write& _stmt);
 
-  Result<Nothing> end_write() final;
+  Result<Nothing> end_write();
 
   Result<Nothing> write(
-      const std::vector<std::vector<std::optional<std::string>>>& _data) final;
+      const std::vector<std::vector<std::optional<std::string>>>& _data);
 
  private:
   /// Generates the underlying connection.
@@ -89,6 +88,9 @@ class Connection : public sqlgen::Connection {
   /// Whether a transaction has been started.
   bool transaction_started_;
 };
+
+static_assert(is_connection<Connection>,
+              "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::sqlite
 
