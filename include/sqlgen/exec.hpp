@@ -5,27 +5,26 @@
 
 #include "Ref.hpp"
 #include "Result.hpp"
+#include "is_connection.hpp"
 
 namespace sqlgen {
 
-inline Result<Ref<Connection>> exec(const Ref<Connection>& _conn,
-                                    const std::string& _sql) {
+template <class Connection>
+  requires is_connection<Connection>
+Result<Ref<Connection>> exec(const Ref<Connection>& _conn,
+                             const std::string& _sql) {
   return _conn->execute(_sql).transform([&](const auto&) { return _conn; });
 }
 
-inline Result<Ref<Connection>> exec(const Result<Ref<Connection>>& _res,
-                                    const std::string& _sql) {
+template <class Connection>
+  requires is_connection<Connection>
+Result<Ref<Connection>> exec(const Result<Ref<Connection>>& _res,
+                             const std::string& _sql) {
   return _res.and_then([&](const auto& _conn) { return exec(_conn, _sql); });
 }
 
 struct Exec {
-  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
-    try {
-      return exec(_conn, sql_);
-    } catch (std::exception& e) {
-      return error(e.what());
-    }
-  }
+  auto operator()(const auto& _conn) const { return exec(_conn, sql_); }
 
   std::string sql_;
 };

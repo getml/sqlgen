@@ -11,11 +11,13 @@
 
 #include "internal/batch_size.hpp"
 #include "internal/to_str_vec.hpp"
+#include "is_connection.hpp"
 #include "transpilation/to_insert_or_write.hpp"
 
 namespace sqlgen {
 
-template <class ItBegin, class ItEnd>
+template <class ItBegin, class ItEnd, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> insert(const Ref<Connection>& _conn, ItBegin _begin,
                                ItEnd _end) {
   using T =
@@ -47,7 +49,8 @@ Result<Ref<Connection>> insert(const Ref<Connection>& _conn, ItBegin _begin,
   return _conn;
 }
 
-template <class ItBegin, class ItEnd>
+template <class ItBegin, class ItEnd, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> insert(const Result<Ref<Connection>>& _res,
                                ItBegin _begin, ItEnd _end) {
   return _res.and_then(
@@ -55,7 +58,7 @@ Result<Ref<Connection>> insert(const Result<Ref<Connection>>& _res,
 }
 
 template <class ContainerType>
-Result<Ref<Connection>> insert(const auto& _conn, const ContainerType& _data) {
+auto insert(const auto& _conn, const ContainerType& _data) {
   if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
     return insert(_conn, _data.begin(), _data.end());
   } else {
@@ -64,20 +67,14 @@ Result<Ref<Connection>> insert(const auto& _conn, const ContainerType& _data) {
 }
 
 template <class ContainerType>
-Result<Ref<Connection>> insert(
-    const auto& _conn, const std::reference_wrapper<ContainerType>& _data) {
+auto insert(const auto& _conn,
+            const std::reference_wrapper<ContainerType>& _data) {
   return insert(_conn, _data.get());
 }
 
 template <class ContainerType>
 struct Insert {
-  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
-    try {
-      return insert(_conn, data_);
-    } catch (std::exception& e) {
-      return error(e.what());
-    }
-  }
+  auto operator()(const auto& _conn) const { return insert(_conn, data_); }
 
   ContainerType data_;
 };

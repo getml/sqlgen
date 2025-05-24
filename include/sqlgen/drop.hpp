@@ -3,14 +3,15 @@
 
 #include <type_traits>
 
-#include "Connection.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
+#include "is_connection.hpp"
 #include "transpilation/to_drop.hpp"
 
 namespace sqlgen {
 
-template <class ValueType>
+template <class ValueType, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> drop_impl(const Ref<Connection>& _conn,
                                   const bool _if_exists) {
   const auto query = transpilation::to_drop<ValueType>(_if_exists);
@@ -19,7 +20,8 @@ Result<Ref<Connection>> drop_impl(const Ref<Connection>& _conn,
   });
 }
 
-template <class ValueType>
+template <class ValueType, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> drop_impl(const Result<Ref<Connection>>& _res,
                                   const bool _if_exists) {
   return _res.and_then([&](const auto& _conn) {
@@ -29,12 +31,8 @@ Result<Ref<Connection>> drop_impl(const Result<Ref<Connection>>& _res,
 
 template <class ValueType>
 struct Drop {
-  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
-    try {
-      return drop_impl<ValueType>(_conn, if_exists_);
-    } catch (std::exception& e) {
-      return error(e.what());
-    }
+  auto operator()(const auto& _conn) const {
+    return drop_impl<ValueType>(_conn, if_exists_);
   }
 
   bool if_exists_ = false;

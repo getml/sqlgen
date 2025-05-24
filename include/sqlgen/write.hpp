@@ -10,18 +10,19 @@
 #include <type_traits>
 #include <vector>
 
-#include "Connection.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "dynamic/Write.hpp"
 #include "internal/batch_size.hpp"
 #include "internal/to_str_vec.hpp"
+#include "is_connection.hpp"
 #include "transpilation/to_create_table.hpp"
 #include "transpilation/to_insert_or_write.hpp"
 
 namespace sqlgen {
 
-template <class ItBegin, class ItEnd>
+template <class ItBegin, class ItEnd, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> write(const Ref<Connection>& _conn, ItBegin _begin,
                               ItEnd _end) noexcept {
   using T =
@@ -69,16 +70,16 @@ Result<Ref<Connection>> write(const Ref<Connection>& _conn, ItBegin _begin,
       .transform([&](const auto&) { return _conn; });
 }
 
-template <class ItBegin, class ItEnd>
+template <class ItBegin, class ItEnd, class Connection>
+  requires is_connection<Connection>
 Result<Ref<Connection>> write(const Result<Ref<Connection>>& _res,
                               ItBegin _begin, ItEnd _end) noexcept {
   return _res.and_then(
       [&](const auto& _conn) { return write(_conn, _begin, _end); });
 }
 
-template <class ConnectionType, class ContainerType>
-Result<Ref<Connection>> write(const ConnectionType& _conn,
-                              const ContainerType& _container) noexcept {
+template <class ContainerType>
+auto write(const auto& _conn, const ContainerType& _container) noexcept {
   if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
     return write(_conn, _container.begin(), _container.end());
   } else {
@@ -86,22 +87,15 @@ Result<Ref<Connection>> write(const ConnectionType& _conn,
   }
 }
 
-template <class ConnectionType, class ContainerType>
-Result<Ref<Connection>> write(
-    const ConnectionType& _conn,
-    const std::reference_wrapper<ContainerType>& _data) {
+template <class ContainerType>
+auto write(const auto& _conn,
+           const std::reference_wrapper<ContainerType>& _data) {
   return write(_conn, _data.get());
 }
 
 template <class ContainerType>
 struct Write {
-  Result<Ref<Connection>> operator()(const auto& _conn) const noexcept {
-    try {
-      return write(_conn, data_);
-    } catch (std::exception& e) {
-      return error(e.what());
-    }
-  }
+  auto operator()(const auto& _conn) const { return write(_conn, data_); }
 
   ContainerType data_;
 };
