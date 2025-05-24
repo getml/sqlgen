@@ -12,15 +12,42 @@ class Transaction {
  public:
   using ConnType = _ConnType;
 
-  Transaction(const Ref<ConnType>& _conn) : conn_(_conn) {}
+  Transaction(const Ref<ConnType>& _conn)
+      : conn_(_conn), transaction_ended_(false) {}
 
   Transaction(const Transaction& _other) = delete;
 
-  ~Transaction() { conn_->rollback(); }
+  Transaction(Transaction&& _other) noexcept
+      : conn_(std::move(_other.conn_)),
+        transaction_ended_(_other.transaction_ended_) {
+    _other.transaction_ended_ = true;
+  }
 
-  Result<Nothing> begin_transaction() { return conn_->begin_transaction(); }
+  ~Transaction() {
+    if (!transaction_ended_) {
+      rollback();
+    }
+  }
 
-  Result<Nothing> commit() { return conn_->commit(); }
+  Result<Nothing> begin_transaction() {
+    if (!transaction_ended_) {
+      return error("Transaction has already begun, cannot begin another.");
+    }
+    return conn_->begin_transaction().transform([&](const auto& _nothing) {
+      transaction_ended_ = false;
+      return _nothing;
+    });
+  }
+
+  Result<Nothing> commit() {
+    if (transaction_ended_) {
+      return error("Transaction has already ended, cannot commit.");
+    }
+    return conn_->commit().transform([&](const auto& _nothing) {
+      transaction_ended_ = true;
+      return _nothing;
+    });
+  }
 
   const Ref<ConnType>& conn() const noexcept { return conn_; }
 
@@ -34,16 +61,30 @@ class Transaction {
     return conn_->insert(_stmt, _data);
   }
 
-  Transaction operator=(const Transaction& _other) = delete;
+  Transaction& operator=(const Transaction& _other) = delete;
+
+  Transaction& operator=(Transaction&& _other) noexcept {
+    if (this == &_other) {
+      return *this;
+    }
+    conn_ = _other.conn;
+    transaction_ended_ = _other.transaction_ended_;
+    _other.transaction_ended_ = true;
+    return *this;
+  }
 
   Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query) {
     return conn_->read(_query);
   }
 
   Result<Nothing> rollback() noexcept {
-    return error(
-        "You should never call .rollback() on a transaction object, just let "
-        "it go out of scope instead.");
+    if (transaction_ended_) {
+      return error("Transaction has already ended, cannot roll back.");
+    }
+    return conn_->rollback().transform([&](const auto& _nothing) {
+      transaction_ended_ = true;
+      return _nothing;
+    });
   }
 
   std::string to_sql(const dynamic::Statement& _stmt) noexcept {
@@ -63,6 +104,8 @@ class Transaction {
 
  private:
   Ref<ConnType> conn_;
+
+  bool transaction_ended_;
 };
 
 }  // namespace sqlgen

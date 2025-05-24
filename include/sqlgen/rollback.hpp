@@ -12,7 +12,7 @@ namespace sqlgen {
 template <class Connection>
   requires is_connection<Connection>
 Result<Ref<Connection>> rollback_impl(const Ref<Transaction<Connection>>& _t) {
-  return _t->conn();
+  return _t->rollback().transform([&](const auto&) { return _t->conn(); });
 }
 
 template <class Connection>
