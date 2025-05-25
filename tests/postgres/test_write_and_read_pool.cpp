@@ -26,13 +26,15 @@ TEST(postgres, test_write_and_read_pool) {
        Person{
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
+  const auto pool_config = sqlgen::ConnectionPoolConfig{.size = 2};
+
   const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
                                                          .password = "password",
                                                          .host = "localhost",
                                                          .dbname = "postgres"};
 
   const auto pool = sqlgen::make_connection_pool<sqlgen::postgres::Connection>(
-      2, credentials);
+      pool_config, credentials);
 
   using namespace sqlgen;
 

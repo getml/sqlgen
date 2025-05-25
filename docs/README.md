@@ -24,6 +24,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::update](update.md) - How to update data in a table
 
 - [Transactions](transactions.md) - How to use transactions for atomic operations
+- [Connection Pool](connection_pool.md) - How to manage database connections efficiently
 
 ## Data Types and Validation
 
