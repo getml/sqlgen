@@ -69,9 +69,6 @@ if (!session_result) {
     std::cerr << "Failed to acquire session: " << session_result.error() << std::endl;
     return;
 }
-
-// Use the session
-const auto& sess = session_result.value();
 ```
 
 ### Chaining Operations
@@ -109,16 +106,13 @@ Example of thread-safe usage with monadic style:
 ```cpp
 using namespace sqlgen;
 
-// Create pool and handle error case
-const auto pool = make_connection_pool<postgres::Connection>(4, credentials)
-    .or_else([](const auto& err) {
-        std::cerr << "Failed to create pool: " << err << std::endl;
-        return error(err);
-    });
+// Create pool
+const auto pool = make_connection_pool<postgres::Connection>(config, credentials);
+
 
 std::vector<std::thread> threads;
 for (int i = 0; i < 4; ++i) {
-    threads.emplace_back([&pool]() {
+    threads.emplace_back([&]() {
         session(pool)
             .and_then(update<Person>("age"_c.set(46) | where("id"_c == i)));
     });
@@ -142,14 +136,9 @@ using namespace sqlgen;
 
 // Using monadic style for session management with exec
 session(pool)
-    .and_then(exec(begin_transaction))
-    .and_then(exec(update<Person>("age"_c.set(46))))
-    .and_then(exec(commit))
-    .or_else([](const auto& err) {
-        // Handle any errors in the chain
-        std::cerr << "Session operation failed: " << err << std::endl;
-        return error(err);
-    });
+    .and_then(begin_transaction)
+    .and_then(update<Person>("age"_c.set(46)))
+    .and_then(commit);
 
 ```
 
@@ -193,12 +182,7 @@ ConnectionPoolConfig config{
 const auto pool = make_connection_pool<postgres::Connection>(config, credentials);
 
 // Acquire a session - will retry if no connections are available
-const auto session_result = session(pool)
-    .or_else([](const auto& err) {
-        // Handle connection acquisition failure after all retries
-        std::cerr << "Failed to acquire connection after retries: " << err << std::endl;
-        return error(err);
-    });
+const auto session_result = session(pool);
 ```
 
 ## Best Practices
