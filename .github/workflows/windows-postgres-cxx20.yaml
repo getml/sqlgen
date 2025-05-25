@@ -1,6 +1,6 @@
 name: windows-postgres-cxx20 
 
-on: [push, pull_request]
+on: [push]
 
 env: 
     VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
