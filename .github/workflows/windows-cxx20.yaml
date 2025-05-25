@@ -13,7 +13,7 @@ jobs:
         include:
           - db: postgres
           - db: sqlite
-    name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
+    name: "(windows-${{ matrix.db }})"
     runs-on: windows-latest
     steps:
       - name: Checkout
