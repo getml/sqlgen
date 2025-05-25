@@ -1,4 +1,4 @@
-name: linux-sqlite-cxx20
+name: linux-postgres-cxx20 
 
 on: [push]
 
@@ -13,21 +13,44 @@ jobs:
         include:
           - compiler: llvm
             compiler-version: 16
+            db: postgres
           - compiler: llvm
             compiler-version: 18
+            db: postgres
           - compiler: llvm
             compiler-version: 20
+            db: postgres
           - compiler: gcc
             compiler-version: 11
             additional-dep: "g++-11"
+            db: postgres
           - compiler: gcc
             compiler-version: 12
+            db: postgres
           - compiler: gcc
             compiler-version: 14
+            db: postgres
+          - compiler: llvm
+            compiler-version: 16
+            db: sqlite 
+          - compiler: llvm
+            compiler-version: 18
+            db: sqlite
+          - compiler: llvm
+            compiler-version: 20
+            db: sqlite
           - compiler: gcc
-            compiler-version: 15
+            compiler-version: 11
+            additional-dep: "g++-11"
+            db: sqlite
+          - compiler: gcc
+            compiler-version: 12
+            db: sqlite
+          - compiler: gcc
+            compiler-version: 14
+            db: sqlite
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }})"
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,6 +75,22 @@ jobs:
           sudo apt update
           sudo apt install -y ninja-build ${{ matrix.additional-dep }}
       - name: Compile
+        if: matrix.db == 'postgres' 
+        run: |
+          if [[ "${{ matrix.compiler }}" == "llvm" ]]; then
+            export CC=clang-${{ matrix.compiler-version }}
+            export CXX=clang++-${{ matrix.compiler-version }}
+          elif [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            export CC=gcc-${{ matrix.compiler-version }}
+            export CXX=g++-${{ matrix.compiler-version }}
+          fi
+          sudo ln -s $(which ccache) /usr/local/bin/$CC
+          sudo ln -s $(which ccache) /usr/local/bin/$CXX
+          $CXX --version
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF 
+          cmake --build build
+      - name: Compile
+        if: matrix.db == 'sqlite' 
         run: |
           if [[ "${{ matrix.compiler }}" == "llvm" ]]; then
             export CC=clang-${{ matrix.compiler-version }}
@@ -64,7 +103,11 @@ jobs:
           sudo ln -s $(which ccache) /usr/local/bin/$CXX
           $CXX --version
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF 
-          cmake --build build -j4
+          cmake --build build
+      - name: Set up postgres
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'password';"
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure
