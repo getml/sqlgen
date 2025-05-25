@@ -7,6 +7,12 @@ env:
 
 jobs:
   windows-msvc:
+    strategy:
+      fail-fast: false
+      matrix:
+          - db: postgres
+          - db: sqlite
+    name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -23,8 +29,14 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
       - uses: lukka/run-vcpkg@v11
       - name: Compile
+        if: matrix.db == 'postgres' 
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON 
+          cmake --build build --config Release -j4 
+      - name: Compile
+        if: matrix.db == 'sqlite' 
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF 
           cmake --build build --config Release -j4 
       - name: Run tests
         run: |

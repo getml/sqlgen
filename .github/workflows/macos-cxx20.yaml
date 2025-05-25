@@ -1,4 +1,4 @@
-name: macos-sqlite-cxx20
+name: macos-postgres-cxx20
 
 on: [push]
 
@@ -10,7 +10,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["macos-latest", "macos-13"]
+          - os: "macos-latest"
+            db: postgres
+          - os: "macos-latest"
+            db: sqlite
+          - os: "macos-13"
+            db: postgres
+          - os: "macos-13"
+            db: sqlite
+    name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -33,9 +41,23 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
       - name: Install ninja 
-        run: brew install ninja
+        run: brew install ninja autoconf bison flex
         if: matrix.os == 'macos-latest'
       - name: Compile
+        if: matrix.db == 'postgres' 
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          if [[ "${{ matrix.os == 'macos-latest' }}" == "true" ]]; then
+            export VCPKG_FORCE_SYSTEM_BINARIES=arm
+            export CMAKE_GENERATOR=Ninja
+          fi
+          $CXX --version
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON 
+          cmake --build build -j 4
+      - name: Compile
+        if: matrix.db == 'sqlite' 
         env:
           CC: clang
           CXX: clang++
