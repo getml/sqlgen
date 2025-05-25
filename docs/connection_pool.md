@@ -42,15 +42,9 @@ Create a connection pool with a specified number of connections:
 ```cpp
 using namespace sqlgen;
 
-// Create a pool with 2 connections
 const auto pool = make_connection_pool<postgres::Connection>(
-    2,  // number of connections
-    postgres::Credentials{
-        .user = "postgres",
-        .password = "password",
-        .host = "localhost",
-        .dbname = "postgres"
-    }
+    config,  // ConnectionPoolConfig
+    credentials // Variables necessary to create the connections
 );
 
 if (!pool) {
