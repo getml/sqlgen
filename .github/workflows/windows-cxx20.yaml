@@ -1,4 +1,4 @@
-name: windows-postgres-cxx20 
+name: windows-cxx20 
 
 on: [push]
 
@@ -10,6 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        include:
           - db: postgres
           - db: sqlite
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
