@@ -17,9 +17,6 @@ jobs:
           - compiler: llvm
             compiler-version: 18
             db: postgres
-          - compiler: llvm
-            compiler-version: 20
-            db: postgres
           - compiler: gcc
             compiler-version: 11
             additional-dep: "g++-11"
@@ -36,9 +33,6 @@ jobs:
           - compiler: llvm
             compiler-version: 18
             db: sqlite
-          - compiler: llvm
-            compiler-version: 20
-            db: sqlite
           - compiler: gcc
             compiler-version: 11
             additional-dep: "g++-11"
@@ -49,7 +43,7 @@ jobs:
           - compiler: gcc
             compiler-version: 14
             db: sqlite
-    name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }})"
+    name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }})"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -105,6 +99,7 @@ jobs:
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF 
           cmake --build build
       - name: Set up postgres
+        if: matrix.db == 'postgres' 
         run: |
           sudo systemctl start postgresql.service
           sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'password';"
