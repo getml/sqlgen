@@ -92,9 +92,11 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
     stream << column_or_value_to_sql(_condition.op1) << " > "
            << column_or_value_to_sql(_condition.op2);
 
-  } else if constexpr (std::is_same_v<C, dynamic::Condition::NotEqual>) {
-    stream << column_or_value_to_sql(_condition.op1)
-           << " != " << column_or_value_to_sql(_condition.op2);
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::IsNull>) {
+    stream << column_or_value_to_sql(_condition.op) << " IS NULL";
+
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::IsNotNull>) {
+    stream << column_or_value_to_sql(_condition.op) << " IS NOT NULL";
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::LesserEqual>) {
     stream << column_or_value_to_sql(_condition.op1)
@@ -104,12 +106,24 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
     stream << column_or_value_to_sql(_condition.op1) << " < "
            << column_or_value_to_sql(_condition.op2);
 
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::Like>) {
+    stream << column_or_value_to_sql(_condition.op) << " LIKE "
+           << column_or_value_to_sql(_condition.pattern);
+
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::NotEqual>) {
+    stream << column_or_value_to_sql(_condition.op1)
+           << " != " << column_or_value_to_sql(_condition.op2);
+
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::NotLike>) {
+    stream << column_or_value_to_sql(_condition.op) << " NOT LIKE "
+           << column_or_value_to_sql(_condition.pattern);
+
   } else if constexpr (std::is_same_v<C, dynamic::Condition::Or>) {
     stream << "(" << condition_to_sql(*_condition.cond1) << ") OR ("
            << condition_to_sql(*_condition.cond2) << ")";
 
   } else {
-    static_assert(rfl::always_false_v<C>, "Not all cases where covered.");
+    static_assert(rfl::always_false_v<C>, "Not all cases were covered.");
   }
 
   return stream.str();

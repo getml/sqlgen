@@ -30,9 +30,12 @@ struct Condition {
     ColumnOrValue op2;
   };
 
-  struct NotEqual {
-    Column op1;
-    ColumnOrValue op2;
+  struct IsNotNull {
+    Column op;
+  };
+
+  struct IsNull {
+    Column op;
   };
 
   struct LesserEqual {
@@ -45,14 +48,30 @@ struct Condition {
     ColumnOrValue op2;
   };
 
+  struct Like {
+    Column op;
+    dynamic::Value pattern;
+  };
+
+  struct NotEqual {
+    Column op1;
+    ColumnOrValue op2;
+  };
+
+  struct NotLike {
+    Column op;
+    dynamic::Value pattern;
+  };
+
   struct Or {
     Ref<Condition> cond1;
     Ref<Condition> cond2;
   };
 
   using ReflectionType =
-      rfl::TaggedUnion<"what", And, Equal, GreaterEqual, GreaterThan, NotEqual,
-                       LesserEqual, LesserThan, Or>;
+      rfl::TaggedUnion<"what", And, Equal, GreaterEqual, GreaterThan, IsNull,
+                       IsNotNull, LesserEqual, LesserThan, Like, NotEqual,
+                       NotLike, Or>;
 
   const ReflectionType& reflection() const { return val; }
 

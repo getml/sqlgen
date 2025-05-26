@@ -168,6 +168,37 @@ struct ToCondition<T, conditions::LesserThan<Col<_name>, Value<V>>> {
   }
 };
 
+template <class T, rfl::internal::StringLiteral _name>
+struct ToCondition<T, conditions::Like<Col<_name>>> {
+  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
+
+  dynamic::Condition operator()(const auto& _cond) const {
+    return dynamic::Condition{.val = dynamic::Condition::Like{
+                                  .op = dynamic::Column{.name = _name.str()},
+                                  .pattern = to_value(_cond.pattern)}};
+  }
+};
+
+template <class T, rfl::internal::StringLiteral _name>
+struct ToCondition<T, conditions::IsNotNull<Col<_name>>> {
+  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
+
+  dynamic::Condition operator()(const auto&) const {
+    return dynamic::Condition{.val = dynamic::Condition::IsNotNull{
+                                  .op = dynamic::Column{.name = _name.str()}}};
+  }
+};
+
+template <class T, rfl::internal::StringLiteral _name>
+struct ToCondition<T, conditions::IsNull<Col<_name>>> {
+  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
+
+  dynamic::Condition operator()(const auto&) const {
+    return dynamic::Condition{.val = dynamic::Condition::IsNull{
+                                  .op = dynamic::Column{.name = _name.str()}}};
+  }
+};
+
 template <class T, rfl::internal::StringLiteral _name1,
           rfl::internal::StringLiteral _name2>
 struct ToCondition<T, conditions::NotEqual<Col<_name1>, Col<_name2>>> {
@@ -191,6 +222,17 @@ struct ToCondition<T, conditions::NotEqual<Col<_name>, Value<V>>> {
                                   .op1 = dynamic::Column{.name = _name.str()},
                                   .op2 = to_value(_cond.op2.val),
                               }};
+  }
+};
+
+template <class T, rfl::internal::StringLiteral _name>
+struct ToCondition<T, conditions::NotLike<Col<_name>>> {
+  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
+
+  dynamic::Condition operator()(const auto& _cond) const {
+    return dynamic::Condition{.val = dynamic::Condition::NotLike{
+                                  .op = dynamic::Column{.name = _name.str()},
+                                  .pattern = to_value(_cond.pattern)}};
   }
 };
 

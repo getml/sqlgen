@@ -45,16 +45,24 @@ auto greater_than(const OpType1& _op1, const OpType2& _op2) {
                      std::remove_cvref_t<OpType2>>{.op1 = _op1, .op2 = _op2};
 }
 
-template <class OpType1, class OpType2>
-struct NotEqual {
-  OpType1 op1;
-  OpType2 op2;
+template <class OpType>
+struct IsNull {
+  OpType op;
 };
 
-template <class OpType1, class OpType2>
-auto not_equal(const OpType1& _op1, const OpType2& _op2) {
-  return NotEqual<std::remove_cvref_t<OpType1>, std::remove_cvref_t<OpType2>>{
-      .op1 = _op1, .op2 = _op2};
+template <class OpType>
+auto is_null(const OpType& _op) {
+  return IsNull<std::remove_cvref_t<OpType>>{.op = _op};
+}
+
+template <class OpType>
+struct IsNotNull {
+  OpType op;
+};
+
+template <class OpType>
+auto is_not_null(const OpType& _op) {
+  return IsNotNull<std::remove_cvref_t<OpType>>{.op = _op};
 }
 
 template <class OpType1, class OpType2>
@@ -79,6 +87,40 @@ template <class OpType1, class OpType2>
 auto lesser_than(const OpType1& _op1, const OpType2& _op2) {
   return LesserThan<std::remove_cvref_t<OpType1>, std::remove_cvref_t<OpType2>>{
       .op1 = _op1, .op2 = _op2};
+}
+
+template <class OpType>
+struct Like {
+  OpType op;
+  std::string pattern;
+};
+
+template <class OpType>
+auto like(const OpType& _op, const std::string& _pattern) {
+  return Like<std::remove_cvref_t<OpType>>{.op = _op, .pattern = _pattern};
+}
+
+template <class OpType1, class OpType2>
+struct NotEqual {
+  OpType1 op1;
+  OpType2 op2;
+};
+
+template <class OpType1, class OpType2>
+auto not_equal(const OpType1& _op1, const OpType2& _op2) {
+  return NotEqual<std::remove_cvref_t<OpType1>, std::remove_cvref_t<OpType2>>{
+      .op1 = _op1, .op2 = _op2};
+}
+
+template <class OpType>
+struct NotLike {
+  OpType op;
+  std::string pattern;
+};
+
+template <class OpType>
+auto not_like(const OpType& _op, const std::string& _pattern) {
+  return NotLike<std::remove_cvref_t<OpType>>{.op = _op, .pattern = _pattern};
 }
 
 template <class CondType1, class CondType2>

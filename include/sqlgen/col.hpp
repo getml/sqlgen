@@ -22,13 +22,37 @@ struct Col {
   /// Returns the column name.
   std::string name() const noexcept { return Name().str(); }
 
-  /// Defines a SET clause in an UPDATE statement.
+  /// Returns an IS NULL condition.
+  auto is_null() const noexcept {
+    return transpilation::make_condition(
+        transpilation::conditions::is_null(*this));
+  }
+
+  /// Returns a IS NOT NULL condition.
+  auto is_not_null() const noexcept {
+    return transpilation::make_condition(
+        transpilation::conditions::is_not_null(*this));
+  }
+
+  /// Returns a LIKE condition.
+  auto like(const std::string& _pattern) const noexcept {
+    return transpilation::make_condition(
+        transpilation::conditions::like(*this, _pattern));
+  }
+
+  /// Returns a NOT LIKE condition.
+  auto not_like(const std::string& _pattern) const noexcept {
+    return transpilation::make_condition(
+        transpilation::conditions::not_like(*this, _pattern));
+  }
+
+  /// Returns a SET clause in an UPDATE statement.
   template <class T>
   auto set(const T& _to) const noexcept {
     return transpilation::Set<Col<_name>, std::remove_cvref_t<T>>{.to = _to};
   }
 
-  /// Defines a SET clause in an UPDATE statement.
+  /// Returns a SET clause in an UPDATE statement.
   auto set(const char* _to) const noexcept {
     return transpilation::Set<Col<_name>, std::string>{.to = _to};
   }
