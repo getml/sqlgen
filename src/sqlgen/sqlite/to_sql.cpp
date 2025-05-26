@@ -237,7 +237,7 @@ std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept {
 }
 
 std::string escape_single_quote(const std::string& _str) noexcept {
-  return strings::replace_all(_str, "'", "''");
+  return internal::strings::replace_all(_str, "'", "''");
 }
 
 template <class InsertOrWrite>

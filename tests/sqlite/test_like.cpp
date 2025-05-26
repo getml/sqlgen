@@ -42,14 +42,22 @@ TEST(sqlite, test_like) {
                     where("first_name"_c.not_like("H%")) | order_by("age"_c))
           .value();
 
+  const auto people4 =
+      conn.and_then(sqlgen::read<std::vector<Person>> |
+                    where("first_name"_c.like("O'Reilly")) | order_by("age"_c))
+          .value();
+
   const std::string expected1 =
       R"([{"id":4,"first_name":"Hugo","last_name":"Simpson","age":10},{"id":0,"first_name":"Homer","last_name":"Simpson","age":45}])";
 
   const std::string expected2 =
       R"([{"id":3,"first_name":"Maggie","last_name":"Simpson","age":0},{"id":2,"first_name":"Lisa","last_name":"Simpson","age":8},{"id":1,"first_name":"Bart","last_name":"Simpson","age":10}])";
 
+  const std::string expected3 = R"([])";
+
   EXPECT_EQ(rfl::json::write(people2), expected1);
   EXPECT_EQ(rfl::json::write(people3), expected2);
+  EXPECT_EQ(rfl::json::write(people4), expected3);
 }
 
 }  // namespace test_like
