@@ -30,6 +30,8 @@ std::string delete_from_to_sql(const dynamic::DeleteFrom& _stmt) noexcept;
 
 std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept;
 
+std::string escape_single_quote(const std::string& _str) noexcept;
+
 std::vector<std::string> get_primary_keys(
     const dynamic::CreateTable& _stmt) noexcept;
 
@@ -63,7 +65,7 @@ std::string column_or_value_to_sql(
   const auto handle_value = [](const auto& _v) -> std::string {
     using Type = std::remove_cvref_t<decltype(_v)>;
     if constexpr (std::is_same_v<Type, dynamic::String>) {
-      return "'" + _v.val + "'";
+      return "'" + escape_single_quote(_v.val) + "'";
     } else {
       return std::to_string(_v.val);
     }
@@ -258,6 +260,10 @@ std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept {
   stream << ";";
 
   return stream.str();
+}
+
+std::string escape_single_quote(const std::string& _str) noexcept {
+  return strings::replace_all(_str, "'", "''");
 }
 
 std::vector<std::string> get_primary_keys(
