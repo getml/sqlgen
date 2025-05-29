@@ -18,6 +18,7 @@
 #include "to_condition.hpp"
 #include "to_sets.hpp"
 #include "to_value.hpp"
+#include "underlying_t.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -28,6 +29,9 @@ template <class T, rfl::internal::StringLiteral _name, class ToType>
 struct ToSet<T, Set<transpilation::Col<_name>, ToType>> {
   static_assert(all_columns_exist<T, transpilation::Col<_name>>(),
                 "All columns must exist.");
+  static_assert(std::is_convertible_v<underlying_t<T, Col<_name>>,
+                                      underlying_t<T, Value<ToType>>>,
+                "Must be convertible.");
 
   dynamic::Update::Set operator()(const auto& _set) const {
     return dynamic::Update::Set{
@@ -44,6 +48,10 @@ struct ToSet<T, Set<transpilation::Col<_name1>, transpilation::Col<_name2>>> {
                 "All columns must exist.");
   static_assert(all_columns_exist<T, transpilation::Col<_name2>>(),
                 "All columns must exist.");
+  static_assert(
+      std::is_convertible_v<underlying_t<T, transpilation::Col<_name2>>,
+                            underlying_t<T, transpilation::Col<_name1>>>,
+      "Must be convertible.");
 
   dynamic::Update::Set operator()(const auto& _set) const {
     return dynamic::Update::Set{
