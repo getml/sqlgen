@@ -44,8 +44,9 @@ template <rfl::internal::StringLiteral _name, class ValueType, class WhereType,
 struct CreateIndex {
   auto operator()(const auto& _conn) const {
     return create_index_impl<
-        ValueType, transpilation::columns_t<ValueType, ColTypes...>, WhereType>(
-        _conn, _name.str(), unique_, if_not_exists_, where_);
+        ValueType,
+        transpilation::columns_t<ValueType, typename ColTypes::ColType...>,
+        WhereType>(_conn, _name.str(), unique_, if_not_exists_, where_);
   }
 
   bool unique_ = false;

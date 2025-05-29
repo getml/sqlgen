@@ -3,9 +3,9 @@
 
 namespace sqlgen::transpilation {
 
-template <class _ColType>
+template <class _C>
 struct Desc {
-  using ColType = _ColType;
+  using ColType = Desc<_C>;
 };
 
 }  // namespace sqlgen::transpilation

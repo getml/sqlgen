@@ -5,12 +5,16 @@ namespace sqlgen::transpilation::conditions {
 
 template <class CondType1, class CondType2>
 struct And {
+  using ResultType = bool;
+
   CondType1 cond1;
   CondType2 cond2;
 };
 
 template <class OpType1, class OpType2>
 struct Equal {
+  using ResultType = bool;
+
   OpType1 op1;
   OpType2 op2;
 };
@@ -23,6 +27,8 @@ auto equal(const OpType1& _op1, const OpType2& _op2) {
 
 template <class OpType1, class OpType2>
 struct GreaterEqual {
+  using ResultType = bool;
+
   OpType1 op1;
   OpType2 op2;
 };
@@ -35,6 +41,8 @@ auto greater_equal(const OpType1& _op1, const OpType2& _op2) {
 
 template <class OpType1, class OpType2>
 struct GreaterThan {
+  using ResultType = bool;
+
   OpType1 op1;
   OpType2 op2;
 };
@@ -47,6 +55,8 @@ auto greater_than(const OpType1& _op1, const OpType2& _op2) {
 
 template <class OpType>
 struct IsNull {
+  using ResultType = bool;
+
   OpType op;
 };
 
@@ -57,6 +67,8 @@ auto is_null(const OpType& _op) {
 
 template <class OpType>
 struct IsNotNull {
+  using ResultType = bool;
+
   OpType op;
 };
 
@@ -67,6 +79,8 @@ auto is_not_null(const OpType& _op) {
 
 template <class OpType1, class OpType2>
 struct LesserEqual {
+  using ResultType = bool;
+
   OpType1 op1;
   OpType2 op2;
 };
@@ -79,6 +93,8 @@ auto lesser_equal(const OpType1& _op1, const OpType2& _op2) {
 
 template <class OpType1, class OpType2>
 struct LesserThan {
+  using ResultType = bool;
+
   OpType1 op1;
   OpType2 op2;
 };
@@ -91,6 +107,8 @@ auto lesser_than(const OpType1& _op1, const OpType2& _op2) {
 
 template <class OpType>
 struct Like {
+  using ResultType = bool;
+
   OpType op;
   std::string pattern;
 };
@@ -102,6 +120,8 @@ auto like(const OpType& _op, const std::string& _pattern) {
 
 template <class OpType1, class OpType2>
 struct NotEqual {
+  using ResultType = bool;
+
   OpType1 op1;
   OpType2 op2;
 };
@@ -114,6 +134,8 @@ auto not_equal(const OpType1& _op1, const OpType2& _op2) {
 
 template <class OpType>
 struct NotLike {
+  using ResultType = bool;
+
   OpType op;
   std::string pattern;
 };
@@ -125,6 +147,8 @@ auto not_like(const OpType& _op, const std::string& _pattern) {
 
 template <class CondType1, class CondType2>
 struct Or {
+  using ResultType = bool;
+
   CondType1 cond1;
   CondType2 cond2;
 };

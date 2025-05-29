@@ -25,8 +25,9 @@ auto operator|(const Read<ContainerType, WhereType, OrderByType, LimitType>& _r,
   static_assert(sizeof...(ColTypes) != 0,
                 "You must assign at least one column to order by.");
   return Read<ContainerType, WhereType,
-              transpilation::order_by_t<transpilation::value_t<ContainerType>,
-                                        std::remove_cvref_t<ColTypes>...>,
+              transpilation::order_by_t<
+                  transpilation::value_t<ContainerType>,
+                  typename std::remove_cvref_t<ColTypes>::ColType...>,
               LimitType>{.where_ = _r.where_};
 }
 

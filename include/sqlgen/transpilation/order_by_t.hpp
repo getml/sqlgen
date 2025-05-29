@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "../col.hpp"
+#include "Col.hpp"
 #include "Desc.hpp"
 #include "all_columns_exist.hpp"
 
@@ -15,14 +15,14 @@ template <class _ColType>
 struct OrderByWrapper;
 
 template <rfl::internal::StringLiteral _name>
-struct OrderByWrapper<Col<_name>> {
-  using ColType = Col<_name>;
+struct OrderByWrapper<transpilation::Col<_name>> {
+  using ColType = transpilation::Col<_name>;
   constexpr static bool desc = false;
 };
 
 template <rfl::internal::StringLiteral _name>
-struct OrderByWrapper<Desc<Col<_name>>> {
-  using ColType = Col<_name>;
+struct OrderByWrapper<Desc<transpilation::Col<_name>>> {
+  using ColType = transpilation::Col<_name>;
   constexpr static bool desc = true;
 };
 
@@ -38,8 +38,8 @@ auto make_order_by() {
 }
 
 template <class T, class... ColTypes>
-using order_by_t =
-    std::invoke_result_t<decltype(make_order_by<T, ColTypes...>)>;
+using order_by_t = std::invoke_result_t<
+    decltype(make_order_by<T, typename ColTypes::ColType...>)>;
 
 }  // namespace sqlgen::transpilation
 

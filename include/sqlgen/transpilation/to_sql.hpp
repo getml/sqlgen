@@ -31,9 +31,9 @@ template <rfl::internal::StringLiteral _name, class ValueType, class WhereType,
 struct ToSQL<CreateIndex<_name, ValueType, WhereType, ColTypes...>> {
   dynamic::Statement operator()(const auto& _create_index) const {
     return transpilation::to_create_index<
-        ValueType, columns_t<ValueType, ColTypes...>, WhereType>(
-        _name.str(), _create_index.unique_, _create_index.if_not_exists_,
-        _create_index.where_);
+        ValueType, columns_t<ValueType, typename ColTypes::ColType...>,
+        WhereType>(_name.str(), _create_index.unique_,
+                   _create_index.if_not_exists_, _create_index.where_);
   }
 };
 

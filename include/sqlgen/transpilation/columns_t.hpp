@@ -5,7 +5,6 @@
 #include <type_traits>
 #include <vector>
 
-#include "../col.hpp"
 #include "Desc.hpp"
 #include "all_columns_exist.hpp"
 

@@ -5,7 +5,7 @@
 #include <type_traits>
 
 #include "../Literal.hpp"
-#include "../col.hpp"
+#include "Col.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -14,7 +14,7 @@ struct ColumnExists;
 
 template <rfl::internal::StringLiteral _col_name,
           rfl::internal::StringLiteral... _field_names>
-struct ColumnExists<Literal<_field_names...>, Col<_col_name>> {
+struct ColumnExists<Literal<_field_names...>, transpilation::Col<_col_name>> {
   static constexpr bool value = (false || ... || (_col_name == _field_names));
   static_assert(value, "Column does not exist.");
 };
