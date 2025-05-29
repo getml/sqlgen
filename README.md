@@ -182,6 +182,10 @@ sqlgen provides comprehensive compile-time checks and runtime protection:
 const auto query = read<std::vector<Person>> |
                    where("color"_c == "blue");
 
+// Compile-time error: Cannot compare column "age" to a string 
+const auto query = read<std::vector<Person>> |
+                   where("age"_c == "Homer");
+
 // Runtime protection against SQL injection
 std::vector<Person> get_people(const auto& conn, 
                               const sqlgen::AlphaNumeric& first_name) {
