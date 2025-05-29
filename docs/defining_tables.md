@@ -86,7 +86,10 @@ CREATE TABLE IF NOT EXISTS "my_schema"."People"(
 As we have seen, all columns are non-nullable by default. But what if we do want
 nullability?
 
-As with reflect-cpp, `std::optional`, `std::shared_ptr` and `std::unique_ptr` are interpreted as nullable types. So you can create nullable fields as follows:
+As with reflect-cpp, `std::optional`, `std::shared_ptr` and `std::unique_ptr` are interpreted as nullable types,
+but it is strongly recommended that you use `std::optional`.
+
+So you can create nullable fields as follows:
 
 ```cpp
 struct People {
@@ -100,7 +103,7 @@ struct People {
 
 - All fields are non-nullable by default
 - Nullable fields can be defined using:
-  - `std::optional<T>`
+  - `std::optional<T>` (strongly recommended)
   - `std::shared_ptr<T>`
   - `std::unique_ptr<T>`
 - Use `std::nullopt` or `nullptr` to represent NULL values
