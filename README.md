@@ -9,6 +9,10 @@
 
 sqlgen is a modern, type-safe ORM and SQL query generator for C++20, inspired by Python's [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy)/[SQLModel](https://github.com/fastapi/sqlmodel) and Rust's [Diesel](https://github.com/diesel-rs/diesel). It provides a fluent, composable interface for database operations with compile-time type checking and SQL injection protection.
 
+sqlgen is based on and tightly integrated with [reflect-cpp](https://github.com/getml/reflect-cpp), a C++-20 library for fast serialization, deserialization and validation using reflection, similar to pydantic in Python, serde in Rust, encoding in Go or aeson in Haskell.
+
+Together, reflect-cpp and sqlgen enable reliable and efficient ETL pipelines.
+
 ## Features
 
 - 🔒 **Type Safety**: Compile-time validation of table schemas and queries
