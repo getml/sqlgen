@@ -1,5 +1,5 @@
-#ifndef SQLGEN_TRANSPILATION_TO_SELECT_FROM_HPP_
-#define SQLGEN_TRANSPILATION_TO_SELECT_FROM_HPP_
+#ifndef SQLGEN_TRANSPILATION_READ_TO_SELECT_FROM_HPP_
+#define SQLGEN_TRANSPILATION_READ_TO_SELECT_FROM_HPP_
 
 #include <ranges>
 #include <rfl.hpp>
@@ -22,14 +22,13 @@
 
 namespace sqlgen::transpilation {
 
-template <class StructType, class FieldsTupleType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType>
-  requires std::is_class_v<std::remove_cvref_t<StructType>> &&
-           std::is_aggregate_v<std::remove_cvref_t<StructType>>
-dynamic::SelectFrom to_select_from(const FieldsTupleType& _fields,
-                                   const WhereType& _where = WhereType{},
-                                   const LimitType& _limit = LimitType{}) {
-  /*using namespace std::ranges::views;
+template <class T, class WhereType = Nothing, class OrderByType = Nothing,
+          class LimitType = Nothing>
+  requires std::is_class_v<std::remove_cvref_t<T>> &&
+           std::is_aggregate_v<std::remove_cvref_t<T>>
+dynamic::SelectFrom read_to_select_from(const WhereType& _where = WhereType{},
+                                        const LimitType& _limit = LimitType{}) {
+  using namespace std::ranges::views;
 
   using NamedTupleType = rfl::named_tuple_t<std::remove_cvref_t<T>>;
   using Fields = typename NamedTupleType::Fields;
@@ -48,7 +47,7 @@ dynamic::SelectFrom to_select_from(const FieldsTupleType& _fields,
       .fields = fields,
       .where = to_condition<std::remove_cvref_t<T>>(_where),
       .order_by = to_order_by<OrderByType>(),
-      .limit = to_limit(_limit)};*/
+      .limit = to_limit(_limit)};
 }
 
 }  // namespace sqlgen::transpilation

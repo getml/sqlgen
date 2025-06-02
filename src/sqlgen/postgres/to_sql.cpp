@@ -4,6 +4,7 @@
 #include <rfl.hpp>
 #include <sstream>
 #include <stdexcept>
+#include <type_traits>
 
 #include "sqlgen/internal/collect/vector.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
@@ -12,6 +13,9 @@ namespace sqlgen::postgres {
 
 std::string add_not_null_if_necessary(
     const dynamic::types::Properties& _p) noexcept;
+
+std::string aggregation_to_sql(
+    const dynamic::Aggregation& _aggregation) noexcept;
 
 std::string column_or_value_to_sql(const dynamic::ColumnOrValue& _col) noexcept;
 
@@ -31,6 +35,8 @@ std::string delete_from_to_sql(const dynamic::DeleteFrom& _stmt) noexcept;
 std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept;
 
 std::string escape_single_quote(const std::string& _str) noexcept;
+
+std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept;
 
 std::vector<std::string> get_primary_keys(
     const dynamic::CreateTable& _stmt) noexcept;
@@ -58,6 +64,40 @@ inline std::string wrap_in_quotes(const std::string& _name) noexcept {
 std::string add_not_null_if_necessary(
     const dynamic::types::Properties& _p) noexcept {
   return std::string(_p.nullable ? "" : " NOT NULL");
+}
+
+std::string aggregation_to_sql(
+    const dynamic::Aggregation& _aggregation) noexcept {
+  return _aggregation.val.visit([](const auto& _agg) -> std::string {
+    std::stringstream stream;
+
+    using Type = std::remove_cvref_t<decltype(_agg)>;
+
+    if constexpr (std::is_same_v<Type, dynamic::Aggregation::Avg>) {
+      stream << "AVG(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Count>) {
+      stream << "COUNT("
+             << std::string(_agg.val && _agg.distinct ? " DISTINCT " : "")
+             << (_agg.val ? column_or_value_to_sql(*_agg.val)
+                          : std::string("*"))
+             << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Max>) {
+      stream << "MAX(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Min>) {
+      stream << "MIN(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Sum>) {
+      stream << "SUM(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else {
+      static_assert(rfl::always_false_v<Type>, "Not all cases were covered.");
+    }
+
+    return stream.str();
+  });
 }
 
 std::string column_or_value_to_sql(
@@ -266,6 +306,25 @@ std::string escape_single_quote(const std::string& _str) noexcept {
   return internal::strings::replace_all(_str, "'", "''");
 }
 
+std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept {
+  std::stringstream stream;
+
+  stream << _field.val.visit([](const auto& _val) -> std::string {
+    using Type = std::remove_cvref_t<decltype(_val)>;
+    if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
+      return aggregation_to_sql(_val);
+    } else {
+      return column_or_value_to_sql(_val);
+    }
+  });
+
+  if (_field.as) {
+    stream << " AS " << wrap_in_quotes(*_field.as);
+  }
+
+  return stream.str();
+}
+
 std::vector<std::string> get_primary_keys(
     const dynamic::CreateTable& _stmt) noexcept {
   using namespace std::ranges::views;
@@ -321,8 +380,8 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
 
   stream << "SELECT ";
   stream << internal::strings::join(
-      ", ", internal::collect::vector(_stmt.columns | transform(get_name) |
-                                      transform(wrap_in_quotes)));
+      ", ", internal::collect::vector(_stmt.fields | transform(field_to_str)));
+
   stream << " FROM ";
   if (_stmt.table.schema) {
     stream << wrap_in_quotes(*_stmt.table.schema) << ".";

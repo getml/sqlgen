@@ -9,7 +9,7 @@
 #include "Result.hpp"
 #include "internal/is_range.hpp"
 #include "is_connection.hpp"
-#include "transpilation/to_select_from.hpp"
+#include "transpilation/read_to_select_from.hpp"
 #include "transpilation/value_t.hpp"
 
 namespace sqlgen {
@@ -23,8 +23,8 @@ Result<ContainerType> read_impl(const Ref<Connection>& _conn,
   using ValueType = transpilation::value_t<ContainerType>;
   if constexpr (internal::is_range_v<ContainerType>) {
     const auto query =
-        transpilation::to_select_from<ValueType, WhereType, OrderByType,
-                                      LimitType>(_where, _limit);
+        transpilation::read_to_select_from<ValueType, WhereType, OrderByType,
+                                           LimitType>(_where, _limit);
     return _conn->read(query).transform(
         [](auto&& _it) { return ContainerType(_it); });
 

@@ -33,7 +33,7 @@ template <class T, class... ColTypes>
 auto make_order_by() {
   static_assert(
       all_columns_exist<T, typename OrderByWrapper<ColTypes>::ColType...>(),
-      "All columns must exist.");
+      "A column in order_by does not exist.");
   return OrderBy<OrderByWrapper<ColTypes>...>{};
 }
 

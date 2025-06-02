@@ -2,7 +2,6 @@
 
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
-#include <sqlgen/transpilation/to_select_from.hpp>
 
 namespace test_to_select_from_dry {
 

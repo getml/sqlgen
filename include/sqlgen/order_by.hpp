@@ -21,7 +21,7 @@ auto operator|(const Read<ContainerType, WhereType, OrderByType, LimitType>& _r,
                 "You cannot call order_by twice (but you can order by more "
                 "than one column).");
   static_assert(std::is_same_v<LimitType, Nothing>,
-                "You cannot call limit(...) must be called before order_by.");
+                "You cannot call limit(...) before order_by.");
   static_assert(sizeof...(ColTypes) != 0,
                 "You must assign at least one column to order by.");
   return Read<ContainerType, WhereType,

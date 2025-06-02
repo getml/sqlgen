@@ -12,12 +12,12 @@
 #include "../read.hpp"
 #include "../update.hpp"
 #include "columns_t.hpp"
+#include "read_to_select_from.hpp"
 #include "to_create_index.hpp"
 #include "to_create_table.hpp"
 #include "to_delete_from.hpp"
 #include "to_drop.hpp"
 #include "to_insert_or_write.hpp"
-#include "to_select_from.hpp"
 #include "to_update.hpp"
 #include "value_t.hpp"
 
@@ -69,8 +69,8 @@ template <class ContainerType, class WhereType, class OrderByType,
           class LimitType>
 struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType>> {
   dynamic::Statement operator()(const auto& _read) const {
-    return to_select_from<value_t<ContainerType>, WhereType, OrderByType,
-                          LimitType>(_read.where_, _read.limit_);
+    return read_to_select_from<value_t<ContainerType>, WhereType, OrderByType,
+                               LimitType>(_read.where_, _read.limit_);
   }
 };
 

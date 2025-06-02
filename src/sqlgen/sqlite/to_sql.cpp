@@ -9,6 +9,9 @@
 
 namespace sqlgen::sqlite {
 
+std::string aggregation_to_sql(
+    const dynamic::Aggregation& _aggregation) noexcept;
+
 std::string column_or_value_to_sql(const dynamic::ColumnOrValue& _col) noexcept;
 
 std::string column_to_sql_definition(const dynamic::Column& _col) noexcept;
@@ -28,6 +31,8 @@ std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept;
 
 std::string escape_single_quote(const std::string& _str) noexcept;
 
+std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept;
+
 template <class InsertOrWrite>
 std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept;
 
@@ -39,7 +44,43 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept;
 
 std::string update_to_sql(const dynamic::Update& _stmt) noexcept;
 
-// ----------------------------------------------------------------------------
+std::string aggregation_to_sql(
+    const dynamic::Aggregation& _aggregation) noexcept {
+  return _aggregation.val.visit([](const auto& _agg) -> std::string {
+    std::stringstream stream;
+
+    using Type = std::remove_cvref_t<decltype(_agg)>;
+
+    if constexpr (std::is_same_v<Type, dynamic::Aggregation::Avg>) {
+      stream << "AVG(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Count>) {
+      stream << "COUNT("
+             << std::string(_agg.val && _agg.distinct ? " DISTINCT " : "")
+             << (_agg.val ? column_or_value_to_sql(*_agg.val)
+                          : std::string("*"))
+             << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Max>) {
+      stream << "MAX(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Min>) {
+      stream << "MIN(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Sum>) {
+      stream << "SUM(" << column_or_value_to_sql(_agg.val) << ")";
+
+    } else {
+      static_assert(rfl::always_false_v<Type>, "Not all cases were covered.");
+    }
+
+    if (_agg.as) {
+      stream << " AS " << "\"" << *_agg.as << "\"";
+    }
+
+    return stream.str();
+  });
+}
 
 std::string column_or_value_to_sql(
     const dynamic::ColumnOrValue& _col) noexcept {
@@ -240,6 +281,37 @@ std::string escape_single_quote(const std::string& _str) noexcept {
   return internal::strings::replace_all(_str, "'", "''");
 }
 
+std::string column_or_agg_to_str(
+    const dynamic::ColumnOrAggregation& _column_or_agg) noexcept {
+  return _column_or_agg.visit([](const auto& _c) -> std::string {
+    using Type = std::remove_cvref_t<decltype(_c)>;
+    if constexpr (std::is_same_v<Type, dynamic::Column>) {
+      return "\"" + _c.name + "\"";
+    } else {
+      return aggregation_to_sql(_c);
+    }
+  });
+}
+
+std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept {
+  std::stringstream stream;
+
+  stream << _field.val.visit([](const auto& _val) -> std::string {
+    using Type = std::remove_cvref_t<decltype(_val)>;
+    if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
+      return aggregation_to_sql(_val);
+    } else {
+      return column_or_value_to_sql(_val);
+    }
+  });
+
+  if (_field.as) {
+    stream << " AS " << "\"" << *_field.as << "\"";
+  }
+
+  return stream.str();
+}
+
 template <class InsertOrWrite>
 std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   using namespace std::ranges::views;
@@ -281,18 +353,15 @@ std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
   using namespace std::ranges::views;
 
-  const auto to_str = [](const auto& _col) -> std::string {
-    return "\"" + _col.name + "\"";
-  };
-
   const auto order_by_to_str = [](const auto& _w) -> std::string {
     return "\"" + _w.column.name + "\"" + (_w.desc ? " DESC" : "");
   };
 
   std::stringstream stream;
+
   stream << "SELECT ";
   stream << internal::strings::join(
-      ", ", internal::collect::vector(_stmt.columns | transform(to_str)));
+      ", ", internal::collect::vector(_stmt.fields | transform(field_to_str)));
 
   stream << " FROM ";
   if (_stmt.table.schema) {
