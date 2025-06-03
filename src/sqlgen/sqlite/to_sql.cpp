@@ -74,10 +74,6 @@ std::string aggregation_to_sql(
       static_assert(rfl::always_false_v<Type>, "Not all cases were covered.");
     }
 
-    if (_agg.as) {
-      stream << " AS " << "\"" << *_agg.as << "\"";
-    }
-
     return stream.str();
   });
 }
