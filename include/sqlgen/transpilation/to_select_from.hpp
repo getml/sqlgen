@@ -16,39 +16,32 @@
 #include "get_schema.hpp"
 #include "get_tablename.hpp"
 #include "make_columns.hpp"
+#include "make_fields.hpp"
 #include "to_condition.hpp"
+#include "to_group_by.hpp"
 #include "to_limit.hpp"
 #include "to_order_by.hpp"
 
 namespace sqlgen::transpilation {
 
-template <class StructType, class FieldsTupleType, class WhereType,
+template <class StructType, class FieldsType, class WhereType,
           class GroupByType, class OrderByType, class LimitType>
   requires std::is_class_v<std::remove_cvref_t<StructType>> &&
            std::is_aggregate_v<std::remove_cvref_t<StructType>>
-dynamic::SelectFrom to_select_from(const FieldsTupleType& _fields,
-                                   const WhereType& _where = WhereType{},
-                                   const LimitType& _limit = LimitType{}) {
-  /*using namespace std::ranges::views;
-
-  using NamedTupleType = rfl::named_tuple_t<std::remove_cvref_t<T>>;
-  using Fields = typename NamedTupleType::Fields;
-
-  const auto columns = make_columns<Fields>(
-      std::make_integer_sequence<int, rfl::tuple_size_v<Fields>>());
-
-  const auto fields = sqlgen::internal::collect::vector(
-      columns | transform([](const auto& _col) -> dynamic::SelectFrom::Field {
-        return dynamic::SelectFrom::Field{.val = _col};
-      }));
+dynamic::SelectFrom to_select_from(const FieldsType& _fields,
+                                   const WhereType& _where,
+                                   const LimitType& _limit) {
+  const auto fields = make_fields<StructType, FieldsType>(
+      std::make_integer_sequence<int, rfl::tuple_size_v<FieldsType>>());
 
   return dynamic::SelectFrom{
-      .table =
-          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
+      .table = dynamic::Table{.name = get_tablename<StructType>(),
+                              .schema = get_schema<StructType>()},
       .fields = fields,
-      .where = to_condition<std::remove_cvref_t<T>>(_where),
+      .where = to_condition<std::remove_cvref_t<StructType>>(_where),
+      .group_by = to_group_by<GroupByType>(),
       .order_by = to_order_by<OrderByType>(),
-      .limit = to_limit(_limit)};*/
+      .limit = to_limit(_limit)};
 }
 
 }  // namespace sqlgen::transpilation

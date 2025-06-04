@@ -7,7 +7,7 @@
 
 namespace sqlgen::transpilation {
 
-template <class _ValueType, class rfl::internal::StringLiteral _new_name>
+template <class _ValueType, rfl::internal::StringLiteral _new_name>
 struct As {
   using ValueType = _ValueType;
   using NewNameType = Literal<_new_name>;

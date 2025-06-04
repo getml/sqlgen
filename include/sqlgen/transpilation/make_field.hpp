@@ -5,9 +5,11 @@
 #include <type_traits>
 
 #include "../Literal.hpp"
+#include "../Result.hpp"
 #include "../dynamic/SelectFrom.hpp"
 #include "As.hpp"
 #include "Col.hpp"
+#include "Value.hpp"
 #include "aggregations.hpp"
 #include "all_columns_exist.hpp"
 #include "to_value.hpp"
@@ -18,8 +20,11 @@ template <class StructType, class Agg>
 struct MakeField;
 
 template <class StructType, class ValueType>
-struct MakeField<StructType, ValueType> {
+struct MakeField {
   static constexpr bool is_aggregation = false;
+
+  using Name = Nothing;
+  using Type = ValueType;
 
   dynamic::SelectFrom::Field operator()(const auto& _val) const {
     return dynamic::SelectFrom::Field{.val = to_value(_val)};
@@ -33,6 +38,9 @@ struct MakeField<StructType, Col<_name>> {
 
   static constexpr bool is_aggregation = false;
 
+  using Name = Literal<_name>;
+  using Type = rfl::field_type_t<_name, StructType>;
+
   dynamic::SelectFrom::Field operator()(const auto&) const {
     return dynamic::SelectFrom::Field{.val =
                                           dynamic::Column{.name = _name.str()}};
@@ -40,10 +48,14 @@ struct MakeField<StructType, Col<_name>> {
 };
 
 template <class StructType, class ValueType,
-          class rfl::internal::StringLiteral _new_name>
+          rfl::internal::StringLiteral _new_name>
 struct MakeField<StructType, As<ValueType, _new_name>> {
   static constexpr bool is_aggregation =
       MakeField<StructType, ValueType>::is_aggregation;
+
+  using Name = Literal<_new_name>;
+  using Type =
+      typename MakeField<StructType, std::remove_cvref_t<ValueType>>::Type;
 
   dynamic::SelectFrom::Field operator()(const auto& _as) const {
     return dynamic::SelectFrom::Field{
@@ -60,21 +72,13 @@ struct MakeField<StructType, aggregations::Avg<Col<_name>>> {
 
   static constexpr bool is_aggregation = true;
 
+  using Name = Literal<_name>;
+  using Type = rfl::field_type_t<_name, StructType>;
+
   dynamic::SelectFrom::Field operator()(const auto&) const {
     return dynamic::SelectFrom::Field{
         .val = dynamic::Aggregation{dynamic::Aggregation::Avg{
             .val = dynamic::Column{.name = _name.str()}}}};
-  }
-};
-
-template <class StructType, class ValueType>
-struct MakeField<StructType, aggregations::Avg<ValueType>> {
-  static constexpr bool is_aggregation = true;
-
-  dynamic::SelectFrom::Field operator()(const auto& _agg) const {
-    return dynamic::SelectFrom::Field{
-        .val = dynamic::Aggregation{
-            dynamic::Aggregation::Avg{.val = to_value(_agg.val)}}};
   }
 };
 

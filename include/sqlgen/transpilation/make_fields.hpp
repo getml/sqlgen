@@ -12,9 +12,9 @@ namespace sqlgen::transpilation {
 
 template <class StructType, class Fields, int... _is>
 std::vector<dynamic::SelectFrom::Field> make_fields(
-    std::integer_sequence<int, _is...>) {
+    const Fields& _fields, std::integer_sequence<int, _is...>) {
   return std::vector<dynamic::SelectFrom::Field>(
-      {make_field<StructType, rfl::tuple_element_t<_is, Fields>>()...});
+      {make_field<StructType>(rfl::get<_is>(_fields))...});
 }
 
 }  // namespace sqlgen::transpilation
