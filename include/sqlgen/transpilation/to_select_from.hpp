@@ -15,7 +15,6 @@
 #include "../internal/collect/vector.hpp"
 #include "get_schema.hpp"
 #include "get_tablename.hpp"
-#include "make_columns.hpp"
 #include "make_fields.hpp"
 #include "to_condition.hpp"
 #include "to_group_by.hpp"
@@ -32,6 +31,7 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                                    const WhereType& _where,
                                    const LimitType& _limit) {
   const auto fields = make_fields<StructType, FieldsType>(
+      _fields,
       std::make_integer_sequence<int, rfl::tuple_size_v<FieldsType>>());
 
   return dynamic::SelectFrom{

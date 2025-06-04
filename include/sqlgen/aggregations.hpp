@@ -1,16 +1,18 @@
 #ifndef SQLGEN_AGGREGATIONS_HPP_
 #define SQLGEN_AGGREGATIONS_HPP_
 
+#include <rfl.hpp>
 #include <type_traits>
 
-#include "sqlgen/transpilation/aggregations.hpp"
+#include "col.hpp"
+#include "transpilation/aggregations.hpp"
 
 namespace sqlgen {
 
-template <class ValueType>
-auto avg(const ValueType& _val) {
-  return transpilation::aggregations::Avg<std::remove_cvref_t<ValueType>>{
-      .val = _val};
+template <rfl::internal::StringLiteral _name>
+auto avg(const Col<_name>& _col) {
+  return transpilation::aggregations::Avg<transpilation::Col<_name>>{
+      .val = transpilation::Col<_name>{}};
 }
 
 template <class ValueType>

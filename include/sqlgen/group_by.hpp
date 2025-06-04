@@ -29,9 +29,10 @@ auto operator|(const SelectFrom<StructType, FieldsTupleType, WhereType,
                 "You cannot call limit(...) before group_by(...).");
   static_assert(sizeof...(ColTypes) != 0,
                 "You must assign at least one column to order by.");
-  return SelectFrom<StructType, FieldsTupleType, WhereType,
-                    transpilation::group_by_t<StructType, ColTypes...>,
-                    OrderByType, LimitType>{.where_ = _s.where_};
+  return SelectFrom<
+      StructType, FieldsTupleType, WhereType,
+      transpilation::group_by_t<StructType, typename ColTypes::ColType...>,
+      OrderByType, LimitType>{.where_ = _s.where_};
 }
 
 template <class... ColTypes>

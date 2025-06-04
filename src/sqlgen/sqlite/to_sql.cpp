@@ -369,6 +369,14 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
     stream << " WHERE " << condition_to_sql(*_stmt.where);
   }
 
+  if (_stmt.group_by) {
+    stream << " GROUP BY "
+           << internal::strings::join(
+                  ", ",
+                  internal::collect::vector(_stmt.group_by->columns |
+                                            transform(column_or_value_to_sql)));
+  }
+
   if (_stmt.order_by) {
     stream << " ORDER BY "
            << internal::strings::join(
