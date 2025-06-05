@@ -15,6 +15,7 @@
 #include "sqlgen/Timestamp.hpp"
 #include "sqlgen/Varchar.hpp"
 #include "sqlgen/aggregations.hpp"
+#include "sqlgen/as.hpp"
 #include "sqlgen/begin_transaction.hpp"
 #include "sqlgen/col.hpp"
 #include "sqlgen/commit.hpp"

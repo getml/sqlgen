@@ -74,10 +74,6 @@ struct SelectFrom {
 
   WhereType where_;
 
-  GroupByType group_by_;
-
-  OrderByType order_by_;
-
   LimitType limit_;
 };
 

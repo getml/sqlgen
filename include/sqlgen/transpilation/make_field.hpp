@@ -59,8 +59,8 @@ struct MakeField<StructType, As<ValueType, _new_name>> {
 
   dynamic::SelectFrom::Field operator()(const auto& _as) const {
     return dynamic::SelectFrom::Field{
-        .val =
-            MakeField<StructType, std::remove_cvref_t<ValueType>>(_as.val).val,
+        .val = MakeField<StructType, std::remove_cvref_t<ValueType>>{}(_as.val)
+                   .val,
         .as = _new_name.str()};
   }
 };

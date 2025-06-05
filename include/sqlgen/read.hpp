@@ -86,8 +86,6 @@ struct Read {
 
   WhereType where_;
 
-  OrderByType order_by_;
-
   LimitType limit_;
 };
 

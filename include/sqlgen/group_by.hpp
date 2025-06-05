@@ -32,7 +32,7 @@ auto operator|(const SelectFrom<StructType, FieldsTupleType, WhereType,
   return SelectFrom<
       StructType, FieldsTupleType, WhereType,
       transpilation::group_by_t<StructType, typename ColTypes::ColType...>,
-      OrderByType, LimitType>{.where_ = _s.where_};
+      OrderByType, LimitType>{.fields_ = _s.fields_, .where_ = _s.where_};
 }
 
 template <class... ColTypes>

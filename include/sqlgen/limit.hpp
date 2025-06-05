@@ -19,8 +19,8 @@ auto operator|(const Read<ContainerType, WhereType, OrderByType, LimitType>& _r,
   static_assert(std::is_same_v<LimitType, Nothing>,
                 "You cannot call limit twice (but you can order by more "
                 "than one column).");
-  return Read<ContainerType, WhereType, OrderByType, Limit>{
-      .where_ = _r.where_, .order_by_ = _r.order_by_, .limit_ = _limit};
+  return Read<ContainerType, WhereType, OrderByType, Limit>{.where_ = _r.where_,
+                                                            .limit_ = _limit};
 }
 
 inline auto limit(const size_t _val) { return Limit{_val}; };
