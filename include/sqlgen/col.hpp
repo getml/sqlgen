@@ -4,6 +4,7 @@
 #include <rfl.hpp>
 #include <string>
 
+#include "transpilation/As.hpp"
 #include "transpilation/Col.hpp"
 #include "transpilation/Condition.hpp"
 #include "transpilation/Desc.hpp"
@@ -17,6 +18,12 @@ template <rfl::internal::StringLiteral _name>
 struct Col {
   using ColType = transpilation::Col<_name>;
   using Name = rfl::Literal<_name>;
+
+  template <rfl::internal::StringLiteral _new_name>
+  auto as() const noexcept {
+    return transpilation::As<transpilation::Col<_name>, _new_name>{
+        .val = transpilation::Col<_name>{}};
+  }
 
   /// Signals to order_by that this column is to be sorted in descending order.
   auto desc() const noexcept {

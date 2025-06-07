@@ -3,11 +3,19 @@
 
 #include <string>
 
+#include "As.hpp"
+
 namespace sqlgen::transpilation::aggregations {
 
 template <class _ValueType>
 struct Avg {
   using ValueType = _ValueType;
+
+  template <rfl::internal::StringLiteral _new_name>
+  auto as() const noexcept {
+    using T = std::remove_cvref_t<decltype(*this)>;
+    return transpilation::As<T, _new_name>{.val = *this};
+  }
 
   ValueType val;
 };
