@@ -68,7 +68,7 @@ struct MakeField<StructType, As<ValueType, _new_name>> {
 template <class StructType, rfl::internal::StringLiteral _name>
 struct MakeField<StructType, aggregations::Avg<Col<_name>>> {
   static_assert(all_columns_exist<StructType, Col<_name>>(),
-                "A column required in Avg aggregation does not exist.");
+                "A column required in the AVG aggregation does not exist.");
 
   static constexpr bool is_aggregation = true;
 
@@ -78,6 +78,92 @@ struct MakeField<StructType, aggregations::Avg<Col<_name>>> {
   dynamic::SelectFrom::Field operator()(const auto&) const {
     return dynamic::SelectFrom::Field{
         .val = dynamic::Aggregation{dynamic::Aggregation::Avg{
+            .val = dynamic::Column{.name = _name.str()}}}};
+  }
+};
+
+template <class StructType, rfl::internal::StringLiteral _name>
+struct MakeField<StructType, aggregations::Count<Col<_name>>> {
+  static_assert(all_columns_exist<StructType, Col<_name>>(),
+                "A column required in the COUNT or COUNT_DISTINCT aggregation "
+                "does not exist.");
+
+  static constexpr bool is_aggregation = true;
+
+  using Name = Literal<_name>;
+  using Type = size_t;
+
+  dynamic::SelectFrom::Field operator()(const auto& _agg) const {
+    return dynamic::SelectFrom::Field{
+        .val = dynamic::Aggregation{dynamic::Aggregation::Count{
+            .val = dynamic::Column{.name = _name.str()},
+            .distinct = _agg.distinct}},
+    };
+  }
+};
+
+template <class StructType>
+struct MakeField<StructType, aggregations::Count<aggregations::All>> {
+  static constexpr bool is_aggregation = true;
+
+  using Name = Nothing;
+  using Type = size_t;
+
+  dynamic::SelectFrom::Field operator()(const auto&) const {
+    return dynamic::SelectFrom::Field{
+        .val = dynamic::Aggregation{
+            dynamic::Aggregation::Count{.val = std::nullopt, .distinct = false},
+        }};
+  }
+};
+
+template <class StructType, rfl::internal::StringLiteral _name>
+struct MakeField<StructType, aggregations::Max<Col<_name>>> {
+  static_assert(all_columns_exist<StructType, Col<_name>>(),
+                "A column required in the MAX aggregation does not exist.");
+
+  static constexpr bool is_aggregation = true;
+
+  using Name = Literal<_name>;
+  using Type = rfl::field_type_t<_name, StructType>;
+
+  dynamic::SelectFrom::Field operator()(const auto&) const {
+    return dynamic::SelectFrom::Field{
+        .val = dynamic::Aggregation{dynamic::Aggregation::Max{
+            .val = dynamic::Column{.name = _name.str()}}}};
+  }
+};
+
+template <class StructType, rfl::internal::StringLiteral _name>
+struct MakeField<StructType, aggregations::Min<Col<_name>>> {
+  static_assert(all_columns_exist<StructType, Col<_name>>(),
+                "A column required in MIN aggregation does not exist.");
+
+  static constexpr bool is_aggregation = true;
+
+  using Name = Literal<_name>;
+  using Type = rfl::field_type_t<_name, StructType>;
+
+  dynamic::SelectFrom::Field operator()(const auto&) const {
+    return dynamic::SelectFrom::Field{
+        .val = dynamic::Aggregation{dynamic::Aggregation::Min{
+            .val = dynamic::Column{.name = _name.str()}}}};
+  }
+};
+
+template <class StructType, rfl::internal::StringLiteral _name>
+struct MakeField<StructType, aggregations::Sum<Col<_name>>> {
+  static_assert(all_columns_exist<StructType, Col<_name>>(),
+                "A column required in SUM aggregation does not exist.");
+
+  static constexpr bool is_aggregation = true;
+
+  using Name = Literal<_name>;
+  using Type = rfl::field_type_t<_name, StructType>;
+
+  dynamic::SelectFrom::Field operator()(const auto&) const {
+    return dynamic::SelectFrom::Field{
+        .val = dynamic::Aggregation{dynamic::Aggregation::Sum{
             .val = dynamic::Column{.name = _name.str()}}}};
   }
 };

@@ -10,39 +10,43 @@
 namespace sqlgen {
 
 template <rfl::internal::StringLiteral _name>
-auto avg(const Col<_name>& _col) {
+auto avg(const Col<_name>&) {
   return transpilation::aggregations::Avg<transpilation::Col<_name>>{
       .val = transpilation::Col<_name>{}};
 }
 
-template <class ValueType>
-auto count(const ValueType& _val) {
-  return transpilation::aggregations::Count<std::remove_cvref_t<ValueType>>{
-      .val = _val};
+inline auto count() {
+  return transpilation::aggregations::Count<transpilation::aggregations::All>{};
 }
 
-template <class ValueType>
-auto count_distinct(const ValueType& _val) {
-  return transpilation::aggregations::Count<std::remove_cvref_t<ValueType>>{
-      .val = _val, .distinct = true};
+template <rfl::internal::StringLiteral _name>
+auto count(const Col<_name>&) {
+  return transpilation::aggregations::Count<transpilation::Col<_name>>{
+      .val = transpilation::Col<_name>{}};
 }
 
-template <class ValueType>
-auto max(const ValueType& _val) {
-  return transpilation::aggregations::Max<std::remove_cvref_t<ValueType>>{
-      .val = _val};
+template <rfl::internal::StringLiteral _name>
+auto count_distinct(const Col<_name>&) {
+  return transpilation::aggregations::Count<transpilation::Col<_name>>{
+      .val = transpilation::Col<_name>{}, .distinct = true};
 }
 
-template <class ValueType>
-auto min(const ValueType& _val) {
-  return transpilation::aggregations::Min<std::remove_cvref_t<ValueType>>{
-      .val = _val};
+template <rfl::internal::StringLiteral _name>
+auto max(const Col<_name>&) {
+  return transpilation::aggregations::Max<transpilation::Col<_name>>{
+      .val = transpilation::Col<_name>{}};
 }
 
-template <class ValueType>
-auto sum(const ValueType& _val) {
-  return transpilation::aggregations::Sum<std::remove_cvref_t<ValueType>>{
-      .val = _val};
+template <rfl::internal::StringLiteral _name>
+auto min(const Col<_name>&) {
+  return transpilation::aggregations::Min<transpilation::Col<_name>>{
+      .val = transpilation::Col<_name>{}};
+}
+
+template <rfl::internal::StringLiteral _name>
+auto sum(const Col<_name>&) {
+  return transpilation::aggregations::Sum<transpilation::Col<_name>>{
+      .val = transpilation::Col<_name>{}};
 }
 
 }  // namespace sqlgen
