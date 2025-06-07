@@ -1,4 +1,3 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
 
 #include <gtest/gtest.h>
 
@@ -6,7 +5,7 @@
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
-#include <sqlgen/postgres.hpp>
+#include <sqlgen/sqlite.hpp>
 #include <vector>
 
 namespace test_range_select_from_with_to {
@@ -18,10 +17,7 @@ struct Person {
   int age;
 };
 
-TEST(postgres, test_range_select_from) {
-  static_assert(std::ranges::input_range<sqlgen::Range<Person>>,
-                "Must be an input range.");
-
+TEST(sqlite, test_range_select_from_with_to) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
@@ -30,11 +26,6 @@ TEST(postgres, test_range_select_from) {
        Person{
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
-
   using namespace sqlgen;
 
   struct FirstName {
@@ -42,14 +33,12 @@ TEST(postgres, test_range_select_from) {
   };
 
   const auto people2 =
-      postgres::connect(credentials)
+      sqlite::connect()
           .and_then(drop<Person> | if_exists)
           .and_then(write(std::ref(people1)))
           .and_then(select_from<Person>("first_name"_c) | order_by("id"_c) |
                     to<std::vector<FirstName>>)
           .value();
-
-  using namespace std::ranges::views;
 
   EXPECT_EQ(people2.at(0).first_name, "Homer");
   EXPECT_EQ(people2.at(1).first_name, "Bart");
@@ -59,4 +48,3 @@ TEST(postgres, test_range_select_from) {
 
 }  // namespace test_range_select_from_with_to
 
-#endif
