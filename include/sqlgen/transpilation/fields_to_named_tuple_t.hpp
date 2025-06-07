@@ -3,6 +3,7 @@
 
 #include <rfl.hpp>
 
+#include "../Literal.hpp"
 #include "make_field.hpp"
 
 namespace sqlgen::transpilation {
@@ -18,14 +19,28 @@ struct GetFieldName {
 };
 
 template <rfl::internal::StringLiteral _name>
-struct GetFieldName {
+struct GetFieldName<Literal<_name>> {
   static constexpr rfl::internal::StringLiteral name = _name;
 };
 
 template <class StructType, class... FieldTypes>
-using fields_to_named_tuple_t = rfl::NamedTuple<rfl::Field<
-    GetFieldName<typename MakeField<StructType::FieldTypes>::Name>::name,
-    typename MakeField<FieldTypes>::Type>...>;
+struct FieldsToNamedTupleType;
+
+template <class StructType, class... FieldTypes>
+struct FieldsToNamedTupleType {
+  using Type = rfl::NamedTuple<rfl::Field<
+      GetFieldName<typename MakeField<StructType, FieldTypes>::Name>::name,
+      typename MakeField<StructType, FieldTypes>::Type>...>;
+};
+
+template <class StructType, class... FieldTypes>
+struct FieldsToNamedTupleType<StructType, rfl::Tuple<FieldTypes...>> {
+  using Type = typename FieldsToNamedTupleType<StructType, FieldTypes...>::Type;
+};
+
+template <class StructType, class... FieldTypes>
+using fields_to_named_tuple_t =
+    typename FieldsToNamedTupleType<StructType, FieldTypes...>::Type;
 
 }  // namespace sqlgen::transpilation
 

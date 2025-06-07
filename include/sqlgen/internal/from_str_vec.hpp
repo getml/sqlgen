@@ -13,6 +13,7 @@
 
 #include "../Result.hpp"
 #include "../parsing/Parser.hpp"
+#include "call_destructors_where_necessary.hpp"
 
 namespace sqlgen::internal {
 
@@ -34,7 +35,7 @@ void assign_if_field_is_field_i(
       *_err = Error(stream.str());
       return;
     }
-    *rfl::get<i>(*_view) = std::move(*res);
+    ::new (rfl::get<i>(*_view)) T(std::move(*res));
   }
 }
 
@@ -71,13 +72,17 @@ std::pair<std::optional<Error>, size_t> read_into_view(
 template <class T>
 Result<T> from_str_vec(
     const std::vector<std::optional<std::string>>& _str_vec) {
-  T t;
-  auto view = rfl::to_view(t);
+  alignas(T) unsigned char buf[sizeof(T)]{};
+  auto ptr = rfl::internal::ptr_cast<T*>(&buf);
+  auto view = rfl::to_view(*ptr);
   const auto [err, num_fields_assigned] = read_into_view(_str_vec, &view);
-  if (err) {
+  if (err) [[unlikely]] {
+    call_destructors_where_necessary(num_fields_assigned, &view);
     return error(err->what());
   }
-  return t;
+  auto res = Result<T>(std::move(*ptr));
+  call_destructors_where_necessary(num_fields_assigned, &view);
+  return res;
 }
 
 }  // namespace sqlgen::internal
