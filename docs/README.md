@@ -23,6 +23,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::delete_from](delete_from.md) - How to delete data from a table
 - [sqlgen::drop](drop.md) - How to drop a table
 - [sqlgen::exec](exec.md) - How to execute raw SQL statements
+- [sqlgen::group_by and Aggregations](group_by_and_aggregations.md) - How generate GROUP BY queries and aggregate data
 - [sqlgen::insert](insert.md) - How to insert data within transactions
 - [sqlgen::update](update.md) - How to update data in a table
 
