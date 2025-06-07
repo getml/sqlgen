@@ -9,7 +9,7 @@
 #include <sqlgen/postgres.hpp>
 #include <vector>
 
-namespace test_group_by {
+namespace test_aggregations {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
@@ -18,10 +18,7 @@ struct Person {
   double age;
 };
 
-TEST(postgres, test_group_by) {
-  static_assert(std::ranges::input_range<sqlgen::Range<Person>>,
-                "Must be an input range.");
-
+TEST(postgres, test_aggregations) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
@@ -38,7 +35,6 @@ TEST(postgres, test_group_by) {
   using namespace sqlgen;
 
   struct Children {
-    std::string last_name;
     int num_children;
     int num_last_names;
     double avg_age;
@@ -49,11 +45,11 @@ TEST(postgres, test_group_by) {
 
   const auto get_children =
       select_from<Person>(
-          "last_name"_c, avg("age"_c).as<"avg_age">(),
-          count().as<"num_children">(), max("age"_c).as<"max_age">(),
-          min("age"_c).as<"min_age">(), sum("age"_c).as<"sum_age">(),
+          avg("age"_c).as<"avg_age">(), count().as<"num_children">(),
+          max("age"_c).as<"max_age">(), min("age"_c).as<"min_age">(),
+          sum("age"_c).as<"sum_age">(),
           count_distinct("last_name"_c).as<"num_last_names">()) |
-      where("age"_c < 18) | group_by("last_name"_c) | to<std::vector<Children>>;
+      where("age"_c < 18) | to<Children>;
 
   const auto children = postgres::connect(credentials)
                             .and_then(drop<Person> | if_exists)
@@ -61,16 +57,16 @@ TEST(postgres, test_group_by) {
                             .and_then(get_children)
                             .value();
 
-  EXPECT_EQ(children.size(), 1);
-  EXPECT_EQ(children.at(0).last_name, "Simpson");
-  EXPECT_EQ(children.at(0).num_children, 3);
-  EXPECT_EQ(children.at(0).num_last_names, 1);
-  EXPECT_EQ(children.at(0).avg_age, 6.0);
-  EXPECT_EQ(children.at(0).max_age, 10.0);
-  EXPECT_EQ(children.at(0).min_age, 0.0);
-  EXPECT_EQ(children.at(0).sum_age, 18.0);
+  using namespace std::ranges::views;
+
+  EXPECT_EQ(children.num_children, 3);
+  EXPECT_EQ(children.num_last_names, 1);
+  EXPECT_EQ(children.avg_age, 6.0);
+  EXPECT_EQ(children.max_age, 10.0);
+  EXPECT_EQ(children.min_age, 0.0);
+  EXPECT_EQ(children.sum_age, 18.0);
 }
 
-}  // namespace test_group_by
+}  // namespace test_aggregations
 
 #endif

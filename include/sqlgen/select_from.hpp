@@ -76,13 +76,33 @@ template <class StructType, class FieldsType, class WhereType = Nothing,
           class LimitType = Nothing, class ToType = Nothing>
 struct SelectFrom {
   auto operator()(const auto& _conn) const {
-    using ContainerType = std::conditional_t<
-        std::is_same_v<ToType, Nothing>,
-        Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>,
-        ToType>;
-    return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
-                            OrderByType, LimitType, ContainerType>(
-        _conn, fields_, where_, limit_);
+    if constexpr (std::is_same_v<ToType, Nothing> ||
+                  std::ranges::input_range<std::remove_cvref_t<ToType>>) {
+      using ContainerType = std::conditional_t<
+          std::is_same_v<ToType, Nothing>,
+          Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>,
+          ToType>;
+      return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
+                              OrderByType, LimitType, ContainerType>(
+          _conn, fields_, where_, limit_);
+
+    } else {
+      const auto extract_result = [](auto&& _vec) -> Result<ToType> {
+        if (_vec.size() != 1) {
+          return error(
+              "Because the type provided to to<...> was not a container, the "
+              "query needs to return exactly one result, but it did return " +
+              std::to_string(_vec.size()) + " results.");
+        }
+        return std::move(_vec[0]);
+      };
+
+      return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
+                              OrderByType, LimitType,
+                              std::vector<std::remove_cvref_t<ToType>>>(
+                 _conn, fields_, where_, limit_)
+          .and_then(extract_result);
+    }
   }
 
   FieldsType fields_;

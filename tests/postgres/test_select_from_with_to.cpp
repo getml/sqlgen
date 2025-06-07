@@ -49,8 +49,6 @@ TEST(postgres, test_range_select_from) {
                     to<std::vector<FirstName>>)
           .value();
 
-  using namespace std::ranges::views;
-
   EXPECT_EQ(people2.at(0).first_name, "Homer");
   EXPECT_EQ(people2.at(1).first_name, "Bart");
   EXPECT_EQ(people2.at(2).first_name, "Lisa");
