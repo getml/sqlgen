@@ -14,11 +14,12 @@ template <class... ColTypes>
 struct GroupBy {};
 
 template <class StructType, class FieldsTupleType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType,
+          class GroupByType, class OrderByType, class LimitType, class ToType,
           class... ColTypes>
-auto operator|(const SelectFrom<StructType, FieldsTupleType, WhereType,
-                                GroupByType, OrderByType, LimitType>& _s,
-               const GroupBy<ColTypes...>&) {
+auto operator|(
+    const SelectFrom<StructType, FieldsTupleType, WhereType, GroupByType,
+                     OrderByType, LimitType, ToType>& _s,
+    const GroupBy<ColTypes...>&) {
   static_assert(
       std::is_same_v<GroupByType, Nothing>,
       "You cannot call group_by(...) twice (but you can group by more "
@@ -27,12 +28,15 @@ auto operator|(const SelectFrom<StructType, FieldsTupleType, WhereType,
                 "You cannot call order_by(...) before group_by(...).");
   static_assert(std::is_same_v<LimitType, Nothing>,
                 "You cannot call limit(...) before group_by(...).");
+  static_assert(std::is_same_v<ToType, Nothing>,
+                "You cannot call to<...> before group_by(...).");
   static_assert(sizeof...(ColTypes) != 0,
-                "You must assign at least one column to order by.");
+                "You must assign at least one column to group_by.");
   return SelectFrom<
       StructType, FieldsTupleType, WhereType,
       transpilation::group_by_t<StructType, typename ColTypes::ColType...>,
-      OrderByType, LimitType>{.fields_ = _s.fields_, .where_ = _s.where_};
+      OrderByType, LimitType, ToType>{.fields_ = _s.fields_,
+                                      .where_ = _s.where_};
 }
 
 template <class... ColTypes>

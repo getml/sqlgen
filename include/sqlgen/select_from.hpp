@@ -9,6 +9,7 @@
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "col.hpp"
+#include "internal/GetColType.hpp"
 #include "internal/is_range.hpp"
 #include "is_connection.hpp"
 #include "transpilation/to_select_from.hpp"
@@ -45,7 +46,7 @@ Result<ContainerType> select_from_impl(const Result<Ref<Connection>>& _res,
 */
 template <class StructType, class FieldsTupleType, class WhereType = Nothing,
           class GroupByType = Nothing, class OrderByType = Nothing,
-          class LimitType = Nothing>
+          class LimitType = Nothing, class ToType = Nothing>
 struct SelectFrom {
   auto operator()(const auto& _conn) const {
     /*if constexpr (std::ranges::input_range<std::remove_cvref_t<Type>>) {
@@ -77,27 +78,13 @@ struct SelectFrom {
   LimitType limit_;
 };
 
-template <class T>
-struct GetColType;
-
-template <class T>
-struct GetColType {
-  using Type = T;
-  static Type get_value(const T& _t) { return _t; }
-};
-
-template <rfl::internal::StringLiteral _name>
-struct GetColType<Col<_name>> {
-  using Type = transpilation::Col<_name>;
-  static Type get_value(const auto&) { return transpilation::Col<_name>{}; }
-};
-
 template <class StructType, class... FieldsType>
 inline auto select_from(const FieldsType&... _fields) {
-  using FieldsTupleType = rfl::Tuple<typename GetColType<FieldsType>::Type...>;
+  using FieldsTupleType =
+      rfl::Tuple<typename internal::GetColType<FieldsType>::Type...>;
   return SelectFrom<StructType, FieldsTupleType>{
-      .fields_ =
-          FieldsTupleType(GetColType<FieldsType>::get_value(_fields)...)};
+      .fields_ = FieldsTupleType(
+          internal::GetColType<FieldsType>::get_value(_fields)...)};
 }
 
 }  // namespace sqlgen

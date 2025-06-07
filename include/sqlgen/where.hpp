@@ -7,6 +7,7 @@
 #include "create_index.hpp"
 #include "delete_from.hpp"
 #include "read.hpp"
+#include "select_from.hpp"
 #include "transpilation/Limit.hpp"
 #include "transpilation/value_t.hpp"
 #include "update.hpp"
@@ -53,6 +54,27 @@ auto operator|(const Read<ContainerType, WhereType, OrderByType, LimitType>& _r,
                 "You cannot call limit(...) before where(...).");
   return Read<ContainerType, ConditionType, OrderByType, LimitType>{
       .where_ = _where.condition};
+}
+
+template <class StructType, class FieldsTupleType, class WhereType,
+          class GroupByType, class OrderByType, class LimitType, class ToType,
+          class ConditionType>
+auto operator|(
+    const SelectFrom<StructType, FieldsTupleType, WhereType, GroupByType,
+                     OrderByType, LimitType, ToType>& _s,
+    const Where<ConditionType>& _where) {
+  static_assert(std::is_same_v<WhereType, Nothing>,
+                "You cannot call where(...) twice (but you can apply more "
+                "than one condition by combining them with && or ||).");
+  static_assert(std::is_same_v<OrderByType, Nothing>,
+                "You cannot call order_by(...) before where(...).");
+  static_assert(std::is_same_v<LimitType, Nothing>,
+                "You cannot call limit(...) before where(...).");
+  static_assert(std::is_same_v<ToType, Nothing>,
+                "You cannot call to<...> before where(...).");
+  return SelectFrom<StructType, FieldsTupleType, ConditionType, GroupByType,
+                    OrderByType, LimitType, ToType>{.fields_ = _s.fields_,
+                                                    .where_ = _where.condition};
 }
 
 template <class ValueType, class SetsType, class WhereType, class ConditionType>
