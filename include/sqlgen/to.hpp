@@ -18,7 +18,7 @@ auto operator|(
     const SelectFrom<StructType, FieldsTupleType, WhereType, GroupByType,
                      OrderByType, LimitType, ToType>& _s,
     const To<NewToType>&) {
-  static_assert(std::is_same_v<GroupByType, Nothing>,
+  static_assert(std::is_same_v<ToType, Nothing>,
                 "You cannot call to<...> twice.");
   return SelectFrom<StructType, FieldsTupleType, WhereType, GroupByType,
                     OrderByType, LimitType, NewToType>{
