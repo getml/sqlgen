@@ -35,6 +35,7 @@
 #include "sqlgen/read.hpp"
 #include "sqlgen/rollback.hpp"
 #include "sqlgen/select_from.hpp"
+#include "sqlgen/to.hpp"
 #include "sqlgen/update.hpp"
 #include "sqlgen/where.hpp"
 #include "sqlgen/write.hpp"

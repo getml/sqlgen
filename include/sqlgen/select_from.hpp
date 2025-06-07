@@ -24,7 +24,6 @@ template <class StructType, class FieldsType, class WhereType,
   requires is_connection<Connection>
 auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
                       const WhereType& _where, const LimitType& _limit) {
-  using ValueType = transpilation::value_t<ContainerType>;
   if constexpr (internal::is_range_v<ContainerType>) {
     const auto query =
         transpilation::to_select_from<StructType, FieldsType, WhereType,
@@ -32,15 +31,29 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
             _fields, _where, _limit);
     return _conn->read(query).transform(
         [](auto&& _it) { return ContainerType(_it); });
+
   } else {
-    /*using ValueType = transpilation::value_t<ContainerType>;
-    const auto query =
-        transpilation::to_select_from<StructType, FieldsType, WhereType,
-                                      GroupByType, OrderByType, LimitType>(
-            _fields, _where, _limit);
-    return _conn->read(query).transform(
-        [](auto&& _it) { return ContainerType(_it); });*/
-    return error("TODO");
+    const auto to_container = [](auto range) -> Result<ContainerType> {
+      using ValueType = transpilation::value_t<ContainerType>;
+      ContainerType container;
+      for (auto& res : range) {
+        if (res) {
+          container.emplace_back(
+              rfl::from_named_tuple<ValueType>(std::move(*res)));
+        } else {
+          return error(res.error().what());
+        }
+      }
+      return container;
+    };
+
+    using RangeType =
+        Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>;
+
+    return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
+                            OrderByType, LimitType, RangeType>(_conn, _fields,
+                                                               _where, _limit)
+        .and_then(to_container);
   }
 }
 

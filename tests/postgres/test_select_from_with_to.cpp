@@ -9,7 +9,7 @@
 #include <sqlgen/postgres.hpp>
 #include <vector>
 
-namespace test_range_select_from {
+namespace test_range_select_from_with_to {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
@@ -40,24 +40,24 @@ TEST(postgres, test_range_select_from) {
   const auto conn =
       sqlgen::postgres::connect(credentials).and_then(drop<Person> | if_exists);
 
+  struct FirstName {
+    std::string first_name;
+  };
+
   const auto people2 =
       sqlgen::write(conn, people1)
-          .and_then(select_from<Person>("first_name"_c) | order_by("id"_c))
+          .and_then(select_from<Person>("first_name"_c) | order_by("id"_c) |
+                    to<std::vector<FirstName>>)
           .value();
 
   using namespace std::ranges::views;
 
-  const auto first_names =
-      internal::collect::vector(people2 | transform([](const auto& _r) {
-                                  return rfl::get<"first_name">(_r.value());
-                                }));
-
-  EXPECT_EQ(first_names.at(0), "Homer");
-  EXPECT_EQ(first_names.at(1), "Bart");
-  EXPECT_EQ(first_names.at(2), "Lisa");
-  EXPECT_EQ(first_names.at(3), "Maggie");
+  EXPECT_EQ(people2.at(0).first_name, "Homer");
+  EXPECT_EQ(people2.at(1).first_name, "Bart");
+  EXPECT_EQ(people2.at(2).first_name, "Lisa");
+  EXPECT_EQ(people2.at(3).first_name, "Maggie");
 }
 
-}  // namespace test_range_select_from
+}  // namespace test_range_select_from_with_to
 
 #endif
