@@ -177,6 +177,43 @@ ORDER BY "age" DESC, "last_name"
 LIMIT 10;
 ```
 
+### Grouping and Aggregating Data
+
+```cpp
+using namespace sqlgen;
+
+struct Children {
+    std::string last_name;
+    int num_children;
+    int max_age;
+    int min_age;
+    int sum_age;
+};
+
+const auto get_children = select_from<Person>(
+    "last_name"_c,
+    count().as<"num_children">(),
+    max("age"_c).as<"max_age">(),
+    min("age"_c).as<"min_age">(),
+    sum("age"_c).as<"sum_age">(),
+) | where("age"_c < 18) | group_by("last_name"_c) | to<std::vector<Children>>;
+
+const std::vector<Children> children = get_children(conn).value();
+```
+
+Generated SQL:
+```sql
+SELECT 
+    "last_name",
+    COUNT(*) as "num_children",
+    MAX("age") as "max_age",
+    MIN("age") as "min_age",
+    SUM("age") as "sum_age"
+FROM "Person"
+WHERE "age" < 18
+GROUP BY "last_name";
+```
+
 ### Type Safety and SQL Injection Protection
 
 sqlgen provides comprehensive compile-time checks and runtime protection:
