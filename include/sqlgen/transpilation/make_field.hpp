@@ -16,12 +16,13 @@
 
 namespace sqlgen::transpilation {
 
-template <class StructType, class Agg>
+template <class StructType, class FieldType>
 struct MakeField;
 
 template <class StructType, class ValueType>
 struct MakeField {
   static constexpr bool is_aggregation = false;
+  static constexpr bool is_column = false;
 
   using Name = Nothing;
   using Type = ValueType;
@@ -37,6 +38,7 @@ struct MakeField<StructType, Col<_name>> {
                 "A required column does not exist.");
 
   static constexpr bool is_aggregation = false;
+  static constexpr bool is_column = true;
 
   using Name = Literal<_name>;
   using Type = rfl::field_type_t<_name, StructType>;
@@ -52,6 +54,7 @@ template <class StructType, class ValueType,
 struct MakeField<StructType, As<ValueType, _new_name>> {
   static constexpr bool is_aggregation =
       MakeField<StructType, ValueType>::is_aggregation;
+  static constexpr bool is_column = MakeField<StructType, ValueType>::is_column;
 
   using Name = Literal<_new_name>;
   using Type =
@@ -71,6 +74,7 @@ struct MakeField<StructType, aggregations::Avg<Col<_name>>> {
                 "A column required in the AVG aggregation does not exist.");
 
   static constexpr bool is_aggregation = true;
+  static constexpr bool is_column = true;
 
   using Name = Literal<_name>;
   using Type = rfl::field_type_t<_name, StructType>;
@@ -89,6 +93,7 @@ struct MakeField<StructType, aggregations::Count<Col<_name>>> {
                 "does not exist.");
 
   static constexpr bool is_aggregation = true;
+  static constexpr bool is_column = true;
 
   using Name = Literal<_name>;
   using Type = size_t;
@@ -105,6 +110,7 @@ struct MakeField<StructType, aggregations::Count<Col<_name>>> {
 template <class StructType>
 struct MakeField<StructType, aggregations::Count<aggregations::All>> {
   static constexpr bool is_aggregation = true;
+  static constexpr bool is_column = true;
 
   using Name = Nothing;
   using Type = size_t;
@@ -123,6 +129,7 @@ struct MakeField<StructType, aggregations::Max<Col<_name>>> {
                 "A column required in the MAX aggregation does not exist.");
 
   static constexpr bool is_aggregation = true;
+  static constexpr bool is_column = true;
 
   using Name = Literal<_name>;
   using Type = rfl::field_type_t<_name, StructType>;
@@ -140,6 +147,7 @@ struct MakeField<StructType, aggregations::Min<Col<_name>>> {
                 "A column required in MIN aggregation does not exist.");
 
   static constexpr bool is_aggregation = true;
+  static constexpr bool is_column = true;
 
   using Name = Literal<_name>;
   using Type = rfl::field_type_t<_name, StructType>;
@@ -157,6 +165,7 @@ struct MakeField<StructType, aggregations::Sum<Col<_name>>> {
                 "A column required in SUM aggregation does not exist.");
 
   static constexpr bool is_aggregation = true;
+  static constexpr bool is_column = true;
 
   using Name = Literal<_name>;
   using Type = rfl::field_type_t<_name, StructType>;

@@ -13,6 +13,7 @@
 #include "../dynamic/SelectFrom.hpp"
 #include "../dynamic/Table.hpp"
 #include "../internal/collect/vector.hpp"
+#include "check_aggregations.hpp"
 #include "get_schema.hpp"
 #include "get_tablename.hpp"
 #include "make_fields.hpp"
@@ -30,6 +31,10 @@ template <class StructType, class FieldsType, class WhereType,
 dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                                    const WhereType& _where,
                                    const LimitType& _limit) {
+  static_assert(check_aggregations<StructType, FieldsType, GroupByType>(),
+                "The aggregations were not set up correctly. Please check the "
+                "trace for a more detailed error message.");
+
   const auto fields = make_fields<StructType, FieldsType>(
       _fields,
       std::make_integer_sequence<int, rfl::tuple_size_v<FieldsType>>());
