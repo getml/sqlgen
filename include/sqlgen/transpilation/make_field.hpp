@@ -12,7 +12,9 @@
 #include "Value.hpp"
 #include "aggregations.hpp"
 #include "all_columns_exist.hpp"
+#include "remove_nullable_t.hpp"
 #include "to_value.hpp"
+#include "underlying_t.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -72,6 +74,13 @@ template <class StructType, rfl::internal::StringLiteral _name>
 struct MakeField<StructType, aggregations::Avg<Col<_name>>> {
   static_assert(all_columns_exist<StructType, Col<_name>>(),
                 "A column required in the AVG aggregation does not exist.");
+
+  static_assert(
+      std::is_integral_v<
+          remove_nullable_t<underlying_t<StructType, Col<_name>>>> ||
+          std::is_floating_point_v<
+              remove_nullable_t<underlying_t<StructType, Col<_name>>>>,
+      "Values inside the AVG aggregation must be numerical.");
 
   static constexpr bool is_aggregation = true;
   static constexpr bool is_column = true;
@@ -163,6 +172,13 @@ template <class StructType, rfl::internal::StringLiteral _name>
 struct MakeField<StructType, aggregations::Sum<Col<_name>>> {
   static_assert(all_columns_exist<StructType, Col<_name>>(),
                 "A column required in SUM aggregation does not exist.");
+
+  static_assert(
+      std::is_integral_v<
+          remove_nullable_t<underlying_t<StructType, Col<_name>>>> ||
+          std::is_floating_point_v<
+              remove_nullable_t<underlying_t<StructType, Col<_name>>>>,
+      "Values inside the SUM aggregation must be numerical.");
 
   static constexpr bool is_aggregation = true;
   static constexpr bool is_column = true;
