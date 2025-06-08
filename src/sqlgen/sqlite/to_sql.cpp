@@ -277,18 +277,6 @@ std::string escape_single_quote(const std::string& _str) noexcept {
   return internal::strings::replace_all(_str, "'", "''");
 }
 
-std::string column_or_agg_to_str(
-    const dynamic::ColumnOrAggregation& _column_or_agg) noexcept {
-  return _column_or_agg.visit([](const auto& _c) -> std::string {
-    using Type = std::remove_cvref_t<decltype(_c)>;
-    if constexpr (std::is_same_v<Type, dynamic::Column>) {
-      return "\"" + _c.name + "\"";
-    } else {
-      return aggregation_to_sql(_c);
-    }
-  });
-}
-
 std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept {
   std::stringstream stream;
 
