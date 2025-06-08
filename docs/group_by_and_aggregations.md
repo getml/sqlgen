@@ -111,6 +111,58 @@ The following aggregation functions are available:
 
 Each aggregation function can be aliased using the `.as<"alias">()` syntax.
 
+## Aggregating Nullable Values
+
+When working with nullable columns (e.g., `std::optional<T>`), it's important to understand how aggregations handle null values:
+
+1. The result of aggregating a nullable column must also be nullable (e.g., `std::optional<double>`)
+2. Null values are excluded from aggregation calculations
+3. If all values in a group are null, the aggregation result will be null
+
+### Example with Nullable Values
+
+```cpp
+struct Person {
+    sqlgen::PrimaryKey<uint32_t> id;
+    std::string first_name;
+    std::string last_name;
+    std::optional<double> age;  // Nullable age field
+};
+
+struct Children {
+    int num_children;           // Non-nullable count
+    int num_last_names;        // Non-nullable count
+    std::optional<double> avg_age;  // Nullable aggregation
+    std::optional<double> max_age;  // Nullable aggregation
+    std::optional<double> min_age;  // Nullable aggregation
+    std::optional<double> sum_age;  // Nullable aggregation
+};
+
+const auto get_children = select_from<Person>(
+    avg("age"_c).as<"avg_age">(),      // Results in std::optional<double>
+    count().as<"num_children">(),      // Results in int (non-nullable)
+    max("age"_c).as<"max_age">(),      // Results in std::optional<double>
+    min("age"_c).as<"min_age">(),      // Results in std::optional<double>
+    sum("age"_c).as<"sum_age">(),      // Results in std::optional<double>
+    count_distinct("last_name"_c).as<"num_last_names">()
+) | where("age"_c < 18 or "age"_c.is_null()) | to<Children>;
+```
+
+In this example:
+- The `age` column is nullable (`std::optional<double>`)
+- All aggregations of `age` result in nullable values (`std::optional<double>`)
+- The `count()` and `count_distinct()` functions return non-nullable integers
+- The `where` clause includes both non-null values less than 18 and null values
+- If all values in a group are null, the aggregation results (avg, max, min, sum) will be null
+
+### Important Notes
+
+- Always use nullable types (`std::optional<T>`) for aggregated values when the source column is nullable
+- Count operations (`count()`, `count_distinct()`) always return non-nullable integers
+- Null values are excluded from aggregation calculations (avg, sum, max, min)
+- When all values in a group are null, the aggregation result will be null
+- The type system will enforce these rules at compile time
+
 ## The `.as` Operator
 
 The `.as` operator allows you to alias columns and expressions in your SQL queries. This is particularly important when mapping query results to C++ structs, as the field names in your struct must match the aliases used in the query.
