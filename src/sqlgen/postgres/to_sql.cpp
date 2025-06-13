@@ -1,11 +1,13 @@
 #include "sqlgen/postgres/to_sql.hpp"
 
+#include <format>
 #include <ranges>
 #include <rfl.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
 
+#include "sqlgen/dynamic/Operation.hpp"
 #include "sqlgen/internal/collect/vector.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
 
@@ -42,6 +44,8 @@ std::vector<std::string> get_primary_keys(
     const dynamic::CreateTable& _stmt) noexcept;
 
 std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept;
+
+std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept;
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept;
 
@@ -367,6 +371,40 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
   stream << ");";
 
   return stream.str();
+}
+
+std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
+  return _stmt.val->visit([](const auto& _s) -> std::string {
+    using Type = std::remove_cvref_t<decltype(_s)>;
+    if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
+      return aggregation_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Constant>) {
+      return column_or_value_to_sql(_s.val);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Column>) {
+      return column_or_value_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Divides>) {
+      return std::format("({}) / ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Minus>) {
+      return std::format("({}) - ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Multiplies>) {
+      return std::format("({}) * ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Plus>) {
+      return std::format("({}) + ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else {
+      static_assert(rfl::always_false_v<Type>, "Unsupported type.");
+    }
+  });
 }
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
