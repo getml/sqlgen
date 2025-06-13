@@ -39,6 +39,16 @@ struct Update {
     return update_impl<ValueType, SetsType, WhereType>(_conn, sets_, where_);
   }
 
+  template <class ConditionType>
+  friend auto operator|(const Update<ValueType, SetsType, WhereType>& _u,
+                        const Where<ConditionType>& _where) {
+    static_assert(std::is_same_v<WhereType, Nothing>,
+                  "You cannot call where(...) twice (but you can apply more "
+                  "than one condition by combining them with && or ||).");
+    return Update<ValueType, SetsType, ConditionType>{
+        .sets_ = _u.sets_, .where_ = _where.condition};
+  }
+
   SetsType sets_;
 
   WhereType where_;

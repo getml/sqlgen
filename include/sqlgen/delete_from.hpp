@@ -7,6 +7,7 @@
 #include "Result.hpp"
 #include "is_connection.hpp"
 #include "transpilation/to_delete_from.hpp"
+#include "where.hpp"
 
 namespace sqlgen {
 
@@ -34,6 +35,15 @@ template <class ValueType, class WhereType = Nothing>
 struct DeleteFrom {
   auto operator()(const auto& _conn) const {
     return delete_from_impl<ValueType, WhereType>(_conn, where_);
+  }
+
+  template <class ConditionType>
+  friend auto operator|(const DeleteFrom<ValueType, WhereType>& _d,
+                        const Where<ConditionType>& _where) {
+    static_assert(std::is_same_v<WhereType, Nothing>,
+                  "You cannot call where(...) twice (but you can apply more "
+                  "than one condition by combining them with && or ||).");
+    return DeleteFrom<ValueType, ConditionType>{.where_ = _where.condition};
   }
 
   WhereType where_;

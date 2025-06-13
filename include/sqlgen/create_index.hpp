@@ -8,6 +8,7 @@
 #include "is_connection.hpp"
 #include "transpilation/columns_t.hpp"
 #include "transpilation/to_create_index.hpp"
+#include "where.hpp"
 
 namespace sqlgen {
 
@@ -47,6 +48,19 @@ struct CreateIndex {
         ValueType,
         transpilation::columns_t<ValueType, typename ColTypes::ColType...>,
         WhereType>(_conn, _name.str(), unique_, if_not_exists_, where_);
+  }
+
+  template <class ConditionType>
+  friend auto operator|(
+      const CreateIndex<_name, ValueType, WhereType, ColTypes...>& _c,
+      const Where<ConditionType>& _where) {
+    static_assert(std::is_same_v<WhereType, Nothing>,
+                  "You cannot call where(...) twice (but you can apply more "
+                  "than one condition by combining them with && or ||).");
+    return CreateIndex<_name, ValueType, ConditionType, ColTypes...>{
+        .unique_ = _c.unique_,
+        .if_not_exists_ = _c.if_not_exists_,
+        .where_ = _where.condition};
   }
 
   bool unique_ = false;
