@@ -6,20 +6,18 @@
 #include <string>
 #include <vector>
 
-#include "Aggregation.hpp"
-#include "Column.hpp"
 #include "Condition.hpp"
 #include "GroupBy.hpp"
 #include "Limit.hpp"
+#include "Operation.hpp"
 #include "OrderBy.hpp"
 #include "Table.hpp"
-#include "Value.hpp"
 
 namespace sqlgen::dynamic {
 
 struct SelectFrom {
   struct Field {
-    rfl::TaggedUnion<"type", Aggregation, Column, Value> val;
+    Operation val;
     std::optional<std::string> as;
   };
 

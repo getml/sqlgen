@@ -1,7 +1,9 @@
+#include <format>
 #include <ranges>
 #include <rfl.hpp>
 #include <sstream>
 
+#include "sqlgen/dynamic/Operation.hpp"
 #include "sqlgen/internal/collect/vector.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
 #include "sqlgen/sqlite/Connection.hpp"
@@ -36,6 +38,8 @@ std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept;
 template <class InsertOrWrite>
 std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept;
 
+std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept;
+
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept;
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept;
@@ -47,34 +51,29 @@ std::string update_to_sql(const dynamic::Update& _stmt) noexcept;
 std::string aggregation_to_sql(
     const dynamic::Aggregation& _aggregation) noexcept {
   return _aggregation.val.visit([](const auto& _agg) -> std::string {
-    std::stringstream stream;
-
     using Type = std::remove_cvref_t<decltype(_agg)>;
 
     if constexpr (std::is_same_v<Type, dynamic::Aggregation::Avg>) {
-      stream << "AVG(" << column_or_value_to_sql(_agg.val) << ")";
+      return std::format("AVG({})", column_or_value_to_sql(_agg.val));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Count>) {
-      stream << "COUNT("
-             << std::string(_agg.val && _agg.distinct ? " DISTINCT " : "")
-             << (_agg.val ? column_or_value_to_sql(*_agg.val)
-                          : std::string("*"))
-             << ")";
+      const auto val =
+          std::string(_agg.val && _agg.distinct ? "DISTINCT " : "") +
+          (_agg.val ? column_or_value_to_sql(*_agg.val) : std::string("*"));
+      return std::format("COUNT({})", val);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Max>) {
-      stream << "MAX(" << column_or_value_to_sql(_agg.val) << ")";
+      return std::format("MAX({})", column_or_value_to_sql(_agg.val));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Min>) {
-      stream << "MIN(" << column_or_value_to_sql(_agg.val) << ")";
+      return std::format("MIN({})", column_or_value_to_sql(_agg.val));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Sum>) {
-      stream << "SUM(" << column_or_value_to_sql(_agg.val) << ")";
+      return std::format("SUM({})", column_or_value_to_sql(_agg.val));
 
     } else {
       static_assert(rfl::always_false_v<Type>, "Not all cases were covered.");
     }
-
-    return stream.str();
   });
 }
 
@@ -94,7 +93,7 @@ std::string column_or_value_to_sql(
     if constexpr (std::is_same_v<Type, dynamic::Column>) {
       return "\"" + _c.name + "\"";
     } else {
-      return _c.visit(handle_value);
+      return _c.val.visit(handle_value);
     }
   });
 }
@@ -280,14 +279,7 @@ std::string escape_single_quote(const std::string& _str) noexcept {
 std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept {
   std::stringstream stream;
 
-  stream << _field.val.visit([](const auto& _val) -> std::string {
-    using Type = std::remove_cvref_t<decltype(_val)>;
-    if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
-      return aggregation_to_sql(_val);
-    } else {
-      return column_or_value_to_sql(_val);
-    }
-  });
+  stream << operation_to_sql(_field.val);
 
   if (_field.as) {
     stream << " AS " << "\"" << *_field.as << "\"";
@@ -327,6 +319,40 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   stream << ");";
 
   return stream.str();
+}
+
+std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
+  return _stmt.val.visit([](const auto& _s) -> std::string {
+    using Type = std::remove_cvref_t<decltype(_s)>;
+    if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
+      return aggregation_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Column>) {
+      return column_or_value_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Divides>) {
+      return std::format("({}) / ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Minus>) {
+      return std::format("({}) - ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Multiplies>) {
+      return std::format("({}) * ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Plus>) {
+      return std::format("({}) + ({})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Value>) {
+      return column_or_value_to_sql(_s);
+
+    } else {
+      static_assert(rfl::always_false_v<Type>, "Unsupported type.");
+    }
+  });
 }
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
