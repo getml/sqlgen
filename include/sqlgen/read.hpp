@@ -9,8 +9,12 @@
 #include "Result.hpp"
 #include "internal/is_range.hpp"
 #include "is_connection.hpp"
+#include "limit.hpp"
+#include "order_by.hpp"
+#include "transpilation/order_by_t.hpp"
 #include "transpilation/read_to_select_from.hpp"
 #include "transpilation/value_t.hpp"
+#include "where.hpp"
 
 namespace sqlgen {
 
@@ -82,6 +86,43 @@ struct Read {
                  _conn, where_, limit_)
           .and_then(extract_result);
     }
+  }
+
+  template <class ConditionType>
+  friend auto operator|(const Read& _r, const Where<ConditionType>& _where) {
+    static_assert(std::is_same_v<WhereType, Nothing>,
+                  "You cannot call where(...) twice (but you can apply more "
+                  "than one condition by combining them with && or ||).");
+    static_assert(std::is_same_v<OrderByType, Nothing>,
+                  "You cannot call order_by(...) before where(...).");
+    static_assert(std::is_same_v<LimitType, Nothing>,
+                  "You cannot call limit(...) before where(...).");
+    return Read<Type, ConditionType, OrderByType, LimitType>{
+        .where_ = _where.condition};
+  }
+
+  template <class... ColTypes>
+  friend auto operator|(const Read& _r, const OrderBy<ColTypes...>&) {
+    static_assert(
+        std::is_same_v<OrderByType, Nothing>,
+        "You cannot call order_by(...) twice (but you can order by more "
+        "than one column).");
+    static_assert(std::is_same_v<LimitType, Nothing>,
+                  "You cannot call limit(...) before order_by.");
+    static_assert(sizeof...(ColTypes) != 0,
+                  "You must assign at least one column to order by(...).");
+    return Read<Type, WhereType,
+                transpilation::order_by_t<
+                    transpilation::value_t<Type>,
+                    typename std::remove_cvref_t<ColTypes>::ColType...>,
+                LimitType>{.where_ = _r.where_};
+  }
+
+  friend auto operator|(const Read& _r, const Limit& _limit) {
+    static_assert(std::is_same_v<LimitType, Nothing>,
+                  "You cannot call limit(...) twice.");
+    return Read<Type, WhereType, OrderByType, Limit>{.where_ = _r.where_,
+                                                     .limit_ = _limit};
   }
 
   WhereType where_;
