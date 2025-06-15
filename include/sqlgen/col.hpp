@@ -8,9 +8,12 @@
 #include "transpilation/Col.hpp"
 #include "transpilation/Condition.hpp"
 #include "transpilation/Desc.hpp"
+#include "transpilation/Operation.hpp"
+#include "transpilation/Operator.hpp"
 #include "transpilation/Set.hpp"
 #include "transpilation/Value.hpp"
 #include "transpilation/conditions.hpp"
+#include "transpilation/to_transpilation_type.hpp"
 
 namespace sqlgen {
 
@@ -77,6 +80,92 @@ struct Col {
     return transpilation::Set<transpilation::Col<_name>, std::string>{.to =
                                                                           _to};
   }
+
+  template <class T>
+  friend auto operator==(const Col&, const T& _t) {
+    return transpilation::make_condition(transpilation::conditions::equal(
+        transpilation::Col<_name>{}, transpilation::to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator!=(const Col&, const T& _t) {
+    return transpilation::make_condition(transpilation::conditions::not_equal(
+        transpilation::Col<_name>{}, transpilation::to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator<(const Col&, const T& _t) {
+    return transpilation::make_condition(transpilation::conditions::lesser_than(
+        transpilation::Col<_name>{}, transpilation::to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator<=(const Col&, const T& _t) {
+    return transpilation::make_condition(
+        transpilation::conditions::lesser_equal(
+            transpilation::Col<_name>{},
+            transpilation::to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator>(const Col&, const T& _t) {
+    return transpilation::make_condition(
+        transpilation::conditions::greater_than(
+            transpilation::Col<_name>{},
+            transpilation::to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator>=(const Col&, const T& _t) {
+    return transpilation::make_condition(
+        transpilation::conditions::greater_equal(
+            transpilation::Col<_name>{},
+            transpilation::to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator/(const Col&, const T& _op2) noexcept {
+    using OtherType = typename transpilation::ToTranspilationType<
+        std::remove_cvref_t<T>>::Type;
+
+    return transpilation::Operation<transpilation::Operator::divides,
+                                    transpilation::Col<_name>, OtherType>{
+        .operand1 = transpilation::Col<_name>{},
+        .operand2 = transpilation::to_transpilation_type(_op2)};
+  }
+
+  template <class T>
+  friend auto operator-(const Col&, const T& _op2) noexcept {
+    using OtherType = typename transpilation::ToTranspilationType<
+        std::remove_cvref_t<T>>::Type;
+
+    return transpilation::Operation<transpilation::Operator::minus,
+                                    transpilation::Col<_name>, OtherType>{
+        .operand1 = transpilation::Col<_name>{},
+        .operand2 = transpilation::to_transpilation_type(_op2)};
+  }
+
+  template <class T>
+  friend auto operator*(const Col&, const T& _op2) noexcept {
+    using OtherType = typename transpilation::ToTranspilationType<
+        std::remove_cvref_t<T>>::Type;
+
+    return transpilation::Operation<transpilation::Operator::multiplies,
+                                    transpilation::Col<_name>, OtherType>{
+        .operand1 = transpilation::Col<_name>{},
+        .operand2 = transpilation::to_transpilation_type(_op2)};
+  }
+
+  template <class T>
+  friend auto operator+(const Col&, const T& _op2) noexcept {
+    using OtherType = typename transpilation::ToTranspilationType<
+        std::remove_cvref_t<T>>::Type;
+
+    return transpilation::Operation<transpilation::Operator::plus,
+                                    transpilation::Col<_name>, OtherType>{
+        .operand1 = transpilation::Col<_name>{},
+        .operand2 = transpilation::to_transpilation_type(_op2)};
+  }
 };
 
 template <rfl::internal::StringLiteral _name>
@@ -87,83 +176,18 @@ auto operator"" _c() {
   return Col<_name>{};
 }
 
-template <rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-auto operator==(const Col<_name1>&, const Col<_name2>&) {
-  return transpilation::make_condition(transpilation::conditions::equal(
-      transpilation::Col<_name1>{}, transpilation::Col<_name2>{}));
-}
+namespace transpilation {
 
-template <rfl::internal::StringLiteral _name1, class T>
-auto operator==(const Col<_name1>&, const T& _t) {
-  return transpilation::make_condition(transpilation::conditions::equal(
-      transpilation::Col<_name1>{}, transpilation::make_value(_t)));
-}
+template <rfl::internal::StringLiteral _name>
+struct ToTranspilationType<sqlgen::Col<_name>> {
+  using Type = transpilation::Col<_name>;
 
-template <rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-auto operator!=(const Col<_name1>&, const Col<_name2>&) {
-  return transpilation::make_condition(transpilation::conditions::not_equal(
-      transpilation::Col<_name1>{}, transpilation::Col<_name2>{}));
-}
+  Type operator()(const auto&) const noexcept {
+    return transpilation::Col<_name>{};
+  }
+};
 
-template <rfl::internal::StringLiteral _name1, class T>
-auto operator!=(const Col<_name1>&, const T& _t) {
-  return transpilation::make_condition(transpilation::conditions::not_equal(
-      transpilation::Col<_name1>{}, transpilation::make_value(_t)));
-}
-
-template <rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-auto operator<(const Col<_name1>&, const Col<_name2>&) {
-  return transpilation::make_condition(transpilation::conditions::lesser_than(
-      transpilation::Col<_name1>{}, transpilation::Col<_name2>{}));
-}
-
-template <rfl::internal::StringLiteral _name1, class T>
-auto operator<(const Col<_name1>&, const T& _t) {
-  return transpilation::make_condition(transpilation::conditions::lesser_than(
-      transpilation::Col<_name1>{}, transpilation::make_value(_t)));
-}
-
-template <rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-auto operator<=(const Col<_name1>&, const Col<_name2>&) {
-  return transpilation::make_condition(transpilation::conditions::lesser_equal(
-      transpilation::Col<_name1>{}, transpilation::Col<_name2>{}));
-}
-
-template <rfl::internal::StringLiteral _name1, class T>
-auto operator<=(const Col<_name1>&, const T& _t) {
-  return transpilation::make_condition(transpilation::conditions::lesser_equal(
-      transpilation::Col<_name1>{}, transpilation::make_value(_t)));
-}
-
-template <rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-auto operator>(const Col<_name1>&, const Col<_name2>&) {
-  return transpilation::make_condition(transpilation::conditions::greater_than(
-      transpilation::Col<_name1>{}, transpilation::Col<_name2>{}));
-}
-
-template <rfl::internal::StringLiteral _name1, class T>
-auto operator>(const Col<_name1>&, const T& _t) {
-  return transpilation::make_condition(transpilation::conditions::greater_than(
-      transpilation::Col<_name1>{}, transpilation::make_value(_t)));
-}
-
-template <rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-auto operator>=(const Col<_name1>&, const Col<_name2>&) {
-  return transpilation::make_condition(transpilation::conditions::greater_equal(
-      transpilation::Col<_name1>{}, transpilation::Col<_name2>{}));
-}
-
-template <rfl::internal::StringLiteral _name1, class T>
-auto operator>=(const Col<_name1>&, const T& _t) {
-  return transpilation::make_condition(transpilation::conditions::greater_equal(
-      transpilation::Col<_name1>{}, transpilation::make_value(_t)));
-}
+}  // namespace transpilation
 
 }  // namespace sqlgen
 

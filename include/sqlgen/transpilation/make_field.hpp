@@ -26,13 +26,13 @@ namespace sqlgen::transpilation {
 template <class StructType, class FieldType>
 struct MakeField;
 
-template <class StructType, class ValueType>
+template <class StructType, class T>
 struct MakeField {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
 
   using Name = Nothing;
-  using Type = ValueType;
+  using Type = std::remove_cvref_t<T>;
 
   dynamic::SelectFrom::Field operator()(const auto& _val) const {
     return dynamic::SelectFrom::Field{
@@ -54,6 +54,20 @@ struct MakeField<StructType, Col<_name>> {
   dynamic::SelectFrom::Field operator()(const auto&) const {
     return dynamic::SelectFrom::Field{
         dynamic::Operation{.val = dynamic::Column{.name = _name.str()}}};
+  }
+};
+
+template <class StructType, class T>
+struct MakeField<StructType, Value<T>> {
+  static constexpr bool is_aggregation = false;
+  static constexpr bool is_column = false;
+
+  using Name = Nothing;
+  using Type = std::remove_cvref_t<T>;
+
+  dynamic::SelectFrom::Field operator()(const auto& _val) const {
+    return dynamic::SelectFrom::Field{
+        dynamic::Operation{.val = to_value(_val.val)}};
   }
 };
 
@@ -150,18 +164,23 @@ struct MakeField<StructType, Operation<_op, Operand1Type, Operand2Type>> {
   static constexpr bool is_column = false;
 
   using Name = Nothing;
+  using Type =
+      typename MakeField<StructType, std::remove_cvref_t<Operand2Type>>::
+          Type;  // TODO: Better solution
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;
     constexpr auto num_operands = num_operands_v<_op>;
     if constexpr (num_operands == 2) {
       return dynamic::SelectFrom::Field{dynamic::Operation{DynamicOperatorType{
-          .op1 = MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
-                     _o.operand1)
-                     .val,
-          .op2 = MakeField<StructType, std::remove_cvref_t<Operand2Type>>{}(
-                     _o.operand2)
-                     .val}}};
+          .op1 = Ref<dynamic::Operation>::make(
+              MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
+                  _o.operand1)
+                  .val),
+          .op2 = Ref<dynamic::Operation>::make(
+              MakeField<StructType, std::remove_cvref_t<Operand2Type>>{}(
+                  _o.operand2)
+                  .val)}}};
     }
   }
 };
