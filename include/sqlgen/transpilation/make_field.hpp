@@ -9,10 +9,11 @@
 #include "../dynamic/SelectFrom.hpp"
 #include "As.hpp"
 #include "Col.hpp"
+#include "Operation.hpp"
 #include "Value.hpp"
 #include "aggregations.hpp"
 #include "all_columns_exist.hpp"
-#include "operations.hpp"
+#include "dynamic_operator_t.hpp"
 #include "remove_nullable_t.hpp"
 #include "to_value.hpp"
 #include "underlying_t.hpp"
@@ -198,20 +199,26 @@ struct MakeField<StructType, aggregations::Sum<Col<_name>>> {
   }
 };
 
-template <class StructType, class Op1Type, class Op2Type>
-struct MakeField<StructType, operations::Divides<Op1Type, Op2Type>> {
+template <class StructType, Operator _op, class Operand1Type,
+          class Operand2Type>
+struct MakeField<StructType, Operation<_op, Operand1Type, Operand2Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
 
   using Name = Nothing;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
-    return dynamic::SelectFrom::Field{
-        dynamic::Operation{dynamic::Operation::Divides{
-            .op1 = MakeField<StructType, std::remove_cvref_t<Op1Type>>{}(_o.op1)
-                       .val,
-            .op2 = MakeField<StructType, std::remove_cvref_t<Op2Type>>{}(_o.op2)
-                       .val}}};
+    using DynamicOperatorType = dynamic_operator_t<_op>;
+    constexpr auto num_operands = num_operands_v<_op>;
+    if constexpr (num_operands == 2) {
+      return dynamic::SelectFrom::Field{dynamic::Operation{DynamicOperatorType{
+          .op1 = MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
+                     _o.operand1)
+                     .val,
+          .op2 = MakeField<StructType, std::remove_cvref_t<Operand2Type>>{}(
+                     _o.operand2)
+                     .val}}};
+    }
   }
 };
 
