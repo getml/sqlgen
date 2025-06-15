@@ -159,29 +159,26 @@ struct MakeField<StructType, Aggregation<AggregationOp::count, All>> {
 
 template <class StructType, Operator _op, class Operand1Type,
           class Operand2Type>
+  requires((num_operands_v<_op>) == 2)
 struct MakeField<StructType, Operation<_op, Operand1Type, Operand2Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
 
   using Name = Nothing;
   using Type =
-      typename MakeField<StructType, std::remove_cvref_t<Operand2Type>>::
-          Type;  // TODO: Better solution
+      underlying_t<StructType, Operation<_op, Operand1Type, Operand2Type>>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;
-    constexpr auto num_operands = num_operands_v<_op>;
-    if constexpr (num_operands == 2) {
-      return dynamic::SelectFrom::Field{dynamic::Operation{DynamicOperatorType{
-          .op1 = Ref<dynamic::Operation>::make(
-              MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
-                  _o.operand1)
-                  .val),
-          .op2 = Ref<dynamic::Operation>::make(
-              MakeField<StructType, std::remove_cvref_t<Operand2Type>>{}(
-                  _o.operand2)
-                  .val)}}};
-    }
+    return dynamic::SelectFrom::Field{dynamic::Operation{DynamicOperatorType{
+        .op1 = Ref<dynamic::Operation>::make(
+            MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
+                _o.operand1)
+                .val),
+        .op2 = Ref<dynamic::Operation>::make(
+            MakeField<StructType, std::remove_cvref_t<Operand2Type>>{}(
+                _o.operand2)
+                .val)}}};
   }
 };
 
