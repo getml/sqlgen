@@ -5,7 +5,9 @@
 #include <type_traits>
 
 #include "../Result.hpp"
+#include "Condition.hpp"
 #include "Operator.hpp"
+#include "conditions.hpp"
 #include "to_transpilation_type.hpp"
 
 namespace sqlgen::transpilation {
@@ -19,6 +21,60 @@ struct Operation {
 
   Operand1Type operand1;
   Operand2Type operand2;
+
+  /// Returns an IS NULL condition.
+  auto is_null() const noexcept {
+    return make_condition(conditions::is_null(*this));
+  }
+
+  /// Returns a IS NOT NULL condition.
+  auto is_not_null() const noexcept {
+    return make_condition(conditions::is_not_null(*this));
+  }
+
+  /// Returns a LIKE condition.
+  auto like(const std::string& _pattern) const noexcept {
+    return make_condition(conditions::like(*this, _pattern));
+  }
+
+  /// Returns a NOT LIKE condition.
+  auto not_like(const std::string& _pattern) const noexcept {
+    return make_condition(conditions::not_like(*this, _pattern));
+  }
+
+  template <class T>
+  friend auto operator==(const Operation& _o, const T& _t) {
+    return make_condition(conditions::equal(_o, to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator!=(const Operation& _o, const T& _t) {
+    return make_condition(conditions::not_equal(_o, to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator<(const Operation& _o, const T& _t) {
+    return make_condition(
+        conditions::lesser_than(_o, to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator<=(const Operation& _o, const T& _t) {
+    return make_condition(
+        conditions::lesser_equal(_o, to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator>(const Operation& _o, const T& _t) {
+    return make_condition(
+        conditions::greater_than(_o, to_transpilation_type(_t)));
+  }
+
+  template <class T>
+  friend auto operator>=(const Operation& _o, const T& _t) {
+    return make_condition(
+        conditions::greater_equal(_o, to_transpilation_type(_t)));
+  }
 
   template <class T>
   friend auto operator/(const Operation& _op1, const T& _op2) noexcept {

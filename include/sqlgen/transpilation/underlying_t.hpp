@@ -8,6 +8,7 @@
 #include "Desc.hpp"
 #include "Operation.hpp"
 #include "Value.hpp"
+#include "all_columns_exist.hpp"
 #include "dynamic_operator_t.hpp"
 #include "remove_reflection_t.hpp"
 
@@ -18,6 +19,7 @@ struct Underlying;
 
 template <class T, rfl::internal::StringLiteral _name>
 struct Underlying<T, Col<_name>> {
+  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
   using Type = remove_reflection_t<rfl::field_type_t<_name, T>>;
 };
 

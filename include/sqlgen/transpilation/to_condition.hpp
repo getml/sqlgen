@@ -12,7 +12,8 @@
 #include "Condition.hpp"
 #include "all_columns_exist.hpp"
 #include "conditions.hpp"
-#include "to_value.hpp"
+#include "make_field.hpp"
+#include "to_transpilation_type.hpp"
 #include "underlying_t.hpp"
 
 namespace sqlgen::transpilation {
@@ -40,245 +41,125 @@ struct ToCondition<T, conditions::And<CondType1, CondType2>> {
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-struct ToCondition<T, conditions::Equal<Col<_name1>, Col<_name2>>> {
-  static_assert(all_columns_exist<T, Col<_name1>, Col<_name2>>(),
-                "All columns must exist.");
-  static_assert(std::equality_comparable_with<underlying_t<T, Col<_name1>>,
-                                              underlying_t<T, Col<_name2>>>,
+template <class T, class Op1Type, class Op2Type>
+struct ToCondition<T, conditions::Equal<Op1Type, Op2Type>> {
+  static_assert(std::equality_comparable_with<underlying_t<T, Op1Type>,
+                                              underlying_t<T, Op2Type>>,
                 "Must be equality comparable.");
 
   dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::Equal{
-                                  .op1 = dynamic::Column{.name = _name1.str()},
-                                  .op2 = dynamic::Column{.name = _name2.str()},
-                              }};
+    return dynamic::Condition{
+        .val = dynamic::Condition::Equal{.op1 = make_field<T>(_cond.op1).val,
+                                         .op2 = make_field<T>(_cond.op2).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name, class V>
-struct ToCondition<T, conditions::Equal<Col<_name>, Value<V>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-  static_assert(std::equality_comparable_with<underlying_t<T, Col<_name>>,
-                                              underlying_t<T, Value<V>>>,
-                "Must be equality comparable.");
-
-  dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::Equal{
-                                  .op1 = dynamic::Column{.name = _name.str()},
-                                  .op2 = to_value(_cond.op2.val),
-                              }};
-  }
-};
-
-template <class T, rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-struct ToCondition<T, conditions::GreaterEqual<Col<_name1>, Col<_name2>>> {
-  static_assert(all_columns_exist<T, Col<_name1>, Col<_name2>>(),
-                "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name1>>,
-                                          underlying_t<T, Col<_name2>>>,
+template <class T, class Op1Type, class Op2Type>
+struct ToCondition<T, conditions::GreaterEqual<Op1Type, Op2Type>> {
+  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
+                                          underlying_t<T, Op2Type>>,
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{.val = dynamic::Condition::GreaterEqual{
-                                  .op1 = dynamic::Column{.name = _name1.str()},
-                                  .op2 = dynamic::Column{.name = _name2.str()},
-                              }};
+                                  .op1 = make_field<T>(_cond.op1).val,
+                                  .op2 = make_field<T>(_cond.op2).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name, class V>
-struct ToCondition<T, conditions::GreaterEqual<Col<_name>, Value<V>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name>>,
-                                          underlying_t<T, Value<V>>>,
-                "Must be totally ordered.");
-
-  dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::GreaterEqual{
-                                  .op1 = dynamic::Column{.name = _name.str()},
-                                  .op2 = to_value(_cond.op2.val),
-                              }};
-  }
-};
-
-template <class T, rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-struct ToCondition<T, conditions::GreaterThan<Col<_name1>, Col<_name2>>> {
-  static_assert(all_columns_exist<T, Col<_name1>, Col<_name2>>(),
-                "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name1>>,
-                                          underlying_t<T, Col<_name2>>>,
+template <class T, class Op1Type, class Op2Type>
+struct ToCondition<T, conditions::GreaterThan<Op1Type, Op2Type>> {
+  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
+                                          underlying_t<T, Op2Type>>,
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{.val = dynamic::Condition::GreaterThan{
-                                  .op1 = dynamic::Column{.name = _name1.str()},
-                                  .op2 = dynamic::Column{.name = _name2.str()},
-                              }};
+                                  .op1 = make_field<T>(_cond.op1).val,
+                                  .op2 = make_field<T>(_cond.op2).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name, class V>
-struct ToCondition<T, conditions::GreaterThan<Col<_name>, Value<V>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name>>,
-                                          underlying_t<T, Value<V>>>,
-                "Must be totally ordered.");
-
-  dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::GreaterThan{
-                                  .op1 = dynamic::Column{.name = _name.str()},
-                                  .op2 = to_value(_cond.op2.val),
-                              }};
-  }
-};
-
-template <class T, rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-struct ToCondition<T, conditions::LesserEqual<Col<_name1>, Col<_name2>>> {
-  static_assert(all_columns_exist<T, Col<_name1>, Col<_name2>>(),
-                "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name1>>,
-                                          underlying_t<T, Col<_name2>>>,
+template <class T, class Op1Type, class Op2Type>
+struct ToCondition<T, conditions::LesserEqual<Op1Type, Op2Type>> {
+  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
+                                          underlying_t<T, Op2Type>>,
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{.val = dynamic::Condition::LesserEqual{
-                                  .op1 = dynamic::Column{.name = _name1.str()},
-                                  .op2 = dynamic::Column{.name = _name2.str()},
-                              }};
+                                  .op1 = make_field<T>(_cond.op1).val,
+                                  .op2 = make_field<T>(_cond.op2).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name, class V>
-struct ToCondition<T, conditions::LesserEqual<Col<_name>, Value<V>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name>>,
-                                          underlying_t<T, Value<V>>>,
-                "Must be totally ordered.");
-
-  dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::LesserEqual{
-                                  .op1 = dynamic::Column{.name = _name.str()},
-                                  .op2 = to_value(_cond.op2.val),
-                              }};
-  }
-};
-
-template <class T, rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-struct ToCondition<T, conditions::LesserThan<Col<_name1>, Col<_name2>>> {
-  static_assert(all_columns_exist<T, Col<_name1>, Col<_name2>>(),
-                "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name1>>,
-                                          underlying_t<T, Col<_name2>>>,
+template <class T, class Op1Type, class Op2Type>
+struct ToCondition<T, conditions::LesserThan<Op1Type, Op2Type>> {
+  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
+                                          underlying_t<T, Op2Type>>,
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{.val = dynamic::Condition::LesserThan{
-                                  .op1 = dynamic::Column{.name = _name1.str()},
-                                  .op2 = dynamic::Column{.name = _name2.str()},
-                              }};
+                                  .op1 = make_field<T>(_cond.op1).val,
+                                  .op2 = make_field<T>(_cond.op2).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name, class V>
-struct ToCondition<T, conditions::LesserThan<Col<_name>, Value<V>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-  static_assert(std::totally_ordered_with<underlying_t<T, Col<_name>>,
-                                          underlying_t<T, Value<V>>>,
-                "Must be totally ordered.");
-
-  dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::LesserThan{
-                                  .op1 = dynamic::Column{.name = _name.str()},
-                                  .op2 = to_value(_cond.op2.val),
-                              }};
-  }
-};
-
-template <class T, rfl::internal::StringLiteral _name>
-struct ToCondition<T, conditions::Like<Col<_name>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
+template <class T, class OpType>
+struct ToCondition<T, conditions::Like<OpType>> {
   static_assert(
-      std::equality_comparable_with<underlying_t<T, Col<_name>>,
+      std::equality_comparable_with<underlying_t<T, OpType>,
                                     underlying_t<T, Value<std::string>>>,
       "Must be equality comparable with a string.");
 
   dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::Like{
-                                  .op = dynamic::Column{.name = _name.str()},
-                                  .pattern = to_value(_cond.pattern)}};
+    return dynamic::Condition{
+        .val = dynamic::Condition::Like{.op = make_field<T>(_cond.op).val,
+                                        .pattern = to_value(_cond.pattern)}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name>
-struct ToCondition<T, conditions::IsNotNull<Col<_name>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-
-  dynamic::Condition operator()(const auto&) const {
+template <class T, class OpType>
+struct ToCondition<T, conditions::IsNotNull<OpType>> {
+  dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{.val = dynamic::Condition::IsNotNull{
-                                  .op = dynamic::Column{.name = _name.str()}}};
+                                  .op = make_field<T>(_cond.op).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name>
-struct ToCondition<T, conditions::IsNull<Col<_name>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-
-  dynamic::Condition operator()(const auto&) const {
-    return dynamic::Condition{.val = dynamic::Condition::IsNull{
-                                  .op = dynamic::Column{.name = _name.str()}}};
+template <class T, class OpType>
+struct ToCondition<T, conditions::IsNull<OpType>> {
+  dynamic::Condition operator()(const auto& _cond) const {
+    return dynamic::Condition{
+        .val = dynamic::Condition::IsNull{.op = make_field<T>(_cond.op).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name1,
-          rfl::internal::StringLiteral _name2>
-struct ToCondition<T, conditions::NotEqual<Col<_name1>, Col<_name2>>> {
-  static_assert(all_columns_exist<T, Col<_name1>, Col<_name2>>(),
-                "All columns must exist.");
-  static_assert(std::equality_comparable_with<underlying_t<T, Col<_name1>>,
-                                              underlying_t<T, Col<_name2>>>,
+template <class T, class Op1Type, class Op2Type>
+struct ToCondition<T, conditions::NotEqual<Op1Type, Op2Type>> {
+  static_assert(std::equality_comparable_with<underlying_t<T, Op1Type>,
+                                              underlying_t<T, Op2Type>>,
                 "Must be equality comparable.");
 
   dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{.val = dynamic::Condition::NotEqual{
-                                  .op1 = dynamic::Column{.name = _name1.str()},
-                                  .op2 = dynamic::Column{.name = _name2.str()},
-                              }};
+                                  .op1 = make_field<T>(_cond.op1).val,
+                                  .op2 = make_field<T>(_cond.op2).val}};
   }
 };
 
-template <class T, rfl::internal::StringLiteral _name, class V>
-struct ToCondition<T, conditions::NotEqual<Col<_name>, Value<V>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-  static_assert(std::equality_comparable_with<underlying_t<T, Col<_name>>,
-                                              underlying_t<T, Value<V>>>,
-                "Must be equality comparable.");
-
-  dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::NotEqual{
-                                  .op1 = dynamic::Column{.name = _name.str()},
-                                  .op2 = to_value(_cond.op2.val),
-                              }};
-  }
-};
-
-template <class T, rfl::internal::StringLiteral _name>
-struct ToCondition<T, conditions::NotLike<Col<_name>>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
+template <class T, class OpType>
+struct ToCondition<T, conditions::NotLike<OpType>> {
   static_assert(
-      std::equality_comparable_with<underlying_t<T, Col<_name>>,
+      std::equality_comparable_with<underlying_t<T, OpType>,
                                     underlying_t<T, Value<std::string>>>,
       "Must be equality comparable with a string.");
 
   dynamic::Condition operator()(const auto& _cond) const {
-    return dynamic::Condition{.val = dynamic::Condition::NotLike{
-                                  .op = dynamic::Column{.name = _name.str()},
-                                  .pattern = to_value(_cond.pattern)}};
+    return dynamic::Condition{
+        .val = dynamic::Condition::NotLike{.op = make_field<T>(_cond.op).val,
+                                           .pattern = to_value(_cond.pattern)}};
   }
 };
 
