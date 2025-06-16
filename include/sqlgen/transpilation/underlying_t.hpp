@@ -10,6 +10,8 @@
 #include "Value.hpp"
 #include "all_columns_exist.hpp"
 #include "dynamic_operator_t.hpp"
+#include "is_nullable.hpp"
+#include "remove_nullable_t.hpp"
 #include "remove_reflection_t.hpp"
 
 namespace sqlgen::transpilation {
@@ -37,14 +39,17 @@ struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
       typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
 
   static_assert(
-      requires(Underlying1 op1, Underlying2 op2) { op1 + op2; },
+      requires(remove_nullable_t<Underlying1> op1,
+               remove_nullable_t<Underlying2> op2) { op1 + op2; },
       "Binary operations are not possible on these types.");
 
-  using Type =
-      std::invoke_result_t<decltype([](const auto& op1, const auto& op2) {
-                             return op1 + op2;
-                           }),
-                           Underlying1, Underlying2>;
+  using ResultType = std::invoke_result_t<
+      decltype([](const auto& op1, const auto& op2) { return op1 + op2; }),
+      remove_nullable_t<Underlying1>, remove_nullable_t<Underlying2>>;
+
+  using Type = std::conditional_t<is_nullable_v<Underlying1> ||
+                                      is_nullable_v<Underlying2>,
+                                  std::optional<ResultType>, ResultType>;
 };
 
 template <class T, class _Type>
