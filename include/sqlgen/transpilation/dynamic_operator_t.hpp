@@ -3,6 +3,7 @@
 
 #include "../dynamic/Operation.hpp"
 #include "Operator.hpp"
+#include "OperatorCategory.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -12,24 +13,35 @@ struct DynamicOperator;
 template <>
 struct DynamicOperator<Operator::divides> {
   static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Divides;
 };
 
 template <>
 struct DynamicOperator<Operator::minus> {
   static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Minus;
+};
+
+template <>
+struct DynamicOperator<Operator::mod> {
+  static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Mod;
 };
 
 template <>
 struct DynamicOperator<Operator::multiplies> {
   static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Multiplies;
 };
 
 template <>
 struct DynamicOperator<Operator::plus> {
   static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Plus;
 };
 
@@ -38,6 +50,9 @@ using dynamic_operator_t = typename DynamicOperator<op>::Type;
 
 template <Operator op>
 inline constexpr size_t num_operands_v = DynamicOperator<op>::num_operands;
+
+template <Operator op>
+inline constexpr auto operator_category_v = DynamicOperator<op>::category;
 
 }  // namespace sqlgen::transpilation
 

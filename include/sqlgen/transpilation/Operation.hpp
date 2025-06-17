@@ -97,6 +97,16 @@ struct Operation {
   }
 
   template <class T>
+  friend auto operator%(const Operation& _op1, const T& _op2) noexcept {
+    using OtherType = typename transpilation::ToTranspilationType<
+        std::remove_cvref_t<T>>::Type;
+
+    return Operation<Operator::mod,
+                     Operation<_op, _Operand1Type, _Operand2Type>, OtherType>{
+        .operand1 = _op1, .operand2 = to_transpilation_type(_op2)};
+  }
+
+  template <class T>
   friend auto operator*(const Operation& _op1, const T& _op2) noexcept {
     using OtherType = typename transpilation::ToTranspilationType<
         std::remove_cvref_t<T>>::Type;

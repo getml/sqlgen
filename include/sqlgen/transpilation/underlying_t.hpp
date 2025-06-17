@@ -31,7 +31,8 @@ struct Underlying<T, Desc<Col<_name>>> {
 };
 
 template <class T, Operator _op, class Operand1Type, class Operand2Type>
-  requires((num_operands_v<_op>) == 2)
+  requires((num_operands_v<_op>) == 2 &&
+           (operator_category_v<_op>) == OperatorCategory::numerical)
 struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
   using Underlying1 =
       typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;

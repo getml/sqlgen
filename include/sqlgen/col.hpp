@@ -146,6 +146,17 @@ struct Col {
   }
 
   template <class T>
+  friend auto operator%(const Col&, const T& _op2) noexcept {
+    using OtherType = typename transpilation::ToTranspilationType<
+        std::remove_cvref_t<T>>::Type;
+
+    return transpilation::Operation<transpilation::Operator::mod,
+                                    transpilation::Col<_name>, OtherType>{
+        .operand1 = transpilation::Col<_name>{},
+        .operand2 = transpilation::to_transpilation_type(_op2)};
+  }
+
+  template <class T>
   friend auto operator*(const Col&, const T& _op2) noexcept {
     using OtherType = typename transpilation::ToTranspilationType<
         std::remove_cvref_t<T>>::Type;

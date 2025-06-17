@@ -22,6 +22,11 @@ struct Operation {
     Ref<Operation> op2;
   };
 
+  struct Mod {
+    Ref<Operation> op1;
+    Ref<Operation> op2;
+  };
+
   struct Multiplies {
     Ref<Operation> op1;
     Ref<Operation> op2;
@@ -33,7 +38,7 @@ struct Operation {
   };
 
   using ReflectionType = rfl::TaggedUnion<"what", Aggregation, Column, Divides,
-                                          Minus, Multiplies, Plus, Value>;
+                                          Minus, Mod, Multiplies, Plus, Value>;
 
   const ReflectionType& reflection() const { return val; }
 

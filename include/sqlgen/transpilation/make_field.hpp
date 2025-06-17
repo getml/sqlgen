@@ -13,6 +13,7 @@
 #include "Col.hpp"
 #include "Operation.hpp"
 #include "Operator.hpp"
+#include "OperatorCategory.hpp"
 #include "Value.hpp"
 #include "all_columns_exist.hpp"
 #include "dynamic_aggregation_t.hpp"
@@ -159,7 +160,8 @@ struct MakeField<StructType, Aggregation<AggregationOp::count, All>> {
 
 template <class StructType, Operator _op, class Operand1Type,
           class Operand2Type>
-  requires((num_operands_v<_op>) == 2)
+  requires((num_operands_v<_op>) == 2 &&
+           (operator_category_v<_op>) == OperatorCategory::numerical)
 struct MakeField<StructType, Operation<_op, Operand1Type, Operand2Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;

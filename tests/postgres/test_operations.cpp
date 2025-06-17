@@ -15,7 +15,7 @@ struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
   std::string first_name;
   std::string last_name;
-  double age;
+  int age;
 };
 
 TEST(postgres, test_operations) {
@@ -38,13 +38,16 @@ TEST(postgres, test_operations) {
     int id_plus_age;
     int age_times_2;
     int id_plus_2_minus_age;
+    int age_mod_3;
   };
 
   const auto get_children =
       select_from<Person>(("id"_c + "age"_c) | as<"id_plus_age">,
                           ("age"_c * 2) | as<"age_times_2">,
+                          ("age"_c % 3) | as<"age_mod_3">,
                           ("id"_c + 2 - "age"_c) | as<"id_plus_2_minus_age">) |
-      where("age"_c < 18) | to<std::vector<Children>>;
+      where("age"_c < 18) | order_by("age"_c.desc()) |
+      to<std::vector<Children>>;
 
   const auto children = postgres::connect(credentials)
                             .and_then(drop<Person> | if_exists)
@@ -53,7 +56,7 @@ TEST(postgres, test_operations) {
                             .value();
 
   const std::string expected =
-      R"([{"id_plus_age":11,"age_times_2":20,"id_plus_2_minus_age":-7},{"id_plus_age":10,"age_times_2":16,"id_plus_2_minus_age":-4},{"id_plus_age":3,"age_times_2":0,"id_plus_2_minus_age":5}])";
+      R"([{"id_plus_age":11,"age_times_2":20,"id_plus_2_minus_age":-7,"age_mod_3":1},{"id_plus_age":10,"age_times_2":16,"id_plus_2_minus_age":-4,"age_mod_3":2},{"id_plus_age":3,"age_times_2":0,"id_plus_2_minus_age":5,"age_mod_3":0}])";
 
   EXPECT_EQ(rfl::json::write(children), expected);
 }
