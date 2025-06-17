@@ -3,7 +3,7 @@
 
 namespace sqlgen::transpilation {
 
-enum class Operator { divides, minus, mod, multiplies, plus };
+enum class Operator { abs, divides, minus, mod, multiplies, plus };
 
 }  // namespace sqlgen::transpilation
 

@@ -31,16 +31,19 @@ TEST(sqlite, test_operations) {
   struct Children {
     int id_plus_age;
     int age_times_2;
-    int age_plus_2_minus_id;
+    int id_plus_2_minus_age;
     int age_mod_3;
+    int abs_age;
   };
 
   const auto get_children =
       select_from<Person>(("id"_c + "age"_c) | as<"id_plus_age">,
                           ("age"_c * 2) | as<"age_times_2">,
                           ("age"_c % 3) | as<"age_mod_3">,
-                          ("age"_c + 2 - "id"_c) | as<"age_plus_2_minus_id">) |
-      where("age"_c < 18) | to<std::vector<Children>>;
+                          abs("age"_c * (-1)) | as<"abs_age">,
+                          ("id"_c + 2 - "age"_c) | as<"id_plus_2_minus_age">) |
+      where("age"_c < 18) | order_by("age"_c.desc()) |
+      to<std::vector<Children>>;
 
   const auto children = sqlite::connect()
                             .and_then(write(std::ref(people1)))
@@ -48,7 +51,7 @@ TEST(sqlite, test_operations) {
                             .value();
 
   const std::string expected =
-      R"([{"id_plus_age":11,"age_times_2":20,"age_plus_2_minus_id":11,"age_mod_3":1},{"id_plus_age":10,"age_times_2":16,"age_plus_2_minus_id":8,"age_mod_3":2},{"id_plus_age":3,"age_times_2":0,"age_plus_2_minus_id":-1,"age_mod_3":0}])";
+      R"([{"id_plus_age":11,"age_times_2":20,"id_plus_2_minus_age":-7,"age_mod_3":1,"abs_age":10},{"id_plus_age":10,"age_times_2":16,"id_plus_2_minus_age":-4,"age_mod_3":2,"abs_age":8},{"id_plus_age":3,"age_times_2":0,"id_plus_2_minus_age":5,"age_mod_3":0,"abs_age":0}])";
 
   EXPECT_EQ(rfl::json::write(children), expected);
 }

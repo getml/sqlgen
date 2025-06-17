@@ -11,6 +11,13 @@ template <Operator op>
 struct DynamicOperator;
 
 template <>
+struct DynamicOperator<Operator::abs> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Abs;
+};
+
+template <>
 struct DynamicOperator<Operator::divides> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::numerical;

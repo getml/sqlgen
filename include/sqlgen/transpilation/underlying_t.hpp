@@ -30,6 +30,20 @@ struct Underlying<T, Desc<Col<_name>>> {
   using Type = remove_reflection_t<rfl::field_type_t<_name, T>>;
 };
 
+template <class T, Operator _op, class Operand1Type>
+  requires((num_operands_v<_op>) == 1 &&
+           (operator_category_v<_op>) == OperatorCategory::numerical)
+struct Underlying<T, Operation<_op, Operand1Type>> {
+  using Underlying1 =
+      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+
+  static_assert(std::is_integral_v<remove_nullable_t<Underlying1>> ||
+                    std::is_floating_point_v<remove_nullable_t<Underlying1>>,
+                "Must be a numerical type");
+
+  using Type = Underlying1;
+};
+
 template <class T, Operator _op, class Operand1Type, class Operand2Type>
   requires((num_operands_v<_op>) == 2 &&
            (operator_category_v<_op>) == OperatorCategory::numerical)

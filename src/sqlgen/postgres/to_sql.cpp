@@ -361,7 +361,10 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
 std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
   return _stmt.val.visit([](const auto& _s) -> std::string {
     using Type = std::remove_cvref_t<decltype(_s)>;
-    if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
+    if constexpr (std::is_same_v<Type, dynamic::Operation::Abs>) {
+      return std::format("abs({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
       return aggregation_to_sql(_s);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Column>) {

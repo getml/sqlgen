@@ -12,6 +12,10 @@
 namespace sqlgen::dynamic {
 
 struct Operation {
+  struct Abs {
+    Ref<Operation> op1;
+  };
+
   struct Divides {
     Ref<Operation> op1;
     Ref<Operation> op2;
@@ -37,8 +41,9 @@ struct Operation {
     Ref<Operation> op2;
   };
 
-  using ReflectionType = rfl::TaggedUnion<"what", Aggregation, Column, Divides,
-                                          Minus, Mod, Multiplies, Plus, Value>;
+  using ReflectionType =
+      rfl::TaggedUnion<"what", Abs, Aggregation, Column, Divides, Minus, Mod,
+                       Multiplies, Plus, Value>;
 
   const ReflectionType& reflection() const { return val; }
 
