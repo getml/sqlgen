@@ -327,12 +327,30 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
       return aggregation_to_sql(_s);
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Ceil>) {
+      return std::format("ceil({})", operation_to_sql(*_s.op1));
+
     } else if constexpr (std::is_same_v<Type, dynamic::Column>) {
       return column_or_value_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cos>) {
+      return std::format("cos({})", operation_to_sql(*_s.op1));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Divides>) {
       return std::format("({}) / ({})", operation_to_sql(*_s.op1),
                          operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Exp>) {
+      return std::format("exp({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Floor>) {
+      return std::format("floor({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Ln>) {
+      return std::format("ln({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Log2>) {
+      return std::format("log2({})", operation_to_sql(*_s.op1));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Minus>) {
       return std::format("({}) - ({})", operation_to_sql(*_s.op1),
@@ -349,6 +367,15 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Plus>) {
       return std::format("({}) + ({})", operation_to_sql(*_s.op1),
                          operation_to_sql(*_s.op2));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Sin>) {
+      return std::format("sin({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Sqrt>) {
+      return std::format("sqrt({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Tan>) {
+      return std::format("tan({})", operation_to_sql(*_s.op1));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Value>) {
       return column_or_value_to_sql(_s);

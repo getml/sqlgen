@@ -18,10 +18,52 @@ struct DynamicOperator<Operator::abs> {
 };
 
 template <>
+struct DynamicOperator<Operator::ceil> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Ceil;
+};
+
+template <>
+struct DynamicOperator<Operator::cos> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Cos;
+};
+
+template <>
 struct DynamicOperator<Operator::divides> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Divides;
+};
+
+template <>
+struct DynamicOperator<Operator::exp> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Exp;
+};
+
+template <>
+struct DynamicOperator<Operator::floor> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Floor;
+};
+
+template <>
+struct DynamicOperator<Operator::ln> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Ln;
+};
+
+template <>
+struct DynamicOperator<Operator::log2> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Log2;
 };
 
 template <>
@@ -50,6 +92,27 @@ struct DynamicOperator<Operator::plus> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Plus;
+};
+
+template <>
+struct DynamicOperator<Operator::sin> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Sin;
+};
+
+template <>
+struct DynamicOperator<Operator::sqrt> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Sqrt;
+};
+
+template <>
+struct DynamicOperator<Operator::tan> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::numerical;
+  using Type = dynamic::Operation::Tan;
 };
 
 template <Operator op>

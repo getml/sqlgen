@@ -3,7 +3,23 @@
 
 namespace sqlgen::transpilation {
 
-enum class Operator { abs, divides, minus, mod, multiplies, plus };
+enum class Operator {
+  abs,
+  ceil,
+  cos,
+  exp,
+  floor,
+  ln,
+  log2,
+  divides,
+  minus,
+  mod,
+  multiplies,
+  plus,
+  sin,
+  sqrt,
+  tan
+};
 
 }  // namespace sqlgen::transpilation
 
