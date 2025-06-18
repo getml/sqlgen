@@ -6,6 +6,7 @@
 #include "../Ref.hpp"
 #include "Aggregation.hpp"
 #include "Column.hpp"
+#include "Type.hpp"
 #include "Value.hpp"
 
 namespace sqlgen::dynamic {
@@ -13,6 +14,11 @@ namespace sqlgen::dynamic {
 struct Operation {
   struct Abs {
     Ref<Operation> op1;
+  };
+
+  struct Cast {
+    Ref<Operation> op1;
+    Type target_type;
   };
 
   struct Ceil {
@@ -77,9 +83,9 @@ struct Operation {
   };
 
   using ReflectionType =
-      rfl::TaggedUnion<"what", Abs, Aggregation, Ceil, Column, Cos, Divides,
-                       Exp, Floor, Ln, Log2, Minus, Mod, Multiplies, Plus, Sin,
-                       Sqrt, Tan, Value>;
+      rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Cos,
+                       Divides, Exp, Floor, Ln, Log2, Minus, Mod, Multiplies,
+                       Plus, Sin, Sqrt, Tan, Value>;
 
   const ReflectionType& reflection() const { return val; }
 

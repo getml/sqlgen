@@ -7,6 +7,7 @@
 #include "../Literal.hpp"
 #include "../Result.hpp"
 #include "../dynamic/SelectFrom.hpp"
+#include "../parsing/Parser.hpp"
 #include "Aggregation.hpp"
 #include "AggregationOp.hpp"
 #include "As.hpp"
@@ -155,6 +156,27 @@ struct MakeField<StructType, Aggregation<AggregationOp::count, All>> {
         .val = dynamic::Aggregation{
             dynamic::Aggregation::Count{.val = std::nullopt, .distinct = false},
         }}};
+  }
+};
+
+template <class StructType, class Operand1Type, class TargetType>
+struct MakeField<StructType, Operation<Operator::cast, Operand1Type,
+                                       TypeHolder<TargetType>>> {
+  static constexpr bool is_aggregation = false;
+  static constexpr bool is_column = false;
+
+  using Name = Nothing;
+  using Type = std::remove_cvref_t<TargetType>;
+
+  dynamic::SelectFrom::Field operator()(const auto& _o) const {
+    return dynamic::SelectFrom::Field{
+        dynamic::Operation{dynamic::Operation::Cast{
+            .op1 = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
+                    _o.operand1)
+                    .val),
+            .target_type =
+                parsing::Parser<std::remove_cvref_t<TargetType>>::to_type()}}};
   }
 };
 

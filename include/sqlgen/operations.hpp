@@ -19,6 +19,16 @@ auto abs(const T& _t) {
       .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
+template <class TargetType, class T>
+auto cast(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<
+      transpilation::Operator::cast, Type,
+      transpilation::TypeHolder<std::remove_cvref_t<TargetType>>>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
+}
+
 template <class T>
 auto ceil(const T& _t) {
   using Type =

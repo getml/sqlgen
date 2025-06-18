@@ -18,6 +18,13 @@ struct DynamicOperator<Operator::abs> {
 };
 
 template <>
+struct DynamicOperator<Operator::cast> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::other;
+  using Type = dynamic::Operation::Cast;
+};
+
+template <>
 struct DynamicOperator<Operator::ceil> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;

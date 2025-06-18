@@ -3,7 +3,7 @@
 
 namespace sqlgen::transpilation {
 
-enum class OperatorCategory { numerical, string };
+enum class OperatorCategory { numerical, string, other };
 
 }  // namespace sqlgen::transpilation
 

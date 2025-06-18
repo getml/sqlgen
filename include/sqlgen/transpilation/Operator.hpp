@@ -5,13 +5,14 @@ namespace sqlgen::transpilation {
 
 enum class Operator {
   abs,
+  cast,
   ceil,
   cos,
+  divides,
   exp,
   floor,
   ln,
   log2,
-  divides,
   minus,
   mod,
   multiplies,

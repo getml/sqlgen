@@ -12,6 +12,10 @@
 
 namespace sqlgen::transpilation {
 
+/// Simple abstraction to be used for the cast operation.
+template <class T>
+struct TypeHolder {};
+
 template <Operator _op, class _Operand1Type, class _Operand2Type = Nothing>
 struct Operation {
   static constexpr Operator op = _op;

@@ -30,6 +30,12 @@ struct Underlying<T, Desc<Col<_name>>> {
   using Type = remove_reflection_t<rfl::field_type_t<_name, T>>;
 };
 
+template <class T, class Operand1Type, class TargetType>
+struct Underlying<
+    T, Operation<Operator::cast, Operand1Type, TypeHolder<TargetType>>> {
+  using Type = std::remove_cvref_t<TargetType>;
+};
+
 template <class T, Operator _op, class Operand1Type>
   requires((num_operands_v<_op>) == 1 &&
            (operator_category_v<_op>) == OperatorCategory::numerical)
