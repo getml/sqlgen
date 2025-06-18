@@ -227,6 +227,17 @@ const auto query = read<std::vector<Person>> |
 const auto query = read<std::vector<Person>> |
                    where("age"_c == "Homer");
 
+// Compile-time error: "age" must be aggregated or included in GROUP BY 
+const auto query = select_from<Person>(
+    "last_name"_c,
+    "age"_c 
+) | group_by("last_name"_c);
+
+// Compile-time error: Cannot add string and int 
+const auto query = select_from<Person>(
+    "last_name"_c + "age"_c 
+);
+
 // Runtime protection against SQL injection
 std::vector<Person> get_people(const auto& conn, 
                               const sqlgen::AlphaNumeric& first_name) {
