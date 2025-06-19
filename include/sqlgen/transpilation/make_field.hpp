@@ -260,7 +260,8 @@ struct MakeField<StructType, Operation<_op, Operand1Type, Operand2Type>> {
   static constexpr bool is_column = false;
 
   using Name = Nothing;
-  using Type = underlying_t<StructType, Operation<_op, Operand1Type>>;
+  using Type =
+      underlying_t<StructType, Operation<_op, Operand1Type, Operand2Type>>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;

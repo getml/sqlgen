@@ -409,6 +409,10 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Tan>) {
       return std::format("tan({})", operation_to_sql(*_s.op1));
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Trim>) {
+      return std::format("trim({}, {})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Upper>) {
       return std::format("upper({})", operation_to_sql(*_s.op1));
 

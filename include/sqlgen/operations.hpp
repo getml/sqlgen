@@ -115,6 +115,11 @@ auto ltrim(const T& _t, const U& _u) {
       .operand2 = transpilation::to_transpilation_type(_u)};
 }
 
+template <class T>
+auto ltrim(const T& _t) {
+  return ltrim(_t, std::string(" "));
+}
+
 template <class T, class U>
 auto round(const T& _t, const U& _u) {
   using Type1 =
@@ -135,6 +140,11 @@ auto rtrim(const T& _t, const U& _u) {
   return transpilation::Operation<transpilation::Operator::rtrim, Type1, Type2>{
       .operand1 = transpilation::to_transpilation_type(_t),
       .operand2 = transpilation::to_transpilation_type(_u)};
+}
+
+template <class T>
+auto rtrim(const T& _t) {
+  return rtrim(_t, std::string(" "));
 }
 
 template <class T>
@@ -170,6 +180,11 @@ auto trim(const T& _t, const U& _u) {
   return transpilation::Operation<transpilation::Operator::trim, Type1, Type2>{
       .operand1 = transpilation::to_transpilation_type(_t),
       .operand2 = transpilation::to_transpilation_type(_u)};
+}
+
+template <class T>
+auto trim(const T& _t) {
+  return trim(_t, std::string(" "));
 }
 
 template <class T>

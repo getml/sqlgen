@@ -123,7 +123,7 @@ struct Operation {
       rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Concat,
                        Cos, Divides, Exp, Floor, Length, Ln, Log2, Lower, LTrim,
                        Minus, Mod, Multiplies, Plus, Round, RTrim, Sin, Sqrt,
-                       Tan, Upper, Value>;
+                       Tan, Trim, Upper, Value>;
 
   const ReflectionType& reflection() const { return val; }
 
