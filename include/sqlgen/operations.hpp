@@ -120,6 +120,21 @@ auto ltrim(const T& _t) {
   return ltrim(_t, std::string(" "));
 }
 
+template <class StringType, class FromType, class ToType>
+auto replace(const StringType& _str, const FromType& _from, const ToType& _to) {
+  using Type1 = typename transpilation::ToTranspilationType<
+      std::remove_cvref_t<StringType>>::Type;
+  using Type2 = typename transpilation::ToTranspilationType<
+      std::remove_cvref_t<FromType>>::Type;
+  using Type3 = typename transpilation::ToTranspilationType<
+      std::remove_cvref_t<ToType>>::Type;
+  return transpilation::Operation<transpilation::Operator::replace, Type1,
+                                  Type2, Type3>{
+      .operand1 = transpilation::to_transpilation_type(_str),
+      .operand2 = transpilation::to_transpilation_type(_from),
+      .operand3 = transpilation::to_transpilation_type(_to)};
+}
+
 template <class T, class U>
 auto round(const T& _t, const U& _u) {
   using Type1 =

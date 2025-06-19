@@ -21,6 +21,7 @@ enum class Operator {
   mod,
   multiplies,
   plus,
+  replace,
   round,
   rtrim,
   sin,

@@ -206,6 +206,36 @@ struct MakeField<StructType,
   }
 };
 
+template <class StructType, class Operand1Type, class Operand2Type,
+          class Operand3Type>
+struct MakeField<StructType, Operation<Operator::replace, Operand1Type,
+                                       Operand2Type, Operand3Type>> {
+  static constexpr bool is_aggregation = false;
+  static constexpr bool is_column = false;
+
+  using Name = Nothing;
+  using Type =
+      underlying_t<StructType, Operation<Operator::replace, Operand1Type,
+                                         Operand2Type, Operand3Type>>;
+
+  dynamic::SelectFrom::Field operator()(const auto& _o) const {
+    return dynamic::SelectFrom::Field{
+        dynamic::Operation{dynamic::Operation::Replace{
+            .op1 = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
+                    _o.operand1)
+                    .val),
+            .op2 = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<Operand2Type>>{}(
+                    _o.operand2)
+                    .val),
+            .op3 = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<Operand3Type>>{}(
+                    _o.operand3)
+                    .val)}}};
+  }
+};
+
 template <class StructType, class Operand1Type, class Operand2Type>
 struct MakeField<StructType,
                  Operation<Operator::round, Operand1Type, Operand2Type>> {

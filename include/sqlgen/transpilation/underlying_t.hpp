@@ -37,21 +37,6 @@ struct Underlying<
   using Type = std::remove_cvref_t<TargetType>;
 };
 
-template <class T, class Operand1Type, class Operand2Type>
-struct Underlying<T, Operation<Operator::round, Operand1Type, Operand2Type>> {
-  using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
-  using Underlying2 =
-      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
-
-  static_assert(std::is_integral_v<remove_nullable_t<Underlying1>> ||
-                    std::is_floating_point_v<remove_nullable_t<Underlying1>>,
-                "Must be a numerical type");
-  static_assert(std::is_integral_v<Underlying2>, "Must be an integral type");
-
-  using Type = Underlying1;
-};
-
 template <class T, class... OperandTypes>
 struct Underlying<T, Operation<Operator::concat, rfl::Tuple<OperandTypes...>>> {
   static_assert(
@@ -66,6 +51,44 @@ struct Underlying<T, Operation<Operator::concat, rfl::Tuple<OperandTypes...>>> {
                           is_nullable_v<typename Underlying<
                               T, std::remove_cvref_t<OperandTypes>>::Type>),
                          std::optional<std::string>, std::string>;
+};
+
+template <class T, class Operand1Type, class Operand2Type, class Operand3Type>
+struct Underlying<
+    T, Operation<Operator::replace, Operand1Type, Operand2Type, Operand3Type>> {
+  using Underlying1 =
+      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+  using Underlying2 =
+      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+  using Underlying3 =
+      typename Underlying<T, std::remove_cvref_t<Operand3Type>>::Type;
+
+  static_assert(std::is_same_v<remove_nullable_t<Underlying1>, std::string>,
+                "Must be a string");
+  static_assert(std::is_same_v<remove_nullable_t<Underlying2>, std::string>,
+                "Must be a string");
+  static_assert(std::is_same_v<remove_nullable_t<Underlying3>, std::string>,
+                "Must be a string");
+
+  using Type = std::conditional_t<is_nullable_v<Underlying1> ||
+                                      is_nullable_v<Underlying2> ||
+                                      is_nullable_v<Underlying3>,
+                                  std::optional<std::string>, std::string>;
+};
+
+template <class T, class Operand1Type, class Operand2Type>
+struct Underlying<T, Operation<Operator::round, Operand1Type, Operand2Type>> {
+  using Underlying1 =
+      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+  using Underlying2 =
+      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+
+  static_assert(std::is_integral_v<remove_nullable_t<Underlying1>> ||
+                    std::is_floating_point_v<remove_nullable_t<Underlying1>>,
+                "Must be a numerical type");
+  static_assert(std::is_integral_v<Underlying2>, "Must be an integral type");
+
+  using Type = Underlying1;
 };
 
 template <class T, Operator _op, class Operand1Type>

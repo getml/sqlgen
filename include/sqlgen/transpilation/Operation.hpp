@@ -16,15 +16,18 @@ namespace sqlgen::transpilation {
 template <class T>
 struct TypeHolder {};
 
-template <Operator _op, class _Operand1Type, class _Operand2Type = Nothing>
+template <Operator _op, class _Operand1Type, class _Operand2Type = Nothing,
+          class _Operand3Type = Nothing>
 struct Operation {
   static constexpr Operator op = _op;
 
   using Operand1Type = _Operand1Type;
   using Operand2Type = _Operand2Type;
+  using Operand3Type = _Operand3Type;
 
   Operand1Type operand1;
   Operand2Type operand2;
+  Operand3Type operand3;
 
   /// Returns an IS NULL condition.
   auto is_null() const noexcept {

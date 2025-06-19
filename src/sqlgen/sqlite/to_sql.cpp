@@ -392,6 +392,10 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       return std::format("({}) + ({})", operation_to_sql(*_s.op1),
                          operation_to_sql(*_s.op2));
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Replace>) {
+      return std::format("replace({}, {}, {})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2), operation_to_sql(*_s.op3));
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Round>) {
       return std::format("round({}, {})", operation_to_sql(*_s.op1),
                          operation_to_sql(*_s.op2));

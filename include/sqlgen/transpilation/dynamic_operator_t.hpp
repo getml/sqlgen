@@ -132,6 +132,13 @@ struct DynamicOperator<Operator::plus> {
 };
 
 template <>
+struct DynamicOperator<Operator::replace> {
+  static constexpr size_t num_operands = 3;
+  static constexpr auto category = OperatorCategory::other;
+  using Type = dynamic::Operation::Replace;
+};
+
+template <>
 struct DynamicOperator<Operator::round> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::other;

@@ -88,6 +88,12 @@ struct Operation {
     Ref<Operation> op2;
   };
 
+  struct Replace {
+    Ref<Operation> op1;
+    Ref<Operation> op2;
+    Ref<Operation> op3;
+  };
+
   struct Round {
     Ref<Operation> op1;
     Ref<Operation> op2;
@@ -122,8 +128,8 @@ struct Operation {
   using ReflectionType =
       rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Concat,
                        Cos, Divides, Exp, Floor, Length, Ln, Log2, Lower, LTrim,
-                       Minus, Mod, Multiplies, Plus, Round, RTrim, Sin, Sqrt,
-                       Tan, Trim, Upper, Value>;
+                       Minus, Mod, Multiplies, Plus, Replace, Round, RTrim, Sin,
+                       Sqrt, Tan, Trim, Upper, Value>;
 
   const ReflectionType& reflection() const { return val; }
 
