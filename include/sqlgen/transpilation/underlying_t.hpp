@@ -34,7 +34,11 @@ struct Underlying<T, Desc<Col<_name>>> {
 template <class T, class Operand1Type, class TargetType>
 struct Underlying<
     T, Operation<Operator::cast, Operand1Type, TypeHolder<TargetType>>> {
-  using Type = std::remove_cvref_t<TargetType>;
+  using Type =
+      std::conditional_t<is_nullable_v<typename Underlying<
+                             T, std::remove_cvref_t<Operand1Type>>::Type>,
+                         std::optional<std::remove_cvref_t<TargetType>>,
+                         std::remove_cvref_t<TargetType>>;
 };
 
 template <class T, class Head, class... Tail>
