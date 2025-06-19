@@ -2,6 +2,7 @@
 #define SQLGEN_TRANSPILATION_UNDERLYINGT_HPP_
 
 #include <rfl.hpp>
+#include <string>
 #include <type_traits>
 
 #include "Col.hpp"
@@ -49,6 +50,60 @@ struct Underlying<T, Operation<Operator::round, Operand1Type, Operand2Type>> {
   static_assert(std::is_integral_v<Underlying2>, "Must be an integral type");
 
   using Type = Underlying1;
+};
+
+template <class T, class... OperandTypes>
+struct Underlying<T, Operation<Operator::concat, rfl::Tuple<OperandTypes...>>> {
+  static_assert(
+      (true && ... &&
+       std::is_same_v<remove_nullable_t<typename Underlying<
+                          T, std::remove_cvref_t<OperandTypes>>::Type>,
+                      std::string>),
+      "Must be a string");
+
+  using Type =
+      std::conditional_t<(false || ... ||
+                          is_nullable_v<typename Underlying<
+                              T, std::remove_cvref_t<OperandTypes>>::Type>),
+                         std::optional<std::string>, std::string>;
+};
+
+template <class T, Operator _op, class Operand1Type>
+  requires((num_operands_v<_op>) == 1 &&
+           (operator_category_v<_op>) == OperatorCategory::string)
+struct Underlying<T, Operation<_op, Operand1Type>> {
+  using Underlying1 =
+      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+
+  static_assert(std::is_same_v<remove_nullable_t<Underlying1>, std::string>,
+                "Must be a string");
+
+  using StringType =
+      std::conditional_t<is_nullable_v<Underlying1>, std::optional<std::string>,
+                         std::string>;
+  using SizeType = std::conditional_t<is_nullable_v<Underlying1>,
+                                      std::optional<size_t>, size_t>;
+  using Type =
+      std::conditional_t<_op == Operator::length, SizeType, StringType>;
+};
+
+template <class T, Operator _op, class Operand1Type, class Operand2Type>
+  requires((num_operands_v<_op>) == 2 &&
+           (operator_category_v<_op>) == OperatorCategory::string)
+struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
+  using Underlying1 =
+      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+  using Underlying2 =
+      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+
+  static_assert(std::is_same_v<remove_nullable_t<Underlying1>, std::string>,
+                "Must be a string");
+  static_assert(std::is_same_v<remove_nullable_t<Underlying2>, std::string>,
+                "Must be a string");
+
+  using Type = std::conditional_t<is_nullable_v<Underlying1> ||
+                                      is_nullable_v<Underlying2>,
+                                  std::optional<std::string>, std::string>;
 };
 
 template <class T, Operator _op, class Operand1Type>

@@ -42,6 +42,8 @@ TEST(postgres, test_operations) {
     int abs_age;
     double exp_age;
     double sqrt_age;
+    size_t length_first_name;
+    std::string full_name;
   };
 
   const auto get_children =
@@ -51,7 +53,9 @@ TEST(postgres, test_operations) {
           abs("age"_c * (-1)) | as<"abs_age">,
           round(exp(cast<double>("age"_c)), 2) | as<"exp_age">,
           round(sqrt(cast<double>("age"_c)), 2) | as<"sqrt_age">,
-          ("id"_c + 2 - "age"_c) | as<"id_plus_2_minus_age">) |
+          ("id"_c + 2 - "age"_c) | as<"id_plus_2_minus_age">,
+          length("first_name"_c) | as<"length_first_name">,
+          concat("first_name"_c, " ", "last_name"_c) | as<"full_name">) |
       where("age"_c < 18) | order_by("age"_c.desc()) |
       to<std::vector<Children>>;
 
@@ -62,7 +66,7 @@ TEST(postgres, test_operations) {
                             .value();
 
   const std::string expected =
-      R"([{"id_plus_age":11,"age_times_2":20,"id_plus_2_minus_age":-7,"age_mod_3":1,"abs_age":10,"exp_age":22026.47,"sqrt_age":3.16},{"id_plus_age":10,"age_times_2":16,"id_plus_2_minus_age":-4,"age_mod_3":2,"abs_age":8,"exp_age":2980.96,"sqrt_age":2.83},{"id_plus_age":3,"age_times_2":0,"id_plus_2_minus_age":5,"age_mod_3":0,"abs_age":0,"exp_age":1.0,"sqrt_age":0.0}])";
+      R"([{"id_plus_age":11,"age_times_2":20,"id_plus_2_minus_age":-7,"age_mod_3":1,"abs_age":10,"exp_age":22026.47,"sqrt_age":3.16,"length_first_name":4,"full_name":"Bart Simpson"},{"id_plus_age":10,"age_times_2":16,"id_plus_2_minus_age":-4,"age_mod_3":2,"abs_age":8,"exp_age":2980.96,"sqrt_age":2.83,"length_first_name":4,"full_name":"Lisa Simpson"},{"id_plus_age":3,"age_times_2":0,"id_plus_2_minus_age":5,"age_mod_3":0,"abs_age":0,"exp_age":1.0,"sqrt_age":0.0,"length_first_name":6,"full_name":"Maggie Simpson"}])";
 
   EXPECT_EQ(rfl::json::write(children), expected);
 }

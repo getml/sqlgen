@@ -2,6 +2,7 @@
 #define SQLGEN_DYNAMIC_OPERATION_HPP_
 
 #include <rfl.hpp>
+#include <vector>
 
 #include "../Ref.hpp"
 #include "Aggregation.hpp"
@@ -25,6 +26,10 @@ struct Operation {
     Ref<Operation> op1;
   };
 
+  struct Concat {
+    std::vector<Ref<Operation>> ops;
+  };
+
   struct Cos {
     Ref<Operation> op1;
   };
@@ -42,8 +47,21 @@ struct Operation {
     Ref<Operation> op1;
   };
 
+  struct Length {
+    Ref<Operation> op1;
+  };
+
   struct Ln {
     Ref<Operation> op1;
+  };
+
+  struct Lower {
+    Ref<Operation> op1;
+  };
+
+  struct LTrim {
+    Ref<Operation> op1;
+    Ref<Operation> op2;
   };
 
   struct Log2 {
@@ -75,6 +93,11 @@ struct Operation {
     Ref<Operation> op2;
   };
 
+  struct RTrim {
+    Ref<Operation> op1;
+    Ref<Operation> op2;
+  };
+
   struct Sin {
     Ref<Operation> op1;
   };
@@ -87,10 +110,20 @@ struct Operation {
     Ref<Operation> op1;
   };
 
+  struct Trim {
+    Ref<Operation> op1;
+    Ref<Operation> op2;
+  };
+
+  struct Upper {
+    Ref<Operation> op1;
+  };
+
   using ReflectionType =
-      rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Cos,
-                       Divides, Exp, Floor, Ln, Log2, Minus, Mod, Multiplies,
-                       Plus, Round, Sin, Sqrt, Tan, Value>;
+      rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Concat,
+                       Cos, Divides, Exp, Floor, Length, Ln, Log2, Lower, LTrim,
+                       Minus, Mod, Multiplies, Plus, Round, RTrim, Sin, Sqrt,
+                       Tan, Upper, Value>;
 
   const ReflectionType& reflection() const { return val; }
 

@@ -27,6 +27,13 @@ struct ToTranspilationType<const char*> {
   Type operator()(const char* _val) const noexcept { return make_value(_val); }
 };
 
+template <int _length>
+struct ToTranspilationType<char[_length]> {
+  using Type = Value<std::string>;
+
+  Type operator()(const char* _val) const noexcept { return make_value(_val); }
+};
+
 template <AggregationOp _agg, class _ValueType>
 struct ToTranspilationType<Aggregation<_agg, _ValueType>> {
   using Type = Aggregation<_agg, _ValueType>;

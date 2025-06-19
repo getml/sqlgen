@@ -1,6 +1,8 @@
 #ifndef SQLGEN_TRANSPILATION_DYNAMICOPERATORT_HPP_
 #define SQLGEN_TRANSPILATION_DYNAMICOPERATORT_HPP_
 
+#include <limits>
+
 #include "../dynamic/Operation.hpp"
 #include "Operator.hpp"
 #include "OperatorCategory.hpp"
@@ -32,6 +34,13 @@ struct DynamicOperator<Operator::ceil> {
 };
 
 template <>
+struct DynamicOperator<Operator::concat> {
+  static constexpr size_t num_operands = std::numeric_limits<size_t>::max();
+  static constexpr auto category = OperatorCategory::string;
+  using Type = dynamic::Operation::Concat;
+};
+
+template <>
 struct DynamicOperator<Operator::cos> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;
@@ -60,6 +69,13 @@ struct DynamicOperator<Operator::floor> {
 };
 
 template <>
+struct DynamicOperator<Operator::length> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::string;
+  using Type = dynamic::Operation::Length;
+};
+
+template <>
 struct DynamicOperator<Operator::ln> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;
@@ -71,6 +87,20 @@ struct DynamicOperator<Operator::log2> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Log2;
+};
+
+template <>
+struct DynamicOperator<Operator::lower> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::string;
+  using Type = dynamic::Operation::Lower;
+};
+
+template <>
+struct DynamicOperator<Operator::ltrim> {
+  static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::string;
+  using Type = dynamic::Operation::LTrim;
 };
 
 template <>
@@ -109,6 +139,13 @@ struct DynamicOperator<Operator::round> {
 };
 
 template <>
+struct DynamicOperator<Operator::rtrim> {
+  static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::string;
+  using Type = dynamic::Operation::RTrim;
+};
+
+template <>
 struct DynamicOperator<Operator::sin> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;
@@ -127,6 +164,20 @@ struct DynamicOperator<Operator::tan> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Tan;
+};
+
+template <>
+struct DynamicOperator<Operator::trim> {
+  static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::string;
+  using Type = dynamic::Operation::Trim;
+};
+
+template <>
+struct DynamicOperator<Operator::upper> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::string;
+  using Type = dynamic::Operation::Upper;
 };
 
 template <Operator op>

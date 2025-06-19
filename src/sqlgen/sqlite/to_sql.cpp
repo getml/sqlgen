@@ -319,6 +319,7 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
 }
 
 std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
+  using namespace std::ranges::views;
   return _stmt.val.visit([](const auto& _s) -> std::string {
     using Type = std::remove_cvref_t<decltype(_s)>;
     if constexpr (std::is_same_v<Type, dynamic::Operation::Abs>) {
@@ -337,6 +338,15 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     } else if constexpr (std::is_same_v<Type, dynamic::Column>) {
       return column_or_value_to_sql(_s);
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Concat>) {
+      return "(" +
+             internal::strings::join(
+                 " || ", internal::collect::vector(
+                             _s.ops | transform([](const auto& _op) {
+                               return operation_to_sql(*_op);
+                             }))) +
+             ")";
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cos>) {
       return std::format("cos({})", operation_to_sql(*_s.op1));
 
@@ -350,11 +360,21 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Floor>) {
       return std::format("floor({})", operation_to_sql(*_s.op1));
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Length>) {
+      return std::format("length({})", operation_to_sql(*_s.op1));
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Ln>) {
       return std::format("ln({})", operation_to_sql(*_s.op1));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Log2>) {
       return std::format("log2({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Lower>) {
+      return std::format("lower({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::LTrim>) {
+      return std::format("ltrim({}, {})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Minus>) {
       return std::format("({}) - ({})", operation_to_sql(*_s.op1),
@@ -376,6 +396,10 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       return std::format("round({}, {})", operation_to_sql(*_s.op1),
                          operation_to_sql(*_s.op2));
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::RTrim>) {
+      return std::format("rtrim({}, {})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Sin>) {
       return std::format("sin({})", operation_to_sql(*_s.op1));
 
@@ -384,6 +408,9 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Tan>) {
       return std::format("tan({})", operation_to_sql(*_s.op1));
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Upper>) {
+      return std::format("upper({})", operation_to_sql(*_s.op1));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Value>) {
       return column_or_value_to_sql(_s);

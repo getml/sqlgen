@@ -7,20 +7,27 @@ enum class Operator {
   abs,
   cast,
   ceil,
+  concat,
   cos,
   divides,
   exp,
   floor,
+  length,
   ln,
   log2,
+  lower,
+  ltrim,
   minus,
   mod,
   multiplies,
   plus,
   round,
+  rtrim,
   sin,
   sqrt,
-  tan
+  tan,
+  trim,
+  upper
 };
 
 }  // namespace sqlgen::transpilation
