@@ -102,6 +102,13 @@ struct DynamicOperator<Operator::plus> {
 };
 
 template <>
+struct DynamicOperator<Operator::round> {
+  static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::other;
+  using Type = dynamic::Operation::Round;
+};
+
+template <>
 struct DynamicOperator<Operator::sin> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;

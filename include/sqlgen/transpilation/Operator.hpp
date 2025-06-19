@@ -17,6 +17,7 @@ enum class Operator {
   mod,
   multiplies,
   plus,
+  round,
   sin,
   sqrt,
   tan

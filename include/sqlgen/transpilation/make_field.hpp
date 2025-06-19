@@ -180,6 +180,31 @@ struct MakeField<StructType, Operation<Operator::cast, Operand1Type,
   }
 };
 
+template <class StructType, class Operand1Type, class Operand2Type>
+struct MakeField<StructType,
+                 Operation<Operator::round, Operand1Type, Operand2Type>> {
+  static constexpr bool is_aggregation = false;
+  static constexpr bool is_column = false;
+
+  using Name = Nothing;
+  using Type =
+      underlying_t<StructType,
+                   Operation<Operator::round, Operand1Type, Operand2Type>>;
+
+  dynamic::SelectFrom::Field operator()(const auto& _o) const {
+    return dynamic::SelectFrom::Field{
+        dynamic::Operation{dynamic::Operation::Round{
+            .op1 = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
+                    _o.operand1)
+                    .val),
+            .op2 = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<Operand2Type>>{}(
+                    _o.operand2)
+                    .val)}}};
+  }
+};
+
 template <class StructType, Operator _op, class Operand1Type>
   requires((num_operands_v<_op>) == 1 &&
            (operator_category_v<_op>) == OperatorCategory::numerical)

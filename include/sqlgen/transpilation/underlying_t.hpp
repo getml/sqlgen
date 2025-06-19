@@ -36,6 +36,21 @@ struct Underlying<
   using Type = std::remove_cvref_t<TargetType>;
 };
 
+template <class T, class Operand1Type, class Operand2Type>
+struct Underlying<T, Operation<Operator::round, Operand1Type, Operand2Type>> {
+  using Underlying1 =
+      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+  using Underlying2 =
+      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+
+  static_assert(std::is_integral_v<remove_nullable_t<Underlying1>> ||
+                    std::is_floating_point_v<remove_nullable_t<Underlying1>>,
+                "Must be a numerical type");
+  static_assert(std::is_integral_v<Underlying2>, "Must be an integral type");
+
+  using Type = Underlying1;
+};
+
 template <class T, Operator _op, class Operand1Type>
   requires((num_operands_v<_op>) == 1 &&
            (operator_category_v<_op>) == OperatorCategory::numerical)

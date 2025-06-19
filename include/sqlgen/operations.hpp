@@ -77,6 +77,17 @@ auto log2(const T& _t) {
       .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
+template <class T, class U>
+auto round(const T& _t, const U& _u) {
+  using Type1 =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  using Type2 =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<U>>::Type;
+  return transpilation::Operation<transpilation::Operator::round, Type1, Type2>{
+      .operand1 = transpilation::to_transpilation_type(_t),
+      .operand2 = transpilation::to_transpilation_type(_u)};
+}
+
 template <class T>
 auto sin(const T& _t) {
   using Type =

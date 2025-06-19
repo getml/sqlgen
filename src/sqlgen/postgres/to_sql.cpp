@@ -412,6 +412,10 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       return std::format("({}) + ({})", operation_to_sql(*_s.op1),
                          operation_to_sql(*_s.op2));
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Round>) {
+      return std::format("round({}, {})", operation_to_sql(*_s.op1),
+                         operation_to_sql(*_s.op2));
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Sin>) {
       return std::format("sin({})", operation_to_sql(*_s.op1));
 
@@ -527,10 +531,9 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
     } else if constexpr (std::is_same_v<T, dynamic::types::Int64> ||
                          std::is_same_v<T, dynamic::types::UInt64>) {
       return "BIGINT";
-    } else if constexpr (std::is_same_v<T, dynamic::types::Float32>) {
-      return "REAL";
-    } else if constexpr (std::is_same_v<T, dynamic::types::Float64>) {
-      return "DOUBLE PRECISION";
+    } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
+                         std::is_same_v<T, dynamic::types::Float64>) {
+      return "NUMERIC";
     } else if constexpr (std::is_same_v<T, dynamic::types::Text>) {
       return "TEXT";
     } else if constexpr (std::is_same_v<T, dynamic::types::VarChar>) {
