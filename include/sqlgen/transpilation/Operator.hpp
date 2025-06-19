@@ -7,6 +7,7 @@ enum class Operator {
   abs,
   cast,
   ceil,
+  coalesce,
   concat,
   cos,
   divides,

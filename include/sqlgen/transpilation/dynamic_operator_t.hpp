@@ -34,6 +34,13 @@ struct DynamicOperator<Operator::ceil> {
 };
 
 template <>
+struct DynamicOperator<Operator::coalesce> {
+  static constexpr size_t num_operands = std::numeric_limits<size_t>::max();
+  static constexpr auto category = OperatorCategory::other;
+  using Type = dynamic::Operation::Coalesce;
+};
+
+template <>
 struct DynamicOperator<Operator::concat> {
   static constexpr size_t num_operands = std::numeric_limits<size_t>::max();
   static constexpr auto category = OperatorCategory::string;

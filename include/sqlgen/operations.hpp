@@ -37,15 +37,24 @@ auto ceil(const T& _t) {
       .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
-template <class T, class... Ts>
-auto concat(const T& _t, const Ts&... _ts) {
-  using Type = rfl::Tuple<
-      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type,
-      typename transpilation::ToTranspilationType<
-          std::remove_cvref_t<Ts>>::Type...>;
+template <class... Ts>
+auto coalesce(const Ts&... _ts) {
+  static_assert(sizeof...(_ts) > 1,
+                "coalesce(...) must have at least two inputs.");
+  using Type = rfl::Tuple<typename transpilation::ToTranspilationType<
+      std::remove_cvref_t<Ts>>::Type...>;
+  return transpilation::Operation<transpilation::Operator::coalesce, Type>{
+      .operand1 = Type(transpilation::to_transpilation_type(_ts)...)};
+}
+
+template <class... Ts>
+auto concat(const Ts&... _ts) {
+  static_assert(sizeof...(_ts) > 0,
+                "concat(...) must have at least one input.");
+  using Type = rfl::Tuple<typename transpilation::ToTranspilationType<
+      std::remove_cvref_t<Ts>>::Type...>;
   return transpilation::Operation<transpilation::Operator::concat, Type>{
-      .operand1 = Type(transpilation::to_transpilation_type(_t),
-                       transpilation::to_transpilation_type(_ts)...)};
+      .operand1 = Type(transpilation::to_transpilation_type(_ts)...)};
 }
 
 template <class T>

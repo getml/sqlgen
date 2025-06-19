@@ -26,6 +26,10 @@ struct Operation {
     Ref<Operation> op1;
   };
 
+  struct Coalesce {
+    std::vector<Ref<Operation>> ops;
+  };
+
   struct Concat {
     std::vector<Ref<Operation>> ops;
   };
@@ -126,10 +130,10 @@ struct Operation {
   };
 
   using ReflectionType =
-      rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Concat,
-                       Cos, Divides, Exp, Floor, Length, Ln, Log2, Lower, LTrim,
-                       Minus, Mod, Multiplies, Plus, Replace, Round, RTrim, Sin,
-                       Sqrt, Tan, Trim, Upper, Value>;
+      rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Coalesce,
+                       Concat, Cos, Divides, Exp, Floor, Length, Ln, Log2,
+                       Lower, LTrim, Minus, Mod, Multiplies, Plus, Replace,
+                       Round, RTrim, Sin, Sqrt, Tan, Trim, Upper, Value>;
 
   const ReflectionType& reflection() const { return val; }
 

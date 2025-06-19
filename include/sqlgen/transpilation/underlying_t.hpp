@@ -37,6 +37,23 @@ struct Underlying<
   using Type = std::remove_cvref_t<TargetType>;
 };
 
+template <class T, class Head, class... Tail>
+struct Underlying<T, Operation<Operator::coalesce, rfl::Tuple<Head, Tail...>>> {
+  using Operand1Type = typename Underlying<T, std::remove_cvref_t<Head>>::Type;
+
+  static_assert((true && ... &&
+                 std::is_same_v<remove_nullable_t<Operand1Type>,
+                                remove_nullable_t<typename Underlying<
+                                    T, std::remove_cvref_t<Tail>>::Type>>),
+                "All inputs into coalesce(...) must have the same type.");
+
+  using Type = std::conditional_t<
+      (is_nullable_v<Operand1Type> && ... &&
+       is_nullable_v<typename Underlying<T, std::remove_cvref_t<Tail>>::Type>),
+      std::optional<remove_nullable_t<Operand1Type>>,
+      remove_nullable_t<Operand1Type>>;
+};
+
 template <class T, class... OperandTypes>
 struct Underlying<T, Operation<Operator::concat, rfl::Tuple<OperandTypes...>>> {
   static_assert(

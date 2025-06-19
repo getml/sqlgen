@@ -369,7 +369,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       return aggregation_to_sql(_s);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cast>) {
-      return std::format("CAST({} AS {})", operation_to_sql(*_s.op1),
+      return std::format("cast({} as {})", operation_to_sql(*_s.op1),
                          type_to_sql(_s.target_type));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Ceil>) {
@@ -377,6 +377,15 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type, dynamic::Column>) {
       return column_or_value_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Coalesce>) {
+      return "coalesce(" +
+             internal::strings::join(
+                 ", ", internal::collect::vector(
+                           _s.ops | transform([](const auto& _op) {
+                             return operation_to_sql(*_op);
+                           }))) +
+             ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Concat>) {
       return "(" +
