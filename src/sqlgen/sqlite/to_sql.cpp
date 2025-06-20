@@ -1,4 +1,3 @@
-#include <format>
 #include <ranges>
 #include <rfl.hpp>
 #include <sstream>
@@ -52,28 +51,29 @@ std::string aggregation_to_sql(
     const dynamic::Aggregation& _aggregation) noexcept {
   return _aggregation.val.visit([](const auto& _agg) -> std::string {
     using Type = std::remove_cvref_t<decltype(_agg)>;
-
+    std::stringstream stream;
     if constexpr (std::is_same_v<Type, dynamic::Aggregation::Avg>) {
-      return std::format("AVG({})", column_or_value_to_sql(_agg.val));
+      stream << "AVG(" << column_or_value_to_sql(_agg.val) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Count>) {
       const auto val =
           std::string(_agg.val && _agg.distinct ? "DISTINCT " : "") +
           (_agg.val ? column_or_value_to_sql(*_agg.val) : std::string("*"));
-      return std::format("COUNT({})", val);
+      stream << "COUNT(" << val << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Max>) {
-      return std::format("MAX({})", column_or_value_to_sql(_agg.val));
+      stream << "MAX(" << column_or_value_to_sql(_agg.val) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Min>) {
-      return std::format("MIN({})", column_or_value_to_sql(_agg.val));
+      stream << "MIN(" << column_or_value_to_sql(_agg.val) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Sum>) {
-      return std::format("SUM({})", column_or_value_to_sql(_agg.val));
+      stream << "SUM(" << column_or_value_to_sql(_agg.val) << ")";
 
     } else {
       static_assert(rfl::always_false_v<Type>, "Not all cases were covered.");
     }
+    return stream.str();
   });
 }
 
@@ -113,55 +113,58 @@ template <class ConditionType>
 std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
   using C = std::remove_cvref_t<ConditionType>;
 
+  std::stringstream stream;
+
   if constexpr (std::is_same_v<C, dynamic::Condition::And>) {
-    return std::format("({}) AND ({})", condition_to_sql(*_condition.cond1),
-                       condition_to_sql(*_condition.cond2));
+    stream << "(" << condition_to_sql(*_condition.cond1) << ") AND ("
+           << condition_to_sql(*_condition.cond2) << ")";
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::Equal>) {
-    return std::format("{} = {}", operation_to_sql(_condition.op1),
-                       operation_to_sql(_condition.op2));
+    stream << operation_to_sql(_condition.op1) << " = "
+           << operation_to_sql(_condition.op2);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::GreaterEqual>) {
-    return std::format("{} >= {}", operation_to_sql(_condition.op1),
-                       operation_to_sql(_condition.op2));
+    stream << operation_to_sql(_condition.op1)
+           << " >= " << operation_to_sql(_condition.op2);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::GreaterThan>) {
-    return std::format("{} > {}", operation_to_sql(_condition.op1),
-                       operation_to_sql(_condition.op2));
+    stream << operation_to_sql(_condition.op1) << " > "
+           << operation_to_sql(_condition.op2);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::IsNull>) {
-    return std::format("{} IS NULL", operation_to_sql(_condition.op));
+    stream << operation_to_sql(_condition.op) << " IS NULL";
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::IsNotNull>) {
-    return std::format("{} IS NOT NULL", operation_to_sql(_condition.op));
+    stream << operation_to_sql(_condition.op) << " IS NOT NULL";
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::LesserEqual>) {
-    return std::format("{} <= {}", operation_to_sql(_condition.op1),
-                       operation_to_sql(_condition.op2));
+    stream << operation_to_sql(_condition.op1)
+           << " <= " << operation_to_sql(_condition.op2);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::LesserThan>) {
-    return std::format("{} < {}", operation_to_sql(_condition.op1),
-                       operation_to_sql(_condition.op2));
+    stream << operation_to_sql(_condition.op1) << " < "
+           << operation_to_sql(_condition.op2);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::Like>) {
-    return std::format("{} LIKE {}", operation_to_sql(_condition.op),
-                       column_or_value_to_sql(_condition.pattern));
+    stream << operation_to_sql(_condition.op) << " LIKE "
+           << column_or_value_to_sql(_condition.pattern);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::NotEqual>) {
-    return std::format("{} != {}", operation_to_sql(_condition.op1),
-                       operation_to_sql(_condition.op2));
+    stream << operation_to_sql(_condition.op1)
+           << " != " << operation_to_sql(_condition.op2);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::NotLike>) {
-    return std::format("{} NOT LIKE {}", operation_to_sql(_condition.op),
-                       column_or_value_to_sql(_condition.pattern));
+    stream << operation_to_sql(_condition.op) << " NOT LIKE "
+           << column_or_value_to_sql(_condition.pattern);
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::Or>) {
-    return std::format("({}) OR ({})", condition_to_sql(*_condition.cond1),
-                       condition_to_sql(*_condition.cond2));
+    stream << "(" << condition_to_sql(*_condition.cond1) << ") OR ("
+           << condition_to_sql(*_condition.cond2) << ")";
 
   } else {
     static_assert(rfl::always_false_v<C>, "Not all cases were covered.");
   }
+  return stream.str();
 }
 
 std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept {
@@ -322,119 +325,124 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
   using namespace std::ranges::views;
   return _stmt.val.visit([](const auto& _s) -> std::string {
     using Type = std::remove_cvref_t<decltype(_s)>;
+
+    std::stringstream stream;
+
     if constexpr (std::is_same_v<Type, dynamic::Operation::Abs>) {
-      return std::format("abs({})", operation_to_sql(*_s.op1));
+      stream << "abs(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation>) {
-      return aggregation_to_sql(_s);
+      stream << aggregation_to_sql(_s);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cast>) {
-      return std::format("cast({} as {})", operation_to_sql(*_s.op1),
-                         type_to_sql(_s.target_type));
+      stream << "cast(" << operation_to_sql(*_s.op1) << " as "
+             << type_to_sql(_s.target_type) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Coalesce>) {
-      return "coalesce(" +
-             internal::strings::join(
-                 ", ", internal::collect::vector(
-                           _s.ops | transform([](const auto& _op) {
-                             return operation_to_sql(*_op);
-                           }))) +
-             ")";
+      stream << "coalesce("
+             << internal::strings::join(
+                    ", ", internal::collect::vector(
+                              _s.ops | transform([](const auto& _op) {
+                                return operation_to_sql(*_op);
+                              })))
+             << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Ceil>) {
-      return std::format("ceil({})", operation_to_sql(*_s.op1));
+      stream << "ceil(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Column>) {
-      return column_or_value_to_sql(_s);
+      stream << column_or_value_to_sql(_s);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Concat>) {
-      return "(" +
-             internal::strings::join(
-                 " || ", internal::collect::vector(
-                             _s.ops | transform([](const auto& _op) {
-                               return operation_to_sql(*_op);
-                             }))) +
-             ")";
+      stream << "("
+             << internal::strings::join(
+                    " || ", internal::collect::vector(
+                                _s.ops | transform([](const auto& _op) {
+                                  return operation_to_sql(*_op);
+                                })))
+             << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cos>) {
-      return std::format("cos({})", operation_to_sql(*_s.op1));
+      stream << "cos(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Divides>) {
-      return std::format("({}) / ({})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "(" << operation_to_sql(*_s.op1) << ") / ("
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Exp>) {
-      return std::format("exp({})", operation_to_sql(*_s.op1));
+      stream << "exp(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Floor>) {
-      return std::format("floor({})", operation_to_sql(*_s.op1));
+      stream << "floor(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Length>) {
-      return std::format("length({})", operation_to_sql(*_s.op1));
+      stream << "length(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Ln>) {
-      return std::format("ln({})", operation_to_sql(*_s.op1));
+      stream << "ln(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Log2>) {
-      return std::format("log2({})", operation_to_sql(*_s.op1));
+      stream << "log2(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Lower>) {
-      return std::format("lower({})", operation_to_sql(*_s.op1));
+      stream << "lower(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::LTrim>) {
-      return std::format("ltrim({}, {})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "ltrim(" << operation_to_sql(*_s.op1) << ", "
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Minus>) {
-      return std::format("({}) - ({})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "(" << operation_to_sql(*_s.op1) << ") - ("
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Mod>) {
-      return std::format("mod({}, {})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "mod(" << operation_to_sql(*_s.op1) << ", "
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Multiplies>) {
-      return std::format("({}) * ({})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "(" << operation_to_sql(*_s.op1) << ") * ("
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Plus>) {
-      return std::format("({}) + ({})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "(" << operation_to_sql(*_s.op1) << ") + ("
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Replace>) {
-      return std::format("replace({}, {}, {})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2), operation_to_sql(*_s.op3));
+      stream << "replace(" << operation_to_sql(*_s.op1) << ", "
+             << operation_to_sql(*_s.op2) << ", " << operation_to_sql(*_s.op3)
+             << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Round>) {
-      return std::format("round({}, {})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "round(" << operation_to_sql(*_s.op1) << ", "
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::RTrim>) {
-      return std::format("rtrim({}, {})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "rtrim(" << operation_to_sql(*_s.op1) << ", "
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Sin>) {
-      return std::format("sin({})", operation_to_sql(*_s.op1));
+      stream << "sin(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Sqrt>) {
-      return std::format("sqrt({})", operation_to_sql(*_s.op1));
+      stream << "sqrt(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Tan>) {
-      return std::format("tan({})", operation_to_sql(*_s.op1));
+      stream << "tan(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Trim>) {
-      return std::format("trim({}, {})", operation_to_sql(*_s.op1),
-                         operation_to_sql(*_s.op2));
+      stream << "trim(" << operation_to_sql(*_s.op1) << ", "
+             << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Upper>) {
-      return std::format("upper({})", operation_to_sql(*_s.op1));
+      stream << "upper(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Value>) {
-      return column_or_value_to_sql(_s);
+      stream << column_or_value_to_sql(_s);
 
     } else {
       static_assert(rfl::always_false_v<Type>, "Unsupported type.");
     }
+    return stream.str();
   });
 }
 
