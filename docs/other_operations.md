@@ -93,7 +93,7 @@ replace("first_name"_c, "Bart", "Hugo") | as<"first_name_replaced">
 Concatenates multiple strings or expressions.
 
 ```cpp
-concat(ltrim("first_name"_c), " ", rtrim("last_name"_c)) | as<"full_name">
+concat("first_name"_c, " ", "last_name"_c) | as<"full_name">
 concat(upper("last_name"_c), ", ", "first_name"_c) | as<"full_name">
 ```
 
@@ -135,7 +135,7 @@ When using these operations on nullable columns (e.g., `std::optional<T>`), the 
 - **Unary operations** (e.g., `abs`, `upper`, `sqrt`):
   - If the operand is nullable (`std::optional<T>`), the result is also nullable.
   - If the operand is not nullable, the result is not nullable.
-- **Binary operations** (e.g., `+`, `concat`, `replace`, etc.):
+- **Binary or ternary operations** (e.g., `+`, `concat`, `replace`, etc.):
   - If *any* operand is nullable, the result is nullable (`std::optional<ResultType>`).
   - If *all* operands are non-nullable, the result is non-nullable.
 - **Type conversion (`cast`)**:
@@ -178,15 +178,13 @@ coalesce(std::optional<std::string>{}, "default") // -> std::string
 ```cpp
 // Provide a default for a nullable column
 coalesce("last_name"_c, "none") | as<"last_name_or_none"> // Result is std::string
-
-// All columns nullable: result is nullable
-coalesce("middle_name"_c, "nickname"_c) | as<"any_name"> // Result is std::optional<std::string>
+coalesce("middle_name"_c, "nickname"_c) | as<"any_name"> 
 ```
 
 ### Advanced: How sqlgen Enforces Nullability
 
 The nullability rules are enforced at compile time using template metaprogramming (see `underlying_t.hpp`). This ensures that:
-- You cannot accidentally assign a nullable result to a non-nullable field (or vice versa).
+- You cannot accidentally assign a nullable result to a non-nullable field.
 - All arguments to `coalesce` must have the same base type (e.g., all `int` or all `std::string`).
 - The result type of any operation is always correct and safe to use in your result structs.
 
@@ -216,11 +214,29 @@ const auto get_children = select_from<Person>(
     round(exp(cast<double>("age"_c)), 2) | as<"exp_age">,
     round(sqrt(cast<double>("age"_c)), 2) | as<"sqrt_age">,
     length(trim("first_name"_c)) | as<"length_first_name">,
-    concat(ltrim("first_name"_c), " ", rtrim("last_name"_c)) | as<"full_name">,
-    lower(ltrim(concat(" ", "first_name"_c))) | as<"first_name_lower">,
-    upper(rtrim(concat("first_name"_c, " "))) | as<"first_name_upper">,
+    concat("first_name"_c, " ", "last_name"_c) | as<"full_name">,
+    lower("first_name"_c) | as<"first_name_lower">,
+    upper("first_name"_c, " ") | as<"first_name_upper">,
     replace("first_name"_c, "Bart", "Hugo") | as<"first_name_replaced">
 ) | where("age"_c < 18) | to<std::vector<Children>>;
+```
+
+This generates the following SQL:
+
+```sql
+SELECT
+    ("id" + "age") AS "id_plus_age",
+    ("age" * 2) AS "age_times_2",
+    ABS(("age" * -1)) AS "abs_age",
+    ROUND(EXP(CAST("age" AS NUMERIC)), 2) AS "exp_age",
+    ROUND(SQRT(CAST("age" AS NUMERIC)), 2) AS "sqrt_age",
+    LENGTH(TRIM("first_name")) AS "length_first_name",
+    ("first_name" || ' ' || "last_name") AS "full_name",
+    LOWER("first_name") AS "first_name_lower",
+    UPPER("first_name") AS "first_name_upper",
+    REPLACE("first_name", 'Bart', 'Hugo') AS "first_name_replaced"
+FROM "Person"
+WHERE "age" < 18;
 ```
 
 ---
