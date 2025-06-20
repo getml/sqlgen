@@ -20,7 +20,8 @@
       "dependencies": [
         {
           "name": "sqlite3",
-          "version>=": "3.49.1"
+          "version>=": "3.49.1",
+          "features": ["math"]
         }
       ]
     },

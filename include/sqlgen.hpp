@@ -30,6 +30,7 @@
 #include "sqlgen/insert.hpp"
 #include "sqlgen/is_connection.hpp"
 #include "sqlgen/limit.hpp"
+#include "sqlgen/operations.hpp"
 #include "sqlgen/order_by.hpp"
 #include "sqlgen/patterns.hpp"
 #include "sqlgen/read.hpp"

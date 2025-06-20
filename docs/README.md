@@ -26,6 +26,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::group_by and Aggregations](group_by_and_aggregations.md) - How generate GROUP BY queries and aggregate data
 - [sqlgen::insert](insert.md) - How to insert data within transactions
 - [sqlgen::update](update.md) - How to update data in a table
+- [Other Operations and Functions](other_operations.md) - How to use SQL functions like `coalesce`, `concat`, `abs`, `cast`, and more
 
 ## Data Types and Validation
 

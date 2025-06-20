@@ -6,6 +6,7 @@
 #include "../Ref.hpp"
 #include "Column.hpp"
 #include "ColumnOrValue.hpp"
+#include "Operation.hpp"
 
 namespace sqlgen::dynamic {
 
@@ -16,50 +17,54 @@ struct Condition {
   };
 
   struct Equal {
-    Column op1;
-    ColumnOrValue op2;
+    Operation op1;
+    Operation op2;
   };
 
   struct GreaterEqual {
-    Column op1;
-    ColumnOrValue op2;
+    Operation op1;
+    Operation op2;
   };
 
   struct GreaterThan {
-    Column op1;
-    ColumnOrValue op2;
+    Operation op1;
+    Operation op2;
   };
 
   struct IsNotNull {
-    Column op;
+    Operation op;
   };
 
   struct IsNull {
-    Column op;
+    Operation op;
   };
 
   struct LesserEqual {
-    Column op1;
-    ColumnOrValue op2;
+    Operation op1;
+    Operation op2;
   };
 
   struct LesserThan {
-    Column op1;
-    ColumnOrValue op2;
+    Operation op1;
+    Operation op2;
   };
 
   struct Like {
-    Column op;
+    Operation op;
     dynamic::Value pattern;
   };
 
+  struct Not {
+    Ref<Condition> cond;
+  };
+
   struct NotEqual {
-    Column op1;
-    ColumnOrValue op2;
+    Operation op1;
+    Operation op2;
   };
 
   struct NotLike {
-    Column op;
+    Operation op;
     dynamic::Value pattern;
   };
 
@@ -70,7 +75,7 @@ struct Condition {
 
   using ReflectionType =
       rfl::TaggedUnion<"what", And, Equal, GreaterEqual, GreaterThan, IsNull,
-                       IsNotNull, LesserEqual, LesserThan, Like, NotEqual,
+                       IsNotNull, LesserEqual, LesserThan, Like, Not, NotEqual,
                        NotLike, Or>;
 
   const ReflectionType& reflection() const { return val; }

@@ -1,14 +1,12 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
-
 #include <gtest/gtest.h>
 
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
-#include <sqlgen/postgres.hpp>
+#include <sqlgen/sqlite.hpp>
 #include <vector>
 
-namespace test_where {
+namespace test_where_with_operations {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
@@ -17,7 +15,7 @@ struct Person {
   int age;
 };
 
-TEST(postgres, test_where) {
+TEST(sqlite, test_where_with_operations) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
@@ -28,20 +26,14 @@ TEST(postgres, test_where) {
        Person{
            .id = 4, .first_name = "Hugo", .last_name = "Simpson", .age = 10}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto conn = sqlgen::sqlite::connect();
+
+  sqlgen::write(conn, people1);
 
   using namespace sqlgen;
 
-  const auto conn =
-      sqlgen::postgres::connect(credentials).and_then(drop<Person> | if_exists);
-
-  sqlgen::write(conn, people1).value();
-
   const auto query = sqlgen::read<std::vector<Person>> |
-                     where("age"_c < 18 and not("first_name"_c == "Hugo")) |
+                     where("age"_c * 2 + 4 < 40 and "first_name"_c != "Hugo") |
                      order_by("age"_c);
 
   const auto people2 = query(conn).value();
@@ -52,6 +44,4 @@ TEST(postgres, test_where) {
   EXPECT_EQ(rfl::json::write(people2), expected);
 }
 
-}  // namespace test_where
-
-#endif
+}  // namespace test_where_with_operations

@@ -8,7 +8,7 @@
 #include <sqlgen/postgres.hpp>
 #include <vector>
 
-namespace test_where {
+namespace test_where_with_operations {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
@@ -17,7 +17,7 @@ struct Person {
   int age;
 };
 
-TEST(postgres, test_where) {
+TEST(postgres, test_where_with_operations) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
@@ -41,7 +41,7 @@ TEST(postgres, test_where) {
   sqlgen::write(conn, people1).value();
 
   const auto query = sqlgen::read<std::vector<Person>> |
-                     where("age"_c < 18 and not("first_name"_c == "Hugo")) |
+                     where("age"_c * 2 + 4 < 40 and "first_name"_c != "Hugo") |
                      order_by("age"_c);
 
   const auto people2 = query(conn).value();
@@ -52,6 +52,6 @@ TEST(postgres, test_where) {
   EXPECT_EQ(rfl::json::write(people2), expected);
 }
 
-}  // namespace test_where
+}  // namespace test_where_with_operations
 
 #endif

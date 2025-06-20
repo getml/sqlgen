@@ -18,7 +18,11 @@ struct String {
   std::string val;
 };
 
-using Value = rfl::TaggedUnion<"type", Float, Integer, String>;
+struct Value {
+  using ReflectionType = rfl::TaggedUnion<"type", Float, Integer, String>;
+  const auto& reflection() const { return val; }
+  ReflectionType val;
+};
 
 }  // namespace sqlgen::dynamic
 

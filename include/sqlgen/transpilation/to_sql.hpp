@@ -77,9 +77,9 @@ struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType>> {
 };
 
 template <class StructType, class FieldsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType>
+          class GroupByType, class OrderByType, class LimitType, class ToType>
 struct ToSQL<SelectFrom<StructType, FieldsType, WhereType, GroupByType,
-                        OrderByType, LimitType>> {
+                        OrderByType, LimitType, ToType>> {
   dynamic::Statement operator()(const auto& _select_from) const {
     return to_select_from<StructType, FieldsType, WhereType, GroupByType,
                           OrderByType, LimitType>(

@@ -33,7 +33,7 @@ TEST(sqlite, test_where) {
   using namespace sqlgen;
 
   const auto query = sqlgen::read<std::vector<Person>> |
-                     where("age"_c < 18 and "first_name"_c != "Hugo") |
+                     where("age"_c < 18 and not("first_name"_c == "Hugo")) |
                      order_by("age"_c);
 
   const auto people2 = query(conn).value();
