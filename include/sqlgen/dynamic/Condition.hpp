@@ -54,6 +54,10 @@ struct Condition {
     dynamic::Value pattern;
   };
 
+  struct Not {
+    Ref<Condition> cond;
+  };
+
   struct NotEqual {
     Operation op1;
     Operation op2;
@@ -71,7 +75,7 @@ struct Condition {
 
   using ReflectionType =
       rfl::TaggedUnion<"what", And, Equal, GreaterEqual, GreaterThan, IsNull,
-                       IsNotNull, LesserEqual, LesserThan, Like, NotEqual,
+                       IsNotNull, LesserEqual, LesserThan, Like, Not, NotEqual,
                        NotLike, Or>;
 
   const ReflectionType& reflection() const { return val; }

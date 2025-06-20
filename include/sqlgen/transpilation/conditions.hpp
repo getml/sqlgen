@@ -126,6 +126,13 @@ struct NotEqual {
   OpType2 op2;
 };
 
+template <class CondType>
+struct Not {
+  using ResultType = bool;
+
+  CondType cond;
+};
+
 template <class OpType1, class OpType2>
 auto not_equal(const OpType1& _op1, const OpType2& _op2) {
   return NotEqual<std::remove_cvref_t<OpType1>, std::remove_cvref_t<OpType2>>{

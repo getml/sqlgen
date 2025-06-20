@@ -11,23 +11,27 @@ template <class _ConditionType>
 struct Condition {
   using ConditionType = _ConditionType;
   ConditionType condition;
+
+  auto operator!() {
+    return make_condition(conditions::Not<_ConditionType>{.cond = condition});
+  }
+
+  template <class C2>
+  friend auto operator&&(const Condition& _cond1, const Condition<C2>& _cond2) {
+    return make_condition(conditions::And<_ConditionType, C2>{
+        .cond1 = _cond1.condition, .cond2 = _cond2.condition});
+  }
+
+  template <class C2>
+  friend auto operator||(const Condition& _cond1, const Condition<C2>& _cond2) {
+    return make_condition(conditions::Or<_ConditionType, C2>{
+        .cond1 = _cond1.condition, .cond2 = _cond2.condition});
+  }
 };
 
 template <class T>
 auto make_condition(T&& _t) {
   return Condition<std::remove_cvref_t<T>>{.condition = _t};
-}
-
-template <class C1, class C2>
-auto operator&&(const Condition<C1>& _cond1, const Condition<C2>& _cond2) {
-  return make_condition(conditions::And<C1, C2>{.cond1 = _cond1.condition,
-                                                .cond2 = _cond2.condition});
-}
-
-template <class C1, class C2>
-auto operator||(const Condition<C1>& _cond1, const Condition<C2>& _cond2) {
-  return make_condition(conditions::Or<C1, C2>{.cond1 = _cond1.condition,
-                                               .cond2 = _cond2.condition});
 }
 
 }  // namespace sqlgen::transpilation

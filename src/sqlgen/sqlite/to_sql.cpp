@@ -149,6 +149,9 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
     stream << operation_to_sql(_condition.op) << " LIKE "
            << column_or_value_to_sql(_condition.pattern);
 
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::Not>) {
+    stream << "NOT (" << condition_to_sql(*_condition.cond) << ")";
+
   } else if constexpr (std::is_same_v<C, dynamic::Condition::NotEqual>) {
     stream << operation_to_sql(_condition.op1)
            << " != " << operation_to_sql(_condition.op2);

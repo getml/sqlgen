@@ -136,6 +136,16 @@ struct ToCondition<T, conditions::IsNull<OpType>> {
   }
 };
 
+template <class T, class CondType>
+struct ToCondition<T, conditions::Not<CondType>> {
+  dynamic::Condition operator()(const auto& _cond) const {
+    return dynamic::Condition{
+        .val = dynamic::Condition::Not{
+            .cond = Ref<dynamic::Condition>::make(
+                ToCondition<T, std::remove_cvref_t<CondType>>{}(_cond.cond))}};
+  }
+};
+
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::NotEqual<Op1Type, Op2Type>> {
   static_assert(std::equality_comparable_with<underlying_t<T, Op1Type>,
