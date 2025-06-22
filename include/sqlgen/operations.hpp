@@ -155,6 +155,11 @@ auto round(const T& _t, const U& _u) {
       .operand2 = transpilation::to_transpilation_type(_u)};
 }
 
+template <class T>
+auto round(const T& _t) {
+  return round(_t, 0);
+}
+
 template <class T, class U>
 auto rtrim(const T& _t, const U& _u) {
   using Type1 =

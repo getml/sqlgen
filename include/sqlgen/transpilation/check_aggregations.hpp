@@ -49,7 +49,8 @@ struct CheckAggregation<StructType, rfl::Tuple<FieldTypes...>,
   static constexpr bool value =
       (true && ... &&
        (MakeField<StructType, FieldTypes>::is_aggregation ||
-        !MakeField<StructType, FieldTypes>::is_column ||
+        (!MakeField<StructType, FieldTypes>::is_column &&
+         !MakeField<StructType, FieldTypes>::is_operation) ||
         included_in_group_by<FieldTypes>));
 
   static_assert(value,

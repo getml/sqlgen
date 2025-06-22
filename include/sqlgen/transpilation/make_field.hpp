@@ -32,6 +32,7 @@ template <class StructType, class T>
 struct MakeField {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = false;
 
   using Name = Nothing;
   using Type = std::remove_cvref_t<T>;
@@ -49,6 +50,7 @@ struct MakeField<StructType, Col<_name>> {
 
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = true;
+  static constexpr bool is_operation = false;
 
   using Name = Literal<_name>;
   using Type = rfl::field_type_t<_name, StructType>;
@@ -63,6 +65,7 @@ template <class StructType, class T>
 struct MakeField<StructType, Value<T>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = false;
 
   using Name = Nothing;
   using Type = std::remove_cvref_t<T>;
@@ -79,6 +82,8 @@ struct MakeField<StructType, As<ValueType, _new_name>> {
   static constexpr bool is_aggregation =
       MakeField<StructType, ValueType>::is_aggregation;
   static constexpr bool is_column = MakeField<StructType, ValueType>::is_column;
+  static constexpr bool is_operation =
+      MakeField<StructType, ValueType>::is_operation;
 
   using Name = Literal<_new_name>;
   using Type =
@@ -110,6 +115,7 @@ struct MakeField<StructType, Aggregation<_agg, Col<_name>>> {
 
   static constexpr bool is_aggregation = true;
   static constexpr bool is_column = true;
+  static constexpr bool is_operation = false;
 
   using Name = Literal<_name>;
   using Type = rfl::field_type_t<_name, StructType>;
@@ -130,6 +136,7 @@ struct MakeField<StructType, Aggregation<AggregationOp::count, Col<_name>>> {
 
   static constexpr bool is_aggregation = true;
   static constexpr bool is_column = true;
+  static constexpr bool is_operation = false;
 
   using Name = Literal<_name>;
   using Type = size_t;
@@ -147,6 +154,7 @@ template <class StructType>
 struct MakeField<StructType, Aggregation<AggregationOp::count, All>> {
   static constexpr bool is_aggregation = true;
   static constexpr bool is_column = true;
+  static constexpr bool is_operation = false;
 
   using Name = Nothing;
   using Type = size_t;
@@ -164,9 +172,11 @@ struct MakeField<StructType, Operation<Operator::cast, Operand1Type,
                                        TypeHolder<TargetType>>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type = std::remove_cvref_t<TargetType>;
+  using Operands = rfl::Tuple<Operand1Type>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     return dynamic::SelectFrom::Field{
@@ -185,10 +195,12 @@ template <class StructType, Operator _op, class... OperandTypes>
 struct MakeField<StructType, Operation<_op, rfl::Tuple<OperandTypes...>>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type =
       underlying_t<StructType, Operation<_op, rfl::Tuple<OperandTypes...>>>;
+  using Operands = rfl::Tuple<OperandTypes...>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;
@@ -211,11 +223,13 @@ struct MakeField<StructType, Operation<Operator::replace, Operand1Type,
                                        Operand2Type, Operand3Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type =
       underlying_t<StructType, Operation<Operator::replace, Operand1Type,
                                          Operand2Type, Operand3Type>>;
+  using Operands = rfl::Tuple<Operand1Type, Operand2Type, Operand3Type>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     return dynamic::SelectFrom::Field{
@@ -240,11 +254,13 @@ struct MakeField<StructType,
                  Operation<Operator::round, Operand1Type, Operand2Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type =
       underlying_t<StructType,
                    Operation<Operator::round, Operand1Type, Operand2Type>>;
+  using Operands = rfl::Tuple<Operand1Type, Operand2Type>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     return dynamic::SelectFrom::Field{
@@ -266,9 +282,11 @@ template <class StructType, Operator _op, class Operand1Type>
 struct MakeField<StructType, Operation<_op, Operand1Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type = underlying_t<StructType, Operation<_op, Operand1Type>>;
+  using Operands = rfl::Tuple<Operand1Type>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;
@@ -287,10 +305,12 @@ template <class StructType, Operator _op, class Operand1Type,
 struct MakeField<StructType, Operation<_op, Operand1Type, Operand2Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type =
       underlying_t<StructType, Operation<_op, Operand1Type, Operand2Type>>;
+  using Operands = rfl::Tuple<Operand1Type, Operand2Type>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;
@@ -312,9 +332,11 @@ template <class StructType, Operator _op, class Operand1Type>
 struct MakeField<StructType, Operation<_op, Operand1Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type = underlying_t<StructType, Operation<_op, Operand1Type>>;
+  using Operands = rfl::Tuple<Operand1Type>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;
@@ -333,10 +355,12 @@ template <class StructType, Operator _op, class Operand1Type,
 struct MakeField<StructType, Operation<_op, Operand1Type, Operand2Type>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
 
   using Name = Nothing;
   using Type =
       underlying_t<StructType, Operation<_op, Operand1Type, Operand2Type>>;
+  using Operands = rfl::Tuple<Operand1Type, Operand2Type>;
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     using DynamicOperatorType = dynamic_operator_t<_op>;
