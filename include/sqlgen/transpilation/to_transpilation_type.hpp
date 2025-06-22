@@ -4,8 +4,6 @@
 #include <string>
 #include <type_traits>
 
-#include "Aggregation.hpp"
-#include "AggregationOp.hpp"
 #include "Value.hpp"
 
 namespace sqlgen::transpilation {
@@ -32,13 +30,6 @@ struct ToTranspilationType<char[_length]> {
   using Type = Value<std::string>;
 
   Type operator()(const char* _val) const noexcept { return make_value(_val); }
-};
-
-template <AggregationOp _agg, class _ValueType>
-struct ToTranspilationType<Aggregation<_agg, _ValueType>> {
-  using Type = Aggregation<_agg, _ValueType>;
-
-  Type operator()(const Type& _val) const noexcept { return _val; }
 };
 
 template <class T>

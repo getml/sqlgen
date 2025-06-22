@@ -1,11 +1,12 @@
 #ifndef SQLGEN_DYNAMIC_OPERATION_HPP_
 #define SQLGEN_DYNAMIC_OPERATION_HPP_
 
+#include <optional>
 #include <rfl.hpp>
+#include <string>
 #include <vector>
 
 #include "../Ref.hpp"
-#include "Aggregation.hpp"
 #include "Column.hpp"
 #include "Type.hpp"
 #include "Value.hpp"
@@ -15,6 +16,35 @@ namespace sqlgen::dynamic {
 struct Operation {
   struct Abs {
     Ref<Operation> op1;
+  };
+
+  struct Aggregation {
+    struct Avg {
+      Ref<Operation> val;
+    };
+
+    struct Count {
+      std::optional<Column> val;
+      bool distinct = false;
+    };
+
+    struct Max {
+      Ref<Operation> val;
+    };
+
+    struct Min {
+      Ref<Operation> val;
+    };
+
+    struct Sum {
+      Ref<Operation> val;
+    };
+
+    using ReflectionType = rfl::TaggedUnion<"what", Avg, Count, Max, Min, Sum>;
+
+    const ReflectionType& reflection() const { return val; }
+
+    ReflectionType val;
   };
 
   struct Cast {

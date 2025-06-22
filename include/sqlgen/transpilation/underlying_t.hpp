@@ -5,6 +5,8 @@
 #include <string>
 #include <type_traits>
 
+#include "Aggregation.hpp"
+#include "AggregationOp.hpp"
 #include "Col.hpp"
 #include "Desc.hpp"
 #include "Operation.hpp"
@@ -19,6 +21,11 @@ namespace sqlgen::transpilation {
 
 template <class T, class _Type>
 struct Underlying;
+
+template <class T, AggregationOp _op, class ValueType>
+struct Underlying<T, Aggregation<_op, ValueType>> {
+  using Type = typename Underlying<T, std::remove_cvref_t<ValueType>>::Type;
+};
 
 template <class T, rfl::internal::StringLiteral _name>
 struct Underlying<T, Col<_name>> {

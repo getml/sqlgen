@@ -1,4 +1,3 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
 
 #include <gtest/gtest.h>
 
@@ -6,7 +5,7 @@
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
-#include <sqlgen/postgres.hpp>
+#include <sqlgen/sqlite.hpp>
 #include <vector>
 
 namespace test_group_by_with_operations {
@@ -18,10 +17,7 @@ struct Person {
   int age;
 };
 
-TEST(postgres, test_group_by) {
-  static_assert(std::ranges::input_range<sqlgen::Range<Person>>,
-                "Must be an input range.");
-
+TEST(sqlite, test_group_by_with_operations) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
@@ -29,11 +25,6 @@ TEST(postgres, test_group_by) {
        Person{.id = 2, .first_name = "Lisa", .last_name = "Simpson", .age = 8},
        Person{
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
-
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
 
   using namespace sqlgen;
 
@@ -53,7 +44,7 @@ TEST(postgres, test_group_by) {
           round(avg(cast<double>("age"_c))).as<"avg_age">()) |
       where("age"_c < 18) | group_by("last_name"_c) | to<std::vector<Children>>;
 
-  const auto children = postgres::connect(credentials)
+  const auto children = sqlite::connect()
                             .and_then(drop<Person> | if_exists)
                             .and_then(write(std::ref(people1)))
                             .and_then(get_children)
@@ -69,4 +60,3 @@ TEST(postgres, test_group_by) {
 
 }  // namespace test_group_by_with_operations
 
-#endif

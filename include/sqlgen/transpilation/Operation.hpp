@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include "../Result.hpp"
+#include "As.hpp"
 #include "Condition.hpp"
 #include "Operator.hpp"
 #include "conditions.hpp"
@@ -28,6 +29,12 @@ struct Operation {
   Operand1Type operand1;
   Operand2Type operand2;
   Operand3Type operand3;
+
+  template <rfl::internal::StringLiteral _new_name>
+  auto as() const noexcept {
+    using T = std::remove_cvref_t<decltype(*this)>;
+    return transpilation::As<T, _new_name>{.val = *this};
+  }
 
   /// Returns an IS NULL condition.
   auto is_null() const noexcept {

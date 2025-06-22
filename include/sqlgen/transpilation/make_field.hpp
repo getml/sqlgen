@@ -100,31 +100,30 @@ struct MakeField<StructType, As<ValueType, _new_name>> {
   }
 };
 
-template <class StructType, AggregationOp _agg,
-          rfl::internal::StringLiteral _name>
-struct MakeField<StructType, Aggregation<_agg, Col<_name>>> {
-  static_assert(all_columns_exist<StructType, Col<_name>>(),
-                "A column required in the aggregation does not exist.");
-
-  static_assert(
-      std::is_integral_v<
-          remove_nullable_t<underlying_t<StructType, Col<_name>>>> ||
-          std::is_floating_point_v<
-              remove_nullable_t<underlying_t<StructType, Col<_name>>>>,
-      "Values inside the aggregation must be numerical.");
+template <class StructType, AggregationOp _agg, class ValueType>
+struct MakeField<StructType, Aggregation<_agg, ValueType>> {
+  static_assert(std::is_integral_v<
+                    remove_nullable_t<underlying_t<StructType, ValueType>>> ||
+                    std::is_floating_point_v<
+                        remove_nullable_t<underlying_t<StructType, ValueType>>>,
+                "Values inside the aggregation must be numerical.");
 
   static constexpr bool is_aggregation = true;
   static constexpr bool is_column = true;
   static constexpr bool is_operation = false;
 
-  using Name = Literal<_name>;
-  using Type = rfl::field_type_t<_name, StructType>;
+  using Name = Nothing;
+  using Type =
+      typename MakeField<StructType, std::remove_cvref_t<ValueType>>::Type;
 
-  dynamic::SelectFrom::Field operator()(const auto&) const {
+  dynamic::SelectFrom::Field operator()(const auto& _val) const {
     using DynamicAggregationType = dynamic_aggregation_t<_agg>;
-    return dynamic::SelectFrom::Field{
-        dynamic::Operation{.val = dynamic::Aggregation{DynamicAggregationType{
-                               .val = dynamic::Column{.name = _name.str()}}}}};
+    return dynamic::SelectFrom::Field{dynamic::Operation{
+        .val = dynamic::Aggregation{DynamicAggregationType{
+            .val = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<ValueType>>{}(
+                    _val.val)
+                    .val)}}}};
   }
 };
 
@@ -145,8 +144,7 @@ struct MakeField<StructType, Aggregation<AggregationOp::count, Col<_name>>> {
     return dynamic::SelectFrom::Field{dynamic::Operation{
         .val = dynamic::Aggregation{dynamic::Aggregation::Count{
             .val = dynamic::Column{.name = _name.str()},
-            .distinct = _agg.distinct}},
-    }};
+            .distinct = _agg.distinct}}}};
   }
 };
 

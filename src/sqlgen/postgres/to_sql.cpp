@@ -75,7 +75,7 @@ std::string aggregation_to_sql(
     using Type = std::remove_cvref_t<decltype(_agg)>;
     std::stringstream stream;
     if constexpr (std::is_same_v<Type, dynamic::Aggregation::Avg>) {
-      stream << "AVG(" << column_or_value_to_sql(_agg.val) << ")";
+      stream << "AVG(" << operation_to_sql(*_agg.val) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Count>) {
       const auto val =
@@ -84,13 +84,13 @@ std::string aggregation_to_sql(
       stream << "COUNT(" << val << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Max>) {
-      stream << "MAX(" << column_or_value_to_sql(_agg.val) << ")";
+      stream << "MAX(" << operation_to_sql(*_agg.val) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Min>) {
-      stream << "MIN(" << column_or_value_to_sql(_agg.val) << ")";
+      stream << "MIN(" << operation_to_sql(*_agg.val) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Aggregation::Sum>) {
-      stream << "SUM(" << column_or_value_to_sql(_agg.val) << ")";
+      stream << "SUM(" << operation_to_sql(*_agg.val) << ")";
 
     } else {
       static_assert(rfl::always_false_v<Type>, "Not all cases were covered.");

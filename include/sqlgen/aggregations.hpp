@@ -7,14 +7,16 @@
 #include "col.hpp"
 #include "transpilation/Aggregation.hpp"
 #include "transpilation/AggregationOp.hpp"
+#include "transpilation/to_transpilation_type.hpp"
 
 namespace sqlgen {
 
-template <rfl::internal::StringLiteral _name>
-auto avg(const Col<_name>&) {
-  return transpilation::Aggregation<transpilation::AggregationOp::avg,
-                                    transpilation::Col<_name>>{
-      .val = transpilation::Col<_name>{}};
+template <class T>
+auto avg(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Aggregation<transpilation::AggregationOp::avg, Type>{
+      .val = transpilation::to_transpilation_type(_t)};
 }
 
 inline auto count() {
@@ -36,25 +38,28 @@ auto count_distinct(const Col<_name>&) {
       .val = transpilation::Col<_name>{}, .distinct = true};
 }
 
-template <rfl::internal::StringLiteral _name>
-auto max(const Col<_name>&) {
-  return transpilation::Aggregation<transpilation::AggregationOp::max,
-                                    transpilation::Col<_name>>{
-      .val = transpilation::Col<_name>{}};
+template <class T>
+auto max(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Aggregation<transpilation::AggregationOp::max, Type>{
+      .val = transpilation::to_transpilation_type(_t)};
 }
 
-template <rfl::internal::StringLiteral _name>
-auto min(const Col<_name>&) {
-  return transpilation::Aggregation<transpilation::AggregationOp::min,
-                                    transpilation::Col<_name>>{
-      .val = transpilation::Col<_name>{}};
+template <class T>
+auto min(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Aggregation<transpilation::AggregationOp::min, Type>{
+      .val = transpilation::to_transpilation_type(_t)};
 }
 
-template <rfl::internal::StringLiteral _name>
-auto sum(const Col<_name>&) {
-  return transpilation::Aggregation<transpilation::AggregationOp::sum,
-                                    transpilation::Col<_name>>{
-      .val = transpilation::Col<_name>{}};
+template <class T>
+auto sum(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Aggregation<transpilation::AggregationOp::sum, Type>{
+      .val = transpilation::to_transpilation_type(_t)};
 }
 
 }  // namespace sqlgen
