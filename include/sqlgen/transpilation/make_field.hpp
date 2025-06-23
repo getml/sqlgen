@@ -109,9 +109,11 @@ struct MakeField<StructType, Aggregation<_agg, ValueType>> {
                         remove_nullable_t<underlying_t<StructType, ValueType>>>,
                 "Values inside the aggregation must be numerical.");
 
+  // Recursively checks if a type contains any aggregations.
   template <class T>
   struct HasAggregations;
 
+  // Case: No operation.
   template <class T>
     requires(!MakeField<StructType, remove_as_t<T>>::is_operation)
   struct HasAggregations<T> {
@@ -119,6 +121,7 @@ struct MakeField<StructType, Aggregation<_agg, ValueType>> {
         MakeField<StructType, remove_as_t<T>>::is_aggregation;
   };
 
+  // Case: Is operations: Check all operands.
   template <class T>
     requires(MakeField<StructType, remove_as_t<T>>::is_operation)
   struct HasAggregations<T> {
@@ -126,6 +129,7 @@ struct MakeField<StructType, Aggregation<_agg, ValueType>> {
         typename MakeField<StructType, remove_as_t<T>>::Operands>::value;
   };
 
+  // Case: Is a set of operands from an operation..
   template <class... FieldTypes>
   struct HasAggregations<rfl::Tuple<FieldTypes...>> {
     static constexpr bool value =
@@ -133,7 +137,8 @@ struct MakeField<StructType, Aggregation<_agg, ValueType>> {
   };
 
   static_assert(!HasAggregations<remove_as_t<ValueType>>::value,
-                "Nested aggregations are not allowed.");
+                "Nested aggregations are not allowed. Please restructure your "
+                "query to avoid nested aggregations.");
 
   static constexpr bool is_aggregation = true;
   static constexpr bool is_column = false;
