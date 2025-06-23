@@ -7,6 +7,7 @@
 namespace sqlgen::dynamic::types {
 
 struct Properties {
+  bool auto_incr = false;
   bool primary = false;
   bool nullable = false;
 };

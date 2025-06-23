@@ -12,9 +12,6 @@
 
 namespace sqlgen::postgres {
 
-std::string add_not_null_if_necessary(
-    const dynamic::types::Properties& _p) noexcept;
-
 std::string aggregation_to_sql(
     const dynamic::Aggregation& _aggregation) noexcept;
 
@@ -46,6 +43,8 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept;
 
 std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept;
 
+std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept;
+
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept;
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept;
@@ -63,11 +62,6 @@ inline std::string wrap_in_quotes(const std::string& _name) noexcept {
 }
 
 // ----------------------------------------------------------------------------
-
-std::string add_not_null_if_necessary(
-    const dynamic::types::Properties& _p) noexcept {
-  return std::string(_p.nullable ? "" : " NOT NULL");
-}
 
 std::string aggregation_to_sql(
     const dynamic::Aggregation& _aggregation) noexcept {
@@ -188,7 +182,7 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
 
 std::string column_to_sql_definition(const dynamic::Column& _col) noexcept {
   return wrap_in_quotes(_col.name) + " " + type_to_sql(_col.type) +
-         add_not_null_if_necessary(
+         properties_to_sql(
              _col.type.visit([](const auto& _t) { return _t.properties; }));
 }
 
@@ -325,8 +319,10 @@ std::vector<std::string> get_primary_keys(
   using namespace std::ranges::views;
 
   const auto is_primary_key = [](const auto& _col) -> bool {
-    return _col.type.visit(
-        [](const auto& _t) -> bool { return _t.properties.primary; });
+    return _col.type.visit([](const auto& _t) -> bool {
+      // Auto incrementing primary keys are directly assigned.
+      return _t.properties.primary && !_t.properties.auto_incr;
+    });
   };
 
   return internal::collect::vector(_stmt.columns | filter(is_primary_key) |
@@ -487,6 +483,16 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     }
     return stream.str();
   });
+}
+
+std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
+  if (_p.primary && _p.auto_incr) {
+    return " GENERATED ALWAYS AS IDENTITY PRIMARY KEY";
+  } else if (!_p.nullable) {
+    return " NOT NULL";
+  } else {
+    return "";
+  }
 }
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {

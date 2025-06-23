@@ -5,7 +5,9 @@
 
 namespace sqlgen {
 
-template <class T>
+inline constexpr bool auto_incr = true;
+
+template <class T, bool _auto_incr = false>
 struct PrimaryKey {
   using ReflectionType = T;
 
@@ -16,15 +18,16 @@ struct PrimaryKey {
 
   PrimaryKey(const T& _value) : value_(_value) {}
 
-  PrimaryKey(PrimaryKey<T>&& _other) noexcept = default;
+  PrimaryKey(PrimaryKey&& _other) noexcept = default;
 
-  PrimaryKey(const PrimaryKey<T>& _other) = default;
+  PrimaryKey(const PrimaryKey& _other) = default;
 
-  template <class U>
-  PrimaryKey(const PrimaryKey<U>& _other) : value_(_other.get()) {}
+  template <class U, bool _other_auto_incr>
+  PrimaryKey(const PrimaryKey<U, _other_auto_incr>& _other)
+      : value_(_other.get()) {}
 
-  template <class U>
-  PrimaryKey(PrimaryKey<U>&& _other) : value_(_other.get()) {}
+  template <class U, bool _other_auto_incr>
+  PrimaryKey(PrimaryKey<U, _other_auto_incr>&& _other) : value_(_other.get()) {}
 
   template <class U,
             typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
@@ -71,21 +74,21 @@ struct PrimaryKey {
   }
 
   /// Assigns the underlying object.
-  PrimaryKey<T>& operator=(const PrimaryKey<T>& _other) = default;
+  PrimaryKey& operator=(const PrimaryKey& _other) = default;
 
   /// Assigns the underlying object.
-  PrimaryKey<T>& operator=(PrimaryKey<T>&& _other) = default;
+  PrimaryKey& operator=(PrimaryKey&& _other) = default;
 
   /// Assigns the underlying object.
-  template <class U>
-  auto& operator=(const PrimaryKey<U>& _other) {
+  template <class U, bool _other_auto_incr>
+  auto& operator=(const PrimaryKey<U, _other_auto_incr>& _other) {
     value_ = _other.get();
     return *this;
   }
 
   /// Assigns the underlying object.
-  template <class U>
-  auto& operator=(PrimaryKey<U>&& _other) {
+  template <class U, bool _other_auto_incr>
+  auto& operator=(PrimaryKey<U, _other_auto_incr>&& _other) {
     value_ = std::forward<T>(_other.value_);
     return *this;
   }
