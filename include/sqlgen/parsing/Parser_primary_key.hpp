@@ -13,7 +13,7 @@ namespace sqlgen::parsing {
 
 template <class T, bool _auto_incr>
 struct Parser<PrimaryKey<T, _auto_incr>> {
-  static Result<PrimaryKey<T>> read(
+  static Result<PrimaryKey<T, _auto_incr>> read(
       const std::optional<std::string>& _str) noexcept {
     return Parser<std::remove_cvref_t<T>>::read(_str).transform(
         [](auto&& _t) -> PrimaryKey<T, _auto_incr> {

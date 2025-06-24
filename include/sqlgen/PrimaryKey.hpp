@@ -96,7 +96,7 @@ struct PrimaryKey {
   /// Assigns the underlying object.
   template <class U, bool _other_auto_incr>
   auto& operator=(PrimaryKey<U, _other_auto_incr>&& _other) {
-    value_ = std::forward<T>(_other.value_);
+    value_ = std::move(_other.value_);
     return *this;
   }
 

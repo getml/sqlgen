@@ -22,9 +22,12 @@ TEST(sqlite, test_auto_incr_primary_key) {
        Person{.first_name = "Lisa", .last_name = "Simpson", .age = 8},
        Person{.first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-  const auto people2 = sqlgen::sqlite::connect()
-                           .and_then(sqlgen::write(std::ref(people1)))
-                           .and_then(sqlgen::read<std::vector<Person>>)
+  using namespace sqlgen;
+
+  const auto people2 = sqlite::connect()
+                           .and_then(write(std::ref(people1)))
+                           .and_then(sqlgen::read<std::vector<Person>> |
+                                     order_by("age"_c.desc()))
                            .value();
 
   people1.at(0).id = 1;
