@@ -19,6 +19,7 @@
 #include "all_columns_exist.hpp"
 #include "dynamic_aggregation_t.hpp"
 #include "dynamic_operator_t.hpp"
+#include "remove_as_t.hpp"
 #include "remove_nullable_t.hpp"
 #include "to_value.hpp"
 #include "underlying_t.hpp"
@@ -108,8 +109,39 @@ struct MakeField<StructType, Aggregation<_agg, ValueType>> {
                         remove_nullable_t<underlying_t<StructType, ValueType>>>,
                 "Values inside the aggregation must be numerical.");
 
+  // Recursively checks if a type contains any aggregations.
+  template <class T>
+  struct HasAggregations;
+
+  // Case: No operation.
+  template <class T>
+    requires(!MakeField<StructType, remove_as_t<T>>::is_operation)
+  struct HasAggregations<T> {
+    static constexpr bool value =
+        MakeField<StructType, remove_as_t<T>>::is_aggregation;
+  };
+
+  // Case: Is operations: Check all operands.
+  template <class T>
+    requires(MakeField<StructType, remove_as_t<T>>::is_operation)
+  struct HasAggregations<T> {
+    static constexpr bool value = HasAggregations<
+        typename MakeField<StructType, remove_as_t<T>>::Operands>::value;
+  };
+
+  // Case: Is a set of operands from an operation..
+  template <class... FieldTypes>
+  struct HasAggregations<rfl::Tuple<FieldTypes...>> {
+    static constexpr bool value =
+        (false || ... || HasAggregations<FieldTypes>::value);
+  };
+
+  static_assert(!HasAggregations<remove_as_t<ValueType>>::value,
+                "Nested aggregations are not allowed. Please restructure your "
+                "query to avoid nested aggregations.");
+
   static constexpr bool is_aggregation = true;
-  static constexpr bool is_column = true;
+  static constexpr bool is_column = false;
   static constexpr bool is_operation = false;
 
   using Name = Nothing;
