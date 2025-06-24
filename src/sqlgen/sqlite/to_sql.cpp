@@ -451,6 +451,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
   return std::string(_p.primary ? " PRIMARY KEY" : "") +
+         std::string(_p.auto_incr ? " AUTOINCREMENT" : "") +
          std::string(_p.nullable ? "" : " NOT NULL");
 }
 

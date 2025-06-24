@@ -9,6 +9,7 @@
 
 #include "../dynamic/CreateTable.hpp"
 #include "../dynamic/Table.hpp"
+#include "../internal/remove_auto_incr_primary_t.hpp"
 #include "get_schema.hpp"
 #include "get_tablename.hpp"
 #include "make_columns.hpp"

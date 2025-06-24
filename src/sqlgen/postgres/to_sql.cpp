@@ -319,10 +319,8 @@ std::vector<std::string> get_primary_keys(
   using namespace std::ranges::views;
 
   const auto is_primary_key = [](const auto& _col) -> bool {
-    return _col.type.visit([](const auto& _t) -> bool {
-      // Auto incrementing primary keys are directly assigned.
-      return _t.properties.primary && !_t.properties.auto_incr;
-    });
+    return _col.type.visit(
+        [](const auto& _t) -> bool { return _t.properties.primary; });
   };
 
   return internal::collect::vector(_stmt.columns | filter(is_primary_key) |
@@ -486,8 +484,8 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 }
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
-  if (_p.primary && _p.auto_incr) {
-    return " GENERATED ALWAYS AS IDENTITY PRIMARY KEY";
+  if (_p.auto_incr) {
+    return " GENERATED ALWAYS AS IDENTITY";
   } else if (!_p.nullable) {
     return " NOT NULL";
   } else {

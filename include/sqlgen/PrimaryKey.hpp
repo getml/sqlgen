@@ -1,6 +1,8 @@
 #ifndef SQLGEN_PRIMARY_KEY_HPP_
 #define SQLGEN_PRIMARY_KEY_HPP_
 
+#include <type_traits>
+
 #include "transpilation/is_nullable.hpp"
 
 namespace sqlgen {
@@ -10,11 +12,16 @@ inline constexpr bool auto_incr = true;
 template <class T, bool _auto_incr = false>
 struct PrimaryKey {
   using ReflectionType = T;
+  static constexpr bool auto_incr = _auto_incr;
 
-  static_assert(!transpilation::is_nullable_v<T>,
-                "A primary key cannot be nullable.");
+  static_assert(
+      !transpilation::is_nullable_v<T>,
+      "A primary key cannot be nullable. Please use a non-nullable type.");
+  static_assert(!_auto_incr || std::is_integral_v<T>,
+                "The type of an auto-incrementing primary key must be "
+                "integral. Please use an integral type or remove auto_incr.");
 
-  PrimaryKey() : value_(0) {}
+  PrimaryKey() : value_(T()) {}
 
   PrimaryKey(const T& _value) : value_(_value) {}
 

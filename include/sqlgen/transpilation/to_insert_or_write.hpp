@@ -10,6 +10,7 @@
 
 #include "../dynamic/Table.hpp"
 #include "../internal/collect/vector.hpp"
+#include "../internal/remove_auto_incr_primary_t.hpp"
 #include "get_schema.hpp"
 #include "get_tablename.hpp"
 #include "make_columns.hpp"
@@ -22,7 +23,8 @@ template <class T, class InsertOrWrite>
 InsertOrWrite to_insert_or_write() {
   using namespace std::ranges::views;
 
-  using NamedTupleType = rfl::named_tuple_t<std::remove_cvref_t<T>>;
+  using NamedTupleType = sqlgen::internal::remove_auto_incr_primary_t<
+      rfl::named_tuple_t<std::remove_cvref_t<T>>>;
   using Fields = typename NamedTupleType::Fields;
 
   const auto columns = make_columns<Fields>(

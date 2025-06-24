@@ -7,17 +7,20 @@
 #include <type_traits>
 #include <vector>
 
+#include "remove_auto_incr_primary_t.hpp"
 #include "to_str.hpp"
 
 namespace sqlgen::internal {
 
 template <class T>
 std::vector<std::optional<std::string>> to_str_vec(const T& _t) {
+  const auto view = rfl::to_view(_t);
+  using ViewType = remove_auto_incr_primary_t<decltype(view)>;
   return rfl::apply(
       [](auto... _ptrs) {
         return std::vector<std::optional<std::string>>({to_str(*_ptrs)...});
       },
-      rfl::to_view(_t).values());
+      ViewType(view).values());
 }
 
 }  // namespace sqlgen::internal
