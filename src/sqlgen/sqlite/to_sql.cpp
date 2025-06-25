@@ -83,6 +83,11 @@ std::string column_or_value_to_sql(
     using Type = std::remove_cvref_t<decltype(_v)>;
     if constexpr (std::is_same_v<Type, dynamic::String>) {
       return "'" + escape_single_quote(_v.val) + "'";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Duration>) {
+      /// TODO
+      return "TODO";
+
     } else {
       return std::to_string(_v.val);
     }

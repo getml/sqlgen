@@ -4,7 +4,14 @@
 #include <rfl.hpp>
 #include <string>
 
+#include "TimeUnit.hpp"
+
 namespace sqlgen::dynamic {
+
+struct Duration {
+  TimeUnit unit;
+  int64_t val;
+};
 
 struct Float {
   double val;
@@ -19,7 +26,8 @@ struct String {
 };
 
 struct Value {
-  using ReflectionType = rfl::TaggedUnion<"type", Float, Integer, String>;
+  using ReflectionType =
+      rfl::TaggedUnion<"type", Duration, Float, Integer, String>;
   const auto& reflection() const { return val; }
   ReflectionType val;
 };
