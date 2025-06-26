@@ -104,6 +104,9 @@ std::string column_or_value_to_sql(
       return "INTERVAL '" + std::to_string(_v.val) + " " +
              rfl::enum_to_string(_v.unit) + "'";
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Timestamp>) {
+      return "to_timestamp(" + std::to_string(_v.seconds_since_unix) + ")";
+
     } else {
       return std::to_string(_v.val);
     }
@@ -406,6 +409,16 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cos>) {
       stream << "cos(" << operation_to_sql(*_s.op1) << ")";
+
+    } else if constexpr (std::is_same_v<Type,
+                                        dynamic::Operation::DatePlusDuration>) {
+      stream << column_or_value_to_sql(_s.date) << " + "
+             << internal::strings::join(
+                    " + ",
+                    internal::collect::vector(
+                        _s.durations | transform([](const auto& _d) {
+                          return column_or_value_to_sql(dynamic::Value{_d});
+                        })));
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Divides>) {
       stream << "(" << operation_to_sql(*_s.op1) << ") / ("

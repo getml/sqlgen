@@ -8,6 +8,7 @@
 
 #include "../Ref.hpp"
 #include "Column.hpp"
+#include "ColumnOrValue.hpp"
 #include "Type.hpp"
 #include "Value.hpp"
 
@@ -66,6 +67,11 @@ struct Operation {
 
   struct Cos {
     Ref<Operation> op1;
+  };
+
+  struct DatePlusDuration {
+    ColumnOrValue date;
+    std::vector<Duration> durations;
   };
 
   struct Divides {
@@ -161,9 +167,10 @@ struct Operation {
 
   using ReflectionType =
       rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Coalesce,
-                       Concat, Cos, Divides, Exp, Floor, Length, Ln, Log2,
-                       Lower, LTrim, Minus, Mod, Multiplies, Plus, Replace,
-                       Round, RTrim, Sin, Sqrt, Tan, Trim, Upper, Value>;
+                       Concat, Cos, DatePlusDuration, Divides, Exp, Floor,
+                       Length, Ln, Log2, Lower, LTrim, Minus, Mod, Multiplies,
+                       Plus, Replace, Round, RTrim, Sin, Sqrt, Tan, Trim, Upper,
+                       Value>;
 
   const ReflectionType& reflection() const { return val; }
 
