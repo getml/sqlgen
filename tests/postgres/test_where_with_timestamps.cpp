@@ -50,7 +50,7 @@ TEST(postgres, test_where_with_timestamps) {
       sqlgen::read<std::vector<Person>> |
       where("birthday"_c + std::chrono::years(11) - std::chrono::weeks(10) +
                 std::chrono::milliseconds(4000000) >
-            "2010-01-01") |
+            Date("2010-01-01")) |
       order_by("id"_c);
 
   const auto people2 = query(conn).value();

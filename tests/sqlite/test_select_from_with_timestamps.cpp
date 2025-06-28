@@ -14,28 +14,28 @@ struct Person {
   sqlgen::PrimaryKey<uint32_t, sqlgen::auto_incr> id;
   std::string first_name;
   std::string last_name;
-  sqlgen::Timestamp<"%Y-%m-%d"> birthday;
+  sqlgen::Date birthday;
 };
 
 TEST(sqlite, test_range_select_from_with_timestamps) {
-  const auto people1 = std::vector<Person>(
-      {Person{.first_name = "Homer",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("1970-01-01")},
-       Person{.first_name = "Bart",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("2000-01-01")},
-       Person{.first_name = "Lisa",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("2002-01-01")},
-       Person{.first_name = "Maggie",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("2010-01-01")}});
+  const auto people1 =
+      std::vector<Person>({Person{.first_name = "Homer",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("1970-01-01")},
+                           Person{.first_name = "Bart",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("2000-01-01")},
+                           Person{.first_name = "Lisa",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("2002-01-01")},
+                           Person{.first_name = "Maggie",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("2010-01-01")}});
 
   using namespace sqlgen;
 
   struct Birthday {
-    sqlgen::Date birthday;
+    Date birthday;
   };
 
   const auto query =

@@ -13,15 +13,20 @@ struct RemoveReflection {
   using Type = T;
 };
 
-template <class T>
-  requires has_reflection_method<std::remove_cvref_t<T>>
-struct RemoveReflection<T> {
-  using Type = typename RemoveReflection<
-      typename std::remove_cvref_t<T>::ReflectionType>::Type;
+template <rfl::internal::StringLiteral _format>
+struct RemoveReflection<rfl::Timestamp<_format>> {
+  using Type = rfl::Timestamp<_format>;
 };
 
 template <class T>
-using remove_reflection_t = typename RemoveReflection<T>::Type;
+  requires has_reflection_method<T>
+struct RemoveReflection<T> {
+  using Type = typename RemoveReflection<typename T::ReflectionType>::Type;
+};
+
+template <class T>
+using remove_reflection_t =
+    typename RemoveReflection<std::remove_cvref_t<T>>::Type;
 
 }  // namespace sqlgen::transpilation
 

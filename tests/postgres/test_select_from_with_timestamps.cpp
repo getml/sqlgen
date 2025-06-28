@@ -42,7 +42,7 @@ TEST(postgres, test_range_select_from_with_timestamps) {
   using namespace sqlgen;
 
   struct Birthday {
-    sqlgen::Timestamp<"%Y-%m-%d"> birthday;
+    Date birthday;
   };
 
   const auto birthdays =

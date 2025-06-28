@@ -19,6 +19,7 @@
 #include "all_columns_exist.hpp"
 #include "dynamic_aggregation_t.hpp"
 #include "dynamic_operator_t.hpp"
+#include "is_timestamp.hpp"
 #include "remove_as_t.hpp"
 #include "remove_nullable_t.hpp"
 #include "to_duration.hpp"
@@ -259,6 +260,8 @@ struct MakeField<StructType, Operation<Operator::date_plus_duration, Col<_name>,
   using Name = Nothing;
   using Type = underlying_t<StructType, Col<_name>>;
   using Operands = rfl::Tuple<Col<_name>, DurationTypes...>;
+
+  static_assert(is_timestamp_v<Type>, "Must be a timestamp.");
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     return dynamic::SelectFrom::Field{

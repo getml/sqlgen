@@ -12,6 +12,7 @@
 #include "Condition.hpp"
 #include "all_columns_exist.hpp"
 #include "conditions.hpp"
+#include "is_timestamp.hpp"
 #include "make_field.hpp"
 #include "to_transpilation_type.hpp"
 #include "underlying_t.hpp"
@@ -43,8 +44,12 @@ struct ToCondition<T, conditions::And<CondType1, CondType2>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::Equal<Op1Type, Op2Type>> {
-  static_assert(std::equality_comparable_with<underlying_t<T, Op1Type>,
-                                              underlying_t<T, Op2Type>>,
+  using Underlying1 = underlying_t<T, Op1Type>;
+  using Underlying2 = underlying_t<T, Op2Type>;
+
+  static_assert(std::equality_comparable_with<Underlying1, Underlying2> ||
+                    (is_timestamp_v<Underlying1> &&
+                     is_timestamp_v<Underlying2>),
                 "Must be equality comparable.");
 
   dynamic::Condition operator()(const auto& _cond) const {
@@ -56,8 +61,12 @@ struct ToCondition<T, conditions::Equal<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::GreaterEqual<Op1Type, Op2Type>> {
-  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
-                                          underlying_t<T, Op2Type>>,
+  using Underlying1 = underlying_t<T, Op1Type>;
+  using Underlying2 = underlying_t<T, Op2Type>;
+
+  static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
+                    (is_timestamp_v<Underlying1> &&
+                     is_timestamp_v<Underlying2>),
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
@@ -69,8 +78,12 @@ struct ToCondition<T, conditions::GreaterEqual<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::GreaterThan<Op1Type, Op2Type>> {
-  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
-                                          underlying_t<T, Op2Type>>,
+  using Underlying1 = underlying_t<T, Op1Type>;
+  using Underlying2 = underlying_t<T, Op2Type>;
+
+  static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
+                    (is_timestamp_v<Underlying1> &&
+                     is_timestamp_v<Underlying2>),
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
@@ -82,8 +95,12 @@ struct ToCondition<T, conditions::GreaterThan<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::LesserEqual<Op1Type, Op2Type>> {
-  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
-                                          underlying_t<T, Op2Type>>,
+  using Underlying1 = underlying_t<T, Op1Type>;
+  using Underlying2 = underlying_t<T, Op2Type>;
+
+  static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
+                    (is_timestamp_v<Underlying1> &&
+                     is_timestamp_v<Underlying2>),
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
@@ -95,8 +112,12 @@ struct ToCondition<T, conditions::LesserEqual<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::LesserThan<Op1Type, Op2Type>> {
-  static_assert(std::totally_ordered_with<underlying_t<T, Op1Type>,
-                                          underlying_t<T, Op2Type>>,
+  using Underlying1 = underlying_t<T, Op1Type>;
+  using Underlying2 = underlying_t<T, Op2Type>;
+
+  static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
+                    (is_timestamp_v<Underlying1> &&
+                     is_timestamp_v<Underlying2>),
                 "Must be totally ordered.");
 
   dynamic::Condition operator()(const auto& _cond) const {
@@ -148,8 +169,12 @@ struct ToCondition<T, conditions::Not<CondType>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::NotEqual<Op1Type, Op2Type>> {
-  static_assert(std::equality_comparable_with<underlying_t<T, Op1Type>,
-                                              underlying_t<T, Op2Type>>,
+  using Underlying1 = underlying_t<T, Op1Type>;
+  using Underlying2 = underlying_t<T, Op2Type>;
+
+  static_assert(std::equality_comparable_with<Underlying1, Underlying2> ||
+                    (is_timestamp_v<Underlying1> &&
+                     is_timestamp_v<Underlying2>),
                 "Must be equality comparable.");
 
   dynamic::Condition operator()(const auto& _cond) const {

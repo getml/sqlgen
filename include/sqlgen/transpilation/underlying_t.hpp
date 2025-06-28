@@ -202,7 +202,7 @@ struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
 
 template <class T, class _Type>
 struct Underlying<T, Value<_Type>> {
-  using Type = _Type;
+  using Type = remove_reflection_t<_Type>;
 };
 
 template <class T, class U>
