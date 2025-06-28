@@ -4,7 +4,6 @@
 namespace sqlgen::dynamic {
 
 enum class TimeUnit {
-  microseconds,
   milliseconds,
   seconds,
   minutes,

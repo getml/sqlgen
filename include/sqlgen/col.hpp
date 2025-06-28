@@ -137,14 +137,20 @@ struct Col {
   }
 
   template <class T>
-  friend auto operator-(const Col&, const T& _op2) noexcept {
-    using OtherType = typename transpilation::ToTranspilationType<
-        std::remove_cvref_t<T>>::Type;
+  friend auto operator-(const Col& _op1, const T& _op2) noexcept {
+    if constexpr (transpilation::is_duration_v<T>) {
+      using DurationType = std::remove_cvref_t<T>;
+      return _op1 + DurationType(_op2.count() * (-1));
 
-    return transpilation::Operation<transpilation::Operator::minus,
-                                    transpilation::Col<_name>, OtherType>{
-        .operand1 = transpilation::Col<_name>{},
-        .operand2 = transpilation::to_transpilation_type(_op2)};
+    } else {
+      using OtherType = typename transpilation::ToTranspilationType<
+          std::remove_cvref_t<T>>::Type;
+
+      return transpilation::Operation<transpilation::Operator::minus,
+                                      transpilation::Col<_name>, OtherType>{
+          .operand1 = transpilation::Col<_name>{},
+          .operand2 = transpilation::to_transpilation_type(_op2)};
+    }
   }
 
   template <class T>
@@ -172,11 +178,12 @@ struct Col {
   template <class T>
   friend auto operator+(const Col&, const T& _op2) noexcept {
     if constexpr (transpilation::is_duration_v<T>) {
+      using DurationType = std::remove_cvref_t<T>;
       return transpilation::Operation<
           transpilation::Operator::date_plus_duration,
-          transpilation::Col<_name>, rfl::Tuple<std::remove_cvref_t<T>>>{
+          transpilation::Col<_name>, rfl::Tuple<DurationType>>{
           .operand1 = transpilation::Col<_name>{},
-          .operand2 = rfl::Tuple<std::remove_cvref_t<T>>(_op2)};
+          .operand2 = rfl::Tuple<DurationType>(_op2)};
 
     } else {
       using OtherType = typename transpilation::ToTranspilationType<

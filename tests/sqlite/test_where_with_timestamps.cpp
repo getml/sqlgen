@@ -1,4 +1,3 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
 
 #include <gtest/gtest.h>
 
@@ -6,7 +5,7 @@
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
-#include <sqlgen/postgres.hpp>
+#include <sqlgen/sqlite.hpp>
 #include <vector>
 
 namespace test_where_with_timestamps {
@@ -18,7 +17,7 @@ struct Person {
   sqlgen::Date birthday;
 };
 
-TEST(postgres, test_where_with_timestamps) {
+TEST(sqlite, test_where_with_timestamps) {
   const auto people1 =
       std::vector<Person>({Person{.first_name = "Homer",
                                   .last_name = "Simpson",
@@ -33,28 +32,23 @@ TEST(postgres, test_where_with_timestamps) {
                                   .last_name = "Simpson",
                                   .birthday = sqlgen::Date("2010-01-01")}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
-
   using namespace sqlgen;
-  using namespace std::literals::chrono_literals;
 
-  const auto conn =
-      sqlgen::postgres::connect(credentials).and_then(drop<Person> | if_exists);
+  const auto conn = sqlgen::sqlite::connect();
 
   sqlgen::write(conn, people1).value();
 
   const auto query =
       sqlgen::read<std::vector<Person>> |
       where("birthday"_c + std::chrono::years(11) - std::chrono::weeks(10) +
-                std::chrono::milliseconds(4000000) >
+                std::chrono::milliseconds(4000005) >
             "2010-01-01") |
       order_by("id"_c);
 
   const auto people2 = query(conn).value();
 
+  const std::string expected_query =
+      R"(SELECT "id", "first_name", "last_name", "birthday" FROM "Person" WHERE datetime("birthday", '+11 years', '-70 days', '+01:06:40.005') > '2010-01-01' ORDER BY "id";)";
   const std::string expected =
       R"([{"id":2,"first_name":"Bart","last_name":"Simpson","birthday":"2000-01-01"},{"id":3,"first_name":"Lisa","last_name":"Simpson","birthday":"2002-01-01"},{"id":4,"first_name":"Maggie","last_name":"Simpson","birthday":"2010-01-01"}])";
 
@@ -63,4 +57,3 @@ TEST(postgres, test_where_with_timestamps) {
 
 }  // namespace test_where_with_timestamps
 
-#endif

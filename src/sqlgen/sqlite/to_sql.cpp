@@ -77,6 +77,15 @@ std::string aggregation_to_sql(
   });
 }
 
+std::string pad_with_zeros(const std::string& _str,
+                           const size_t _expected_length) {
+  if (_str.size() < _expected_length) {
+    return std::string(_expected_length - _str.size(), '0') + _str;
+  } else {
+    return _str;
+  }
+}
+
 std::string column_or_value_to_sql(
     const dynamic::ColumnOrValue& _col) noexcept {
   const auto handle_value = [](const auto& _v) -> std::string {
@@ -85,8 +94,27 @@ std::string column_or_value_to_sql(
       return "'" + escape_single_quote(_v.val) + "'";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Duration>) {
-      return std::string("'") + (_v.val ? "+" : "-") + std::to_string(_v.val) +
-             " " + rfl::enum_to_string(_v.unit) + "'";
+      const auto prefix = std::string("'") + (_v.val >= 0 ? "+" : "-");
+      const auto val = std::abs(_v.val);
+      switch (_v.unit) {
+        case dynamic::TimeUnit::milliseconds: {
+          const auto h = (val / 3600000);
+          const auto m = (val / 60000) % 60;
+          const auto s = (val / 1000) % 60;
+          const auto ms = val % 1000;
+          return prefix + pad_with_zeros(std::to_string(h), 2) + ":" +
+                 pad_with_zeros(std::to_string(m), 2) + ":" +
+                 pad_with_zeros(std::to_string(s), 2) + "." +
+                 pad_with_zeros(std::to_string(ms), 3) + "'";
+        }
+
+        case dynamic::TimeUnit::weeks:
+          return prefix + std::to_string(val * 7) + " days'";
+
+        default:
+          return prefix + std::to_string(val) + " " +
+                 rfl::enum_to_string(_v.unit) + "'";
+      }
 
     } else if constexpr (std::is_same_v<Type, dynamic::Timestamp>) {
       return std::to_string(_v.seconds_since_unix);
@@ -378,7 +406,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type,
                                         dynamic::Operation::DatePlusDuration>) {
-      stream << "unixepoch(" << column_or_value_to_sql(_s.date) << ", "
+      stream << "datetime(" << column_or_value_to_sql(_s.date) << ", "
              << internal::strings::join(
                     ", ",
                     internal::collect::vector(

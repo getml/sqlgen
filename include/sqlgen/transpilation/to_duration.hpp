@@ -13,12 +13,7 @@ namespace sqlgen::transpilation {
 template <class DurationType>
 struct ToDuration {
   dynamic::Duration operator()(const DurationType& _t) {
-    if constexpr (std::is_same_v<DurationType, std::chrono::microseconds>) {
-      return dynamic::Duration{.unit = dynamic::TimeUnit::microseconds,
-                               .val = static_cast<int64_t>(_t.count())};
-
-    } else if constexpr (std::is_same_v<DurationType,
-                                        std::chrono::milliseconds>) {
+    if constexpr (std::is_same_v<DurationType, std::chrono::milliseconds>) {
       return dynamic::Duration{.unit = dynamic::TimeUnit::milliseconds,
                                .val = static_cast<int64_t>(_t.count())};
 
