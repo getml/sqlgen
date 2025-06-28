@@ -55,6 +55,13 @@ struct DynamicOperator<Operator::cos> {
 };
 
 template <>
+struct DynamicOperator<Operator::date_plus_duration> {
+  static constexpr size_t num_operands = std::numeric_limits<size_t>::max();
+  static constexpr auto category = OperatorCategory::other;
+  using Type = dynamic::Operation::DatePlusDuration;
+};
+
+template <>
 struct DynamicOperator<Operator::divides> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::numerical;

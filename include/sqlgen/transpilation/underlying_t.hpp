@@ -81,6 +81,12 @@ struct Underlying<T, Operation<Operator::concat, rfl::Tuple<OperandTypes...>>> {
                          std::optional<std::string>, std::string>;
 };
 
+template <class T, rfl::internal::StringLiteral _name, class... DurationTypes>
+struct Underlying<T, Operation<Operator::date_plus_duration, Col<_name>,
+                               rfl::Tuple<DurationTypes...>>> {
+  using Type = typename Underlying<std::remove_cvref_t<T>, Col<_name>>::Type;
+};
+
 template <class T, class Operand1Type, class Operand2Type, class Operand3Type>
 struct Underlying<
     T, Operation<Operator::replace, Operand1Type, Operand2Type, Operand3Type>> {

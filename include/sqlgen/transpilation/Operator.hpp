@@ -10,6 +10,7 @@ enum class Operator {
   coalesce,
   concat,
   cos,
+  date_plus_duration,
   divides,
   exp,
   floor,

@@ -21,6 +21,7 @@
 #include "dynamic_operator_t.hpp"
 #include "remove_as_t.hpp"
 #include "remove_nullable_t.hpp"
+#include "to_duration.hpp"
 #include "to_value.hpp"
 #include "underlying_t.hpp"
 
@@ -244,6 +245,30 @@ struct MakeField<StructType, Operation<_op, rfl::Tuple<OperandTypes...>>> {
                           .val)...});
             },
             _o.operand1)}}};
+  }
+};
+
+template <class StructType, rfl::internal::StringLiteral _name,
+          class... DurationTypes>
+struct MakeField<StructType, Operation<Operator::date_plus_duration, Col<_name>,
+                                       rfl::Tuple<DurationTypes...>>> {
+  static constexpr bool is_aggregation = false;
+  static constexpr bool is_column = false;
+  static constexpr bool is_operation = true;
+
+  using Name = Nothing;
+  using Type = underlying_t<StructType, Col<_name>>;
+  using Operands = rfl::Tuple<Col<_name>, DurationTypes...>;
+
+  dynamic::SelectFrom::Field operator()(const auto& _o) const {
+    return dynamic::SelectFrom::Field{
+        dynamic::Operation{dynamic::Operation::DatePlusDuration{
+            .date = dynamic::Column{.name = _name.str()},
+            .durations = rfl::apply(
+                [](const auto&... _ops) {
+                  return std::vector<dynamic::Duration>({to_duration(_ops)...});
+                },
+                _o.operand2)}}};
   }
 };
 
