@@ -420,6 +420,9 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
                           return column_or_value_to_sql(dynamic::Value{_d});
                         })));
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Day>) {
+      stream << "extract(DAY from " << operation_to_sql(*_s.op1) << ")";
+
     } else if constexpr (std::is_same_v<Type,
                                         dynamic::Operation::DaysBetween>) {
       stream << "cast(" << operation_to_sql(*_s.op2) << " as DATE) - cast("
@@ -434,6 +437,9 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Floor>) {
       stream << "floor(" << operation_to_sql(*_s.op1) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Hour>) {
+      stream << "extract(HOUR from " << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Length>) {
       stream << "length(" << operation_to_sql(*_s.op1) << ")";
@@ -455,9 +461,15 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << "(" << operation_to_sql(*_s.op1) << ") - ("
              << operation_to_sql(*_s.op2) << ")";
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Minute>) {
+      stream << "extract(MINUTE from " << operation_to_sql(*_s.op1) << ")";
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Mod>) {
       stream << "mod(" << operation_to_sql(*_s.op1) << ", "
              << operation_to_sql(*_s.op2) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Month>) {
+      stream << "extract(MONTH from " << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Multiplies>) {
       stream << "(" << operation_to_sql(*_s.op1) << ") * ("
@@ -480,6 +492,9 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << "rtrim(" << operation_to_sql(*_s.op1) << ", "
              << operation_to_sql(*_s.op2) << ")";
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Second>) {
+      stream << "extract(SECOND from " << operation_to_sql(*_s.op1) << ")";
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Sin>) {
       stream << "sin(" << operation_to_sql(*_s.op1) << ")";
 
@@ -501,6 +516,12 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type, dynamic::Value>) {
       stream << column_or_value_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Weekday>) {
+      stream << "extract(DOW from " << operation_to_sql(*_s.op1) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Year>) {
+      stream << "extract(YEAR from " << operation_to_sql(*_s.op1) << ")";
 
     } else {
       static_assert(rfl::always_false_v<Type>, "Unsupported type.");

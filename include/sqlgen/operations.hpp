@@ -65,6 +65,14 @@ auto cos(const T& _t) {
       .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
+template <class T>
+auto day(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::day, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
+}
+
 template <class T, class U>
 auto days_between(const T& _t, const U& _u) {
   using Type1 =
@@ -90,6 +98,14 @@ auto floor(const T& _t) {
   using Type =
       typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
   return transpilation::Operation<transpilation::Operator::floor, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
+}
+
+template <class T>
+auto hour(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::hour, Type>{
       .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
@@ -141,6 +157,22 @@ auto ltrim(const T& _t) {
   return ltrim(_t, std::string(" "));
 }
 
+template <class T>
+auto minute(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::minute, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
+}
+
+template <class T>
+auto month(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::month, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
+}
+
 template <class StringType, class FromType, class ToType>
 auto replace(const StringType& _str, const FromType& _from, const ToType& _to) {
   using Type1 = typename transpilation::ToTranspilationType<
@@ -186,6 +218,14 @@ auto rtrim(const T& _t, const U& _u) {
 template <class T>
 auto rtrim(const T& _t) {
   return rtrim(_t, std::string(" "));
+}
+
+template <class T>
+auto second(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::second, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
 template <class T>
@@ -241,6 +281,22 @@ auto upper(const T& _t) {
   using Type =
       typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
   return transpilation::Operation<transpilation::Operator::upper, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
+}
+
+template <class T>
+auto weekday(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::weekday, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
+}
+
+template <class T>
+auto year(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::year, Type>{
       .operand1 = transpilation::to_transpilation_type(_t)};
 }
 

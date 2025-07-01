@@ -62,6 +62,13 @@ struct DynamicOperator<Operator::date_plus_duration> {
 };
 
 template <>
+struct DynamicOperator<Operator::day> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::date_part;
+  using Type = dynamic::Operation::Day;
+};
+
+template <>
 struct DynamicOperator<Operator::days_between> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::other;
@@ -87,6 +94,13 @@ struct DynamicOperator<Operator::floor> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Floor;
+};
+
+template <>
+struct DynamicOperator<Operator::hour> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::date_part;
+  using Type = dynamic::Operation::Hour;
 };
 
 template <>
@@ -132,10 +146,24 @@ struct DynamicOperator<Operator::minus> {
 };
 
 template <>
+struct DynamicOperator<Operator::minute> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::date_part;
+  using Type = dynamic::Operation::Minute;
+};
+
+template <>
 struct DynamicOperator<Operator::mod> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::numerical;
   using Type = dynamic::Operation::Mod;
+};
+
+template <>
+struct DynamicOperator<Operator::month> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::date_part;
+  using Type = dynamic::Operation::Month;
 };
 
 template <>
@@ -171,6 +199,13 @@ struct DynamicOperator<Operator::rtrim> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::string;
   using Type = dynamic::Operation::RTrim;
+};
+
+template <>
+struct DynamicOperator<Operator::second> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::date_part;
+  using Type = dynamic::Operation::Second;
 };
 
 template <>
@@ -213,6 +248,20 @@ struct DynamicOperator<Operator::upper> {
   static constexpr size_t num_operands = 1;
   static constexpr auto category = OperatorCategory::string;
   using Type = dynamic::Operation::Upper;
+};
+
+template <>
+struct DynamicOperator<Operator::weekday> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::date_part;
+  using Type = dynamic::Operation::Weekday;
+};
+
+template <>
+struct DynamicOperator<Operator::year> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::date_part;
+  using Type = dynamic::Operation::Year;
 };
 
 template <Operator op>
