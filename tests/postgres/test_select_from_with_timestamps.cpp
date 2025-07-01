@@ -43,20 +43,26 @@ TEST(postgres, test_range_select_from_with_timestamps) {
 
   struct Birthday {
     Date birthday;
+    time_t birthday_unixepoch;
+    double age_in_days;
   };
 
-  const auto birthdays =
-      postgres::connect(credentials)
-          .and_then(drop<Person> | if_exists)
-          .and_then(write(std::ref(people1)))
-          .and_then(
-              select_from<Person>(
-                  ("birthday"_c + std::chrono::days(10)).as<"birthday">()) |
-              order_by("id"_c) | to<std::vector<Birthday>>)
-          .value();
+  const auto get_birthdays =
+      select_from<Person>(
+          ("birthday"_c + std::chrono::days(10)) | as<"birthday">,
+          days_between("birthday"_c, Date("2011-01-01")) | as<"age_in_days">,
+          unixepoch("birthday"_c + std::chrono::days(10)) |
+              as<"birthday_unixepoch">) |
+      order_by("id"_c) | to<std::vector<Birthday>>;
+
+  const auto birthdays = postgres::connect(credentials)
+                             .and_then(drop<Person> | if_exists)
+                             .and_then(write(std::ref(people1)))
+                             .and_then(get_birthdays)
+                             .value();
 
   const std::string expected =
-      R"([{"birthday":"1970-01-11"},{"birthday":"2000-01-11"},{"birthday":"2002-01-11"},{"birthday":"2010-01-11"}])";
+      R"([{"birthday":"1970-01-11","birthday_unixepoch":864000,"age_in_days":14975.0},{"birthday":"2000-01-11","birthday_unixepoch":947548800,"age_in_days":4018.0},{"birthday":"2002-01-11","birthday_unixepoch":1010707200,"age_in_days":3287.0},{"birthday":"2010-01-11","birthday_unixepoch":1263168000,"age_in_days":365.0}])";
 
   EXPECT_EQ(rfl::json::write(birthdays), expected);
 }

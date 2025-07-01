@@ -62,6 +62,13 @@ struct DynamicOperator<Operator::date_plus_duration> {
 };
 
 template <>
+struct DynamicOperator<Operator::days_between> {
+  static constexpr size_t num_operands = 2;
+  static constexpr auto category = OperatorCategory::other;
+  using Type = dynamic::Operation::DaysBetween;
+};
+
+template <>
 struct DynamicOperator<Operator::divides> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::numerical;
@@ -192,6 +199,13 @@ struct DynamicOperator<Operator::trim> {
   static constexpr size_t num_operands = 2;
   static constexpr auto category = OperatorCategory::string;
   using Type = dynamic::Operation::Trim;
+};
+
+template <>
+struct DynamicOperator<Operator::unixepoch> {
+  static constexpr size_t num_operands = 1;
+  static constexpr auto category = OperatorCategory::other;
+  using Type = dynamic::Operation::Unixepoch;
 };
 
 template <>

@@ -14,6 +14,7 @@
 #include "all_columns_exist.hpp"
 #include "dynamic_operator_t.hpp"
 #include "is_nullable.hpp"
+#include "is_timestamp.hpp"
 #include "remove_nullable_t.hpp"
 #include "remove_reflection_t.hpp"
 
@@ -85,6 +86,13 @@ template <class T, rfl::internal::StringLiteral _name, class... DurationTypes>
 struct Underlying<T, Operation<Operator::date_plus_duration, Col<_name>,
                                rfl::Tuple<DurationTypes...>>> {
   using Type = typename Underlying<std::remove_cvref_t<T>, Col<_name>>::Type;
+  static_assert(is_timestamp_v<Type>, "Must be a timestamp");
+};
+
+template <class T, class Operand1Type, class Operand2Type>
+struct Underlying<
+    T, Operation<Operator::days_between, Operand1Type, Operand2Type>> {
+  using Type = double;
 };
 
 template <class T, class Operand1Type, class Operand2Type, class Operand3Type>
@@ -123,6 +131,13 @@ struct Underlying<T, Operation<Operator::round, Operand1Type, Operand2Type>> {
   static_assert(std::is_integral_v<Underlying2>, "Must be an integral type");
 
   using Type = Underlying1;
+};
+
+template <class T, class Operand1Type>
+struct Underlying<T, Operation<Operator::unixepoch, Operand1Type>> {
+  static_assert(is_timestamp_v<typename Underlying<T, Operand1Type>::Type>,
+                "Must be a timestamp");
+  using Type = time_t;
 };
 
 template <class T, Operator _op, class Operand1Type>

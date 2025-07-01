@@ -65,6 +65,18 @@ auto cos(const T& _t) {
       .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
+template <class T, class U>
+auto days_between(const T& _t, const U& _u) {
+  using Type1 =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  using Type2 =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<U>>::Type;
+  return transpilation::Operation<transpilation::Operator::days_between, Type1,
+                                  Type2>{
+      .operand1 = transpilation::to_transpilation_type(_t),
+      .operand2 = transpilation::to_transpilation_type(_u)};
+}
+
 template <class T>
 auto exp(const T& _t) {
   using Type =
@@ -214,6 +226,14 @@ auto trim(const T& _t, const U& _u) {
 template <class T>
 auto trim(const T& _t) {
   return trim(_t, std::string(" "));
+}
+
+template <class T>
+auto unixepoch(const T& _t) {
+  using Type =
+      typename transpilation::ToTranspilationType<std::remove_cvref_t<T>>::Type;
+  return transpilation::Operation<transpilation::Operator::unixepoch, Type>{
+      .operand1 = transpilation::to_transpilation_type(_t)};
 }
 
 template <class T>

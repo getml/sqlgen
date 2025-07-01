@@ -74,6 +74,11 @@ struct Operation {
     std::vector<Duration> durations;
   };
 
+  struct DaysBetween {
+    Ref<Operation> op1;
+    Ref<Operation> op2;
+  };
+
   struct Divides {
     Ref<Operation> op1;
     Ref<Operation> op2;
@@ -161,16 +166,20 @@ struct Operation {
     Ref<Operation> op2;
   };
 
+  struct Unixepoch {
+    Ref<Operation> op1;
+  };
+
   struct Upper {
     Ref<Operation> op1;
   };
 
   using ReflectionType =
       rfl::TaggedUnion<"what", Abs, Aggregation, Cast, Ceil, Column, Coalesce,
-                       Concat, Cos, DatePlusDuration, Divides, Exp, Floor,
-                       Length, Ln, Log2, Lower, LTrim, Minus, Mod, Multiplies,
-                       Plus, Replace, Round, RTrim, Sin, Sqrt, Tan, Trim, Upper,
-                       Value>;
+                       Concat, Cos, DatePlusDuration, DaysBetween, Divides, Exp,
+                       Floor, Length, Ln, Log2, Lower, LTrim, Minus, Mod,
+                       Multiplies, Plus, Replace, Round, RTrim, Sin, Sqrt, Tan,
+                       Trim, Unixepoch, Upper, Value>;
 
   const ReflectionType& reflection() const { return val; }
 

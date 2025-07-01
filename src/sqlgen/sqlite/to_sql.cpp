@@ -405,6 +405,11 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << "cos(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type,
+                                        dynamic::Operation::DaysBetween>) {
+      stream << "julianday(" << operation_to_sql(*_s.op2) << ") - julianday("
+             << operation_to_sql(*_s.op1) << ")";
+
+    } else if constexpr (std::is_same_v<Type,
                                         dynamic::Operation::DatePlusDuration>) {
       stream << "datetime(" << column_or_value_to_sql(_s.date) << ", "
              << internal::strings::join(
@@ -482,6 +487,9 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Trim>) {
       stream << "trim(" << operation_to_sql(*_s.op1) << ", "
              << operation_to_sql(*_s.op2) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Unixepoch>) {
+      stream << "unixepoch(" << operation_to_sql(*_s.op1) << ", 'subsec')";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Upper>) {
       stream << "upper(" << operation_to_sql(*_s.op1) << ")";

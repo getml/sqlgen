@@ -420,6 +420,11 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
                           return column_or_value_to_sql(dynamic::Value{_d});
                         })));
 
+    } else if constexpr (std::is_same_v<Type,
+                                        dynamic::Operation::DaysBetween>) {
+      stream << "cast(" << operation_to_sql(*_s.op2) << " as DATE) - cast("
+             << operation_to_sql(*_s.op1) << " as DATE)";
+
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Divides>) {
       stream << "(" << operation_to_sql(*_s.op1) << ") / ("
              << operation_to_sql(*_s.op2) << ")";
@@ -487,6 +492,9 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Trim>) {
       stream << "trim(" << operation_to_sql(*_s.op1) << ", "
              << operation_to_sql(*_s.op2) << ")";
+
+    } else if constexpr (std::is_same_v<Type, dynamic::Operation::Unixepoch>) {
+      stream << "extract(EPOCH FROM" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Upper>) {
       stream << "upper(" << operation_to_sql(*_s.op1) << ")";

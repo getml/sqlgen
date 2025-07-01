@@ -11,6 +11,7 @@ enum class Operator {
   concat,
   cos,
   date_plus_duration,
+  days_between,
   divides,
   exp,
   floor,
@@ -30,6 +31,7 @@ enum class Operator {
   sqrt,
   tan,
   trim,
+  unixepoch,
   upper
 };
 
