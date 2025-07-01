@@ -70,7 +70,7 @@ struct Operation {
   };
 
   struct DatePlusDuration {
-    ColumnOrValue date;
+    Ref<Operation> date;
     std::vector<Duration> durations;
   };
 

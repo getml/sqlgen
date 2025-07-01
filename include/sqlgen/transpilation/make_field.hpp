@@ -223,24 +223,27 @@ struct MakeField<StructType, Operation<Operator::cast, Operand1Type,
   }
 };
 
-template <class StructType, rfl::internal::StringLiteral _name,
-          class... DurationTypes>
-struct MakeField<StructType, Operation<Operator::date_plus_duration, Col<_name>,
-                                       rfl::Tuple<DurationTypes...>>> {
+template <class StructType, class Operand1Type, class... DurationTypes>
+struct MakeField<StructType,
+                 Operation<Operator::date_plus_duration, Operand1Type,
+                           rfl::Tuple<DurationTypes...>>> {
   static constexpr bool is_aggregation = false;
   static constexpr bool is_column = false;
   static constexpr bool is_operation = true;
 
   using Name = Nothing;
-  using Type = underlying_t<StructType, Col<_name>>;
-  using Operands = rfl::Tuple<Col<_name>, DurationTypes...>;
+  using Type = underlying_t<StructType, std::remove_cvref_t<Operand1Type>>;
+  using Operands = rfl::Tuple<Operand1Type, DurationTypes...>;
 
   static_assert(is_timestamp_v<Type>, "Must be a timestamp.");
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     return dynamic::SelectFrom::Field{
         dynamic::Operation{dynamic::Operation::DatePlusDuration{
-            .date = dynamic::Column{.name = _name.str()},
+            .date = Ref<dynamic::Operation>::make(
+                MakeField<StructType, std::remove_cvref_t<Operand1Type>>{}(
+                    _o.operand1)
+                    .val),
             .durations = rfl::apply(
                 [](const auto&... _ops) {
                   return std::vector<dynamic::Duration>({to_duration(_ops)...});

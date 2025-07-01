@@ -411,7 +411,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type,
                                         dynamic::Operation::DatePlusDuration>) {
-      stream << "datetime(" << column_or_value_to_sql(_s.date) << ", "
+      stream << "datetime(" << operation_to_sql(*_s.date) << ", "
              << internal::strings::join(
                     ", ",
                     internal::collect::vector(
