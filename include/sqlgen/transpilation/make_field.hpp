@@ -235,7 +235,8 @@ struct MakeField<StructType,
   using Type = underlying_t<StructType, std::remove_cvref_t<Operand1Type>>;
   using Operands = rfl::Tuple<Operand1Type, DurationTypes...>;
 
-  static_assert(is_timestamp_v<Type>, "Must be a timestamp.");
+  static_assert(is_timestamp_v<remove_nullable_t<Type>>,
+                "Must be a timestamp.");
 
   dynamic::SelectFrom::Field operator()(const auto& _o) const {
     return dynamic::SelectFrom::Field{
