@@ -26,7 +26,14 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::group_by and Aggregations](group_by_and_aggregations.md) - How generate GROUP BY queries and aggregate data
 - [sqlgen::insert](insert.md) - How to insert data within transactions
 - [sqlgen::update](update.md) - How to update data in a table
-- [Other Operations and Functions](other_operations.md) - How to use SQL functions like `coalesce`, `concat`, `abs`, `cast`, and more
+
+## Other Operations
+
+- [Mathematical Operations](mathematical_operations.md) - How to use mathematical functions in queries (e.g., abs, ceil, floor, exp, trigonometric functions, round).
+- [String Operations](string_operations.md) - How to manipulate and transform strings in queries (e.g., length, lower, upper, trim, replace, concat).
+- [Type Conversion Operations](type_conversion_operations.md) - How to convert between types safely in queries (e.g., cast int to double).
+- [Null Handling Operations](null_handling_operations.md) - How to handle nullable values and propagate nullability correctly (e.g., with coalesce and nullability rules).
+- [Timestamp and Date/Time Functions](timestamp_operations.md) - How to work with timestamps, dates, and times (e.g., extract parts, perform arithmetic, convert formats).
 
 ## Data Types and Validation
 
