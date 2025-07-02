@@ -48,9 +48,9 @@ TEST(sqlite, test_range_select_from_with_timestamps) {
   const auto get_birthdays =
       select_from<Person>(
           ("birthday"_c + std::chrono::days(10)) | as<"birthday">,
-          cast<Date>(concat(cast<std::string>(year("birthday"_c)), "-",
-                            cast<std::string>(month("birthday"_c)), "-",
-                            cast<std::string>(day("birthday"_c)))) |
+          ((cast<Date>(concat(cast<std::string>(year("birthday"_c)), "-",
+                              cast<std::string>(month("birthday"_c)), "-",
+                              cast<std::string>(day("birthday"_c)))))) |
               as<"birthday_recreated">,
           days_between("birthday"_c, Date("2011-01-01")) | as<"age_in_days">,
           unixepoch("birthday"_c + std::chrono::days(10)) |
