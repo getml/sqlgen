@@ -509,7 +509,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
              << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Unixepoch>) {
-      stream << "extract(EPOCH FROM" << operation_to_sql(*_s.op1) << ")";
+      stream << "extract(EPOCH FROM " << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Upper>) {
       stream << "upper(" << operation_to_sql(*_s.op1) << ")";
