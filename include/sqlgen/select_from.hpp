@@ -25,17 +25,19 @@
 
 namespace sqlgen {
 
-template <class StructType, class FieldsType, class WhereType,
+template <class StructType, class FieldsType, class JoinsType, class WhereType,
           class GroupByType, class OrderByType, class LimitType,
           class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
-                      const WhereType& _where, const LimitType& _limit) {
+                      const JoinsType& _joins, const WhereType& _where,
+                      const LimitType& _limit) {
   if constexpr (internal::is_range_v<ContainerType>) {
     const auto query =
-        transpilation::to_select_from<StructType, FieldsType, WhereType,
-                                      GroupByType, OrderByType, LimitType>(
-            _fields, _where, _limit);
+        transpilation::to_select_from<StructType, FieldsType, JoinsType,
+                                      WhereType, GroupByType, OrderByType,
+                                      LimitType>(_fields, _joins, _where,
+                                                 _limit);
     return _conn->read(query).transform(
         [](auto&& _it) { return ContainerType(_it); });
 
@@ -57,30 +59,31 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
     using RangeType =
         Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>;
 
-    return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
-                            OrderByType, LimitType, RangeType>(_conn, _fields,
-                                                               _where, _limit)
+    return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
+                            GroupByType, OrderByType, LimitType, RangeType>(
+               _conn, _fields, _joins, _where, _limit)
         .and_then(to_container);
   }
 }
 
-template <class StructType, class FieldsType, class WhereType,
+template <class StructType, class FieldsType, class JoinsType, class WhereType,
           class GroupByType, class OrderByType, class LimitType,
           class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Result<Ref<Connection>>& _res,
-                      const FieldsType& _fields, const WhereType& _where,
-                      const LimitType& _limit) {
+                      const FieldsType& _fields, const JoinsType& _joins,
+                      const WhereType& _where, const LimitType& _limit) {
   return _res.and_then([&](const auto& _conn) {
-    return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
-                            OrderByType, LimitType, ContainerType>(
-        _conn, _where, _limit);
+    return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
+                            GroupByType, OrderByType, LimitType, ContainerType>(
+        _conn, _joins, _where, _limit);
   });
 }
 
-template <class StructType, class FieldsType, class WhereType = Nothing,
-          class GroupByType = Nothing, class OrderByType = Nothing,
-          class LimitType = Nothing, class ToType = Nothing>
+template <class StructType, class FieldsType, class JoinsType = Nothing,
+          class WhereType = Nothing, class GroupByType = Nothing,
+          class OrderByType = Nothing, class LimitType = Nothing,
+          class ToType = Nothing>
 struct SelectFrom {
   auto operator()(const auto& _conn) const {
     if constexpr (std::is_same_v<ToType, Nothing> ||
@@ -89,9 +92,10 @@ struct SelectFrom {
           std::is_same_v<ToType, Nothing>,
           Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>,
           ToType>;
-      return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
-                              OrderByType, LimitType, ContainerType>(
-          _conn, fields_, where_, limit_);
+      return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
+                              GroupByType, OrderByType, LimitType,
+                              ContainerType>(_conn, fields_, joins_, where_,
+                                             limit_);
 
     } else {
       const auto extract_result = [](auto&& _vec) -> Result<ToType> {
@@ -104,10 +108,10 @@ struct SelectFrom {
         return std::move(_vec[0]);
       };
 
-      return select_from_impl<StructType, FieldsType, WhereType, GroupByType,
-                              OrderByType, LimitType,
+      return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
+                              GroupByType, OrderByType, LimitType,
                               std::vector<std::remove_cvref_t<ToType>>>(
-                 _conn, fields_, where_, limit_)
+                 _conn, fields_, joins_, where_, limit_)
           .and_then(extract_result);
     }
   }
@@ -124,9 +128,9 @@ struct SelectFrom {
                   "You cannot call limit(...) before where(...).");
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> before where(...).");
-    return SelectFrom<StructType, FieldsType, ConditionType, GroupByType,
-                      OrderByType, LimitType, ToType>{
-        .fields_ = _s.fields_, .where_ = _where.condition};
+    return SelectFrom<StructType, FieldsType, JoinsType, ConditionType,
+                      GroupByType, OrderByType, LimitType, ToType>{
+        .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _where.condition};
   }
 
   template <class... ColTypes>
@@ -144,10 +148,10 @@ struct SelectFrom {
     static_assert(sizeof...(ColTypes) != 0,
                   "You must assign at least one column to group_by.");
     return SelectFrom<
-        StructType, FieldsType, WhereType,
+        StructType, FieldsType, JoinsType, WhereType,
         transpilation::group_by_t<StructType, typename ColTypes::ColType...>,
-        OrderByType, LimitType, ToType>{.fields_ = _s.fields_,
-                                        .where_ = _s.where_};
+        OrderByType, LimitType, ToType>{
+        .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
   }
 
   template <class... ColTypes>
@@ -163,30 +167,37 @@ struct SelectFrom {
     static_assert(sizeof...(ColTypes) != 0,
                   "You must assign at least one column to order_by.");
     return SelectFrom<
-        StructType, FieldsType, WhereType, GroupByType,
+        StructType, FieldsType, JoinsType, WhereType, GroupByType,
         transpilation::order_by_t<
             StructType, typename std::remove_cvref_t<ColTypes>::ColType...>,
-        LimitType, ToType>{.fields_ = _s.fields_, .where_ = _s.where_};
+        LimitType, ToType>{
+        .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
   }
 
   friend auto operator|(const SelectFrom& _s, const Limit& _limit) {
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit twice.");
-    return SelectFrom<StructType, FieldsType, WhereType, GroupByType,
-                      OrderByType, Limit, ToType>{
-        .fields_ = _s.fields_, .where_ = _s.where_, .limit_ = _limit};
+    return SelectFrom<StructType, FieldsType, JoinsType, WhereType, GroupByType,
+                      OrderByType, Limit, ToType>{.fields_ = _s.fields_,
+                                                  .joins_ = _s.joins_,
+                                                  .where_ = _s.where_,
+                                                  .limit_ = _limit};
   }
 
   template <class NewToType>
   friend auto operator|(const SelectFrom& _s, const To<NewToType>&) {
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> twice.");
-    return SelectFrom<StructType, FieldsType, WhereType, GroupByType,
-                      OrderByType, LimitType, NewToType>{
-        .fields_ = _s.fields_, .where_ = _s.where_, .limit_ = _s.limit_};
+    return SelectFrom<StructType, FieldsType, JoinsType, WhereType, GroupByType,
+                      OrderByType, LimitType, NewToType>{.fields_ = _s.fields_,
+                                                         .joins_ = _s.joins_,
+                                                         .where_ = _s.where_,
+                                                         .limit_ = _s.limit_};
   }
 
   FieldsType fields_;
+
+  JoinsType joins_;
 
   WhereType where_;
 
