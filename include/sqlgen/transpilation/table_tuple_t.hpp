@@ -13,8 +13,8 @@ namespace sqlgen::transpilation {
 template <class StructType, class AliasType, class JoinsType>
 struct TableTupleType;
 
-template <class StructType>
-struct TableTupleType<StructType, Nothing, Nothing> {
+template <class StructType, class AliasType>
+struct TableTupleType<StructType, AliasType, Nothing> {
   using Type = StructType;
 };
 

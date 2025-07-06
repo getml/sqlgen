@@ -84,7 +84,7 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
   using StructType =
       get_table_t<std::integral_constant<size_t, 0>, TableTupleType>;
 
-  const auto fields = make_fields<StructType, FieldsType>(
+  const auto fields = make_fields<TableTupleType, FieldsType>(
       _fields,
       std::make_integer_sequence<int, rfl::tuple_size_v<FieldsType>>());
 

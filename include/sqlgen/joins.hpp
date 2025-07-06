@@ -18,53 +18,53 @@ auto join(const transpilation::JoinType _how,
 template <rfl::internal::StringLiteral _alias, class QueryType,
           class ConditionType>
 auto full_join(const QueryType& _query, const ConditionType& _on) {
-  return join(transpilation::JoinType::full_join, _query, _on);
+  return join<_alias>(transpilation::JoinType::full_join, _query, _on);
 }
 
 template <class TableType, rfl::internal::StringLiteral _alias,
           class ConditionType>
 auto full_join(const ConditionType& _on) {
-  return join(transpilation::JoinType::full_join,
-              transpilation::TableWrapper<TableType>{}, _on);
+  return join<_alias>(transpilation::JoinType::full_join,
+                      transpilation::TableWrapper<TableType>{}, _on);
 }
 
 template <rfl::internal::StringLiteral _alias, class QueryType,
           class ConditionType>
 auto inner_join(const QueryType& _query, const ConditionType& _on) {
-  return join(transpilation::JoinType::inner_join, _query, _on);
+  return join<_alias>(transpilation::JoinType::inner_join, _query, _on);
 }
 
 template <class TableType, rfl::internal::StringLiteral _alias,
           class ConditionType>
 auto inner_join(const ConditionType& _on) {
-  return join(transpilation::JoinType::inner_join,
-              transpilation::TableWrapper<TableType>{}, _on);
+  return join<_alias>(transpilation::JoinType::inner_join,
+                      transpilation::TableWrapper<TableType>{}, _on);
 }
 
 template <rfl::internal::StringLiteral _alias, class QueryType,
           class ConditionType>
 auto left_join(const QueryType& _query, const ConditionType& _on) {
-  return join(transpilation::JoinType::left_join, _query, _on);
+  return join<_alias>(transpilation::JoinType::left_join, _query, _on);
 }
 
 template <class TableType, rfl::internal::StringLiteral _alias,
           class ConditionType>
 auto left_join(const ConditionType& _on) {
-  return join(transpilation::JoinType::left_join,
-              transpilation::TableWrapper<TableType>{}, _on);
+  return join<_alias>(transpilation::JoinType::left_join,
+                      transpilation::TableWrapper<TableType>{}, _on);
 }
 
 template <rfl::internal::StringLiteral _alias, class QueryType,
           class ConditionType>
 auto right_join(const QueryType& _query, const ConditionType& _on) {
-  return join(transpilation::JoinType::right_join, _query, _on);
+  return join<_alias>(transpilation::JoinType::right_join, _query, _on);
 }
 
 template <class TableType, rfl::internal::StringLiteral _alias,
           class ConditionType>
 auto right_join(const ConditionType& _on) {
-  return join(transpilation::JoinType::right_join,
-              transpilation::TableWrapper<TableType>{}, _on);
+  return join<_alias>(transpilation::JoinType::right_join,
+                      transpilation::TableWrapper<TableType>{}, _on);
 }
 
 }  // namespace sqlgen

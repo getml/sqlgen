@@ -207,6 +207,16 @@ auto operator"" _c() {
   return Col<_name>{};
 }
 
+template <rfl::internal::StringLiteral _name>
+auto operator"" _t1() {
+  return Col<_name, "t1">{};
+}
+
+template <rfl::internal::StringLiteral _name>
+auto operator"" _t2() {
+  return Col<_name, "t2">{};
+}
+
 namespace transpilation {
 
 template <rfl::internal::StringLiteral _name>

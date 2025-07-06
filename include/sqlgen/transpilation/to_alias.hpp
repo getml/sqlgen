@@ -19,6 +19,11 @@ struct ToAlias<Nothing> {
   std::optional<std::string> operator()() const { return std::nullopt; }
 };
 
+template <>
+struct ToAlias<Literal<"">> {
+  std::optional<std::string> operator()() const { return std::nullopt; }
+};
+
 template <rfl::internal::StringLiteral _alias>
 struct ToAlias<Literal<_alias>> {
   std::optional<std::string> operator()() const {

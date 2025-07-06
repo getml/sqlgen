@@ -13,6 +13,7 @@
 #include "Value.hpp"
 #include "all_columns_exist.hpp"
 #include "dynamic_operator_t.hpp"
+#include "get_table_t.hpp"
 #include "is_nullable.hpp"
 #include "is_timestamp.hpp"
 #include "remove_nullable_t.hpp"
@@ -20,72 +21,85 @@
 
 namespace sqlgen::transpilation {
 
-template <class T, class _Type>
+template <class TableTupleType, class _Type>
 struct Underlying;
 
-template <class T, AggregationOp _op, class ValueType>
-struct Underlying<T, Aggregation<_op, ValueType>> {
-  using Type = typename Underlying<T, std::remove_cvref_t<ValueType>>::Type;
-};
-
-template <class T, rfl::internal::StringLiteral _name>
-struct Underlying<T, Col<_name>> {
-  static_assert(all_columns_exist<T, Col<_name>>(), "All columns must exist.");
-  using Type = remove_reflection_t<rfl::field_type_t<_name, T>>;
-};
-
-template <class T, rfl::internal::StringLiteral _name>
-struct Underlying<T, Desc<Col<_name>>> {
-  using Type = remove_reflection_t<rfl::field_type_t<_name, T>>;
-};
-
-template <class T, class Operand1Type, class TargetType>
-struct Underlying<
-    T, Operation<Operator::cast, Operand1Type, TypeHolder<TargetType>>> {
+template <class TableTupleType, AggregationOp _op, class ValueType>
+struct Underlying<TableTupleType, Aggregation<_op, ValueType>> {
   using Type =
-      std::conditional_t<is_nullable_v<typename Underlying<
-                             T, std::remove_cvref_t<Operand1Type>>::Type>,
-                         std::optional<std::remove_cvref_t<TargetType>>,
-                         std::remove_cvref_t<TargetType>>;
+      typename Underlying<TableTupleType, std::remove_cvref_t<ValueType>>::Type;
 };
 
-template <class T, class Head, class... Tail>
-struct Underlying<T, Operation<Operator::coalesce, rfl::Tuple<Head, Tail...>>> {
-  using Operand1Type = typename Underlying<T, std::remove_cvref_t<Head>>::Type;
+template <class TableTupleType, rfl::internal::StringLiteral _name,
+          rfl::internal::StringLiteral _alias>
+struct Underlying<TableTupleType, Col<_name, _alias>> {
+  static_assert(all_columns_exist<TableTupleType, Col<_name, _alias>>(),
+                "All columns must exist.");
+  using Type = remove_reflection_t<
+      rfl::field_type_t<_name, get_table_t<Literal<_alias>, TableTupleType>>>;
+};
 
-  static_assert((true && ... &&
-                 std::is_same_v<remove_nullable_t<Operand1Type>,
-                                remove_nullable_t<typename Underlying<
-                                    T, std::remove_cvref_t<Tail>>::Type>>),
-                "All inputs into coalesce(...) must have the same type.");
+template <class TableTupleType, rfl::internal::StringLiteral _name,
+          rfl::internal::StringLiteral _alias>
+struct Underlying<TableTupleType, Desc<Col<_name, _alias>>> {
+  using Type = remove_reflection_t<
+      rfl::field_type_t<_name, get_table_t<Literal<_alias>, TableTupleType>>>;
+};
+
+template <class TableTupleType, class Operand1Type, class TargetType>
+struct Underlying<TableTupleType, Operation<Operator::cast, Operand1Type,
+                                            TypeHolder<TargetType>>> {
+  using Type = std::conditional_t<
+      is_nullable_v<typename Underlying<
+          TableTupleType, std::remove_cvref_t<Operand1Type>>::Type>,
+      std::optional<std::remove_cvref_t<TargetType>>,
+      std::remove_cvref_t<TargetType>>;
+};
+
+template <class TableTupleType, class Head, class... Tail>
+struct Underlying<TableTupleType,
+                  Operation<Operator::coalesce, rfl::Tuple<Head, Tail...>>> {
+  using Operand1Type =
+      typename Underlying<TableTupleType, std::remove_cvref_t<Head>>::Type;
+
+  static_assert(
+      (true && ... &&
+       std::is_same_v<remove_nullable_t<Operand1Type>,
+                      remove_nullable_t<typename Underlying<
+                          TableTupleType, std::remove_cvref_t<Tail>>::Type>>),
+      "All inputs into coalesce(...) must have the same type.");
 
   using Type = std::conditional_t<
       (is_nullable_v<Operand1Type> && ... &&
-       is_nullable_v<typename Underlying<T, std::remove_cvref_t<Tail>>::Type>),
+       is_nullable_v<typename Underlying<TableTupleType,
+                                         std::remove_cvref_t<Tail>>::Type>),
       std::optional<remove_nullable_t<Operand1Type>>,
       remove_nullable_t<Operand1Type>>;
 };
 
-template <class T, class... OperandTypes>
-struct Underlying<T, Operation<Operator::concat, rfl::Tuple<OperandTypes...>>> {
+template <class TableTupleType, class... OperandTypes>
+struct Underlying<TableTupleType,
+                  Operation<Operator::concat, rfl::Tuple<OperandTypes...>>> {
   static_assert(
       (true && ... &&
-       std::is_same_v<remove_nullable_t<typename Underlying<
-                          T, std::remove_cvref_t<OperandTypes>>::Type>,
-                      std::string>),
+       std::is_same_v<
+           remove_nullable_t<typename Underlying<
+               TableTupleType, std::remove_cvref_t<OperandTypes>>::Type>,
+           std::string>),
       "Must be a string");
 
-  using Type =
-      std::conditional_t<(false || ... ||
-                          is_nullable_v<typename Underlying<
-                              T, std::remove_cvref_t<OperandTypes>>::Type>),
-                         std::optional<std::string>, std::string>;
+  using Type = std::conditional_t<
+      (false || ... ||
+       is_nullable_v<typename Underlying<
+           TableTupleType, std::remove_cvref_t<OperandTypes>>::Type>),
+      std::optional<std::string>, std::string>;
 };
 
-template <class T, class Operand1Type, class... DurationTypes>
-struct Underlying<T, Operation<Operator::date_plus_duration, Operand1Type,
-                               rfl::Tuple<DurationTypes...>>> {
-  using Underlying1 = typename Underlying<T, Operand1Type>::Type;
+template <class TableTupleType, class Operand1Type, class... DurationTypes>
+struct Underlying<TableTupleType,
+                  Operation<Operator::date_plus_duration, Operand1Type,
+                            rfl::Tuple<DurationTypes...>>> {
+  using Underlying1 = typename Underlying<TableTupleType, Operand1Type>::Type;
 
   static_assert(is_timestamp_v<remove_nullable_t<Underlying1>>,
                 "Must be a timestamp");
@@ -95,11 +109,11 @@ struct Underlying<T, Operation<Operator::date_plus_duration, Operand1Type,
                                   Underlying1>;
 };
 
-template <class T, class Operand1Type, class Operand2Type>
-struct Underlying<
-    T, Operation<Operator::days_between, Operand1Type, Operand2Type>> {
-  using Underlying1 = typename Underlying<T, Operand1Type>::Type;
-  using Underlying2 = typename Underlying<T, Operand2Type>::Type;
+template <class TableTupleType, class Operand1Type, class Operand2Type>
+struct Underlying<TableTupleType, Operation<Operator::days_between,
+                                            Operand1Type, Operand2Type>> {
+  using Underlying1 = typename Underlying<TableTupleType, Operand1Type>::Type;
+  using Underlying2 = typename Underlying<TableTupleType, Operand2Type>::Type;
 
   static_assert(is_timestamp_v<remove_nullable_t<Underlying1>>,
                 "Must be a timestamp");
@@ -111,15 +125,19 @@ struct Underlying<
                                   std::optional<double>, double>;
 };
 
-template <class T, class Operand1Type, class Operand2Type, class Operand3Type>
-struct Underlying<
-    T, Operation<Operator::replace, Operand1Type, Operand2Type, Operand3Type>> {
+template <class TableTupleType, class Operand1Type, class Operand2Type,
+          class Operand3Type>
+struct Underlying<TableTupleType, Operation<Operator::replace, Operand1Type,
+                                            Operand2Type, Operand3Type>> {
   using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand1Type>>::Type;
   using Underlying2 =
-      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand2Type>>::Type;
   using Underlying3 =
-      typename Underlying<T, std::remove_cvref_t<Operand3Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand3Type>>::Type;
 
   static_assert(std::is_same_v<remove_nullable_t<Underlying1>, std::string>,
                 "Must be a string");
@@ -134,12 +152,15 @@ struct Underlying<
                                   std::optional<std::string>, std::string>;
 };
 
-template <class T, class Operand1Type, class Operand2Type>
-struct Underlying<T, Operation<Operator::round, Operand1Type, Operand2Type>> {
+template <class TableTupleType, class Operand1Type, class Operand2Type>
+struct Underlying<TableTupleType,
+                  Operation<Operator::round, Operand1Type, Operand2Type>> {
   using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand1Type>>::Type;
   using Underlying2 =
-      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand2Type>>::Type;
 
   static_assert(std::is_integral_v<remove_nullable_t<Underlying1>> ||
                     std::is_floating_point_v<remove_nullable_t<Underlying1>>,
@@ -149,9 +170,10 @@ struct Underlying<T, Operation<Operator::round, Operand1Type, Operand2Type>> {
   using Type = Underlying1;
 };
 
-template <class T, class Operand1Type>
-struct Underlying<T, Operation<Operator::unixepoch, Operand1Type>> {
-  using Underlying1 = typename Underlying<T, Operand1Type>::Type;
+template <class TableTupleType, class Operand1Type>
+struct Underlying<TableTupleType,
+                  Operation<Operator::unixepoch, Operand1Type>> {
+  using Underlying1 = typename Underlying<TableTupleType, Operand1Type>::Type;
 
   static_assert(is_timestamp_v<remove_nullable_t<Underlying1>>,
                 "Must be a timestamp");
@@ -160,12 +182,13 @@ struct Underlying<T, Operation<Operator::unixepoch, Operand1Type>> {
                                   std::optional<time_t>, time_t>;
 };
 
-template <class T, Operator _op, class Operand1Type>
+template <class TableTupleType, Operator _op, class Operand1Type>
   requires((num_operands_v<_op>) == 1 &&
            (operator_category_v<_op>) == OperatorCategory::date_part)
-struct Underlying<T, Operation<_op, Operand1Type>> {
+struct Underlying<TableTupleType, Operation<_op, Operand1Type>> {
   using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand1Type>>::Type;
 
   static_assert(is_timestamp_v<remove_nullable_t<Underlying1>>,
                 "Must be a timestamp");
@@ -174,12 +197,13 @@ struct Underlying<T, Operation<_op, Operand1Type>> {
       std::conditional_t<is_nullable_v<Underlying1>, std::optional<int>, int>;
 };
 
-template <class T, Operator _op, class Operand1Type>
+template <class TableTupleType, Operator _op, class Operand1Type>
   requires((num_operands_v<_op>) == 1 &&
            (operator_category_v<_op>) == OperatorCategory::string)
-struct Underlying<T, Operation<_op, Operand1Type>> {
+struct Underlying<TableTupleType, Operation<_op, Operand1Type>> {
   using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand1Type>>::Type;
 
   static_assert(std::is_same_v<remove_nullable_t<Underlying1>, std::string>,
                 "Must be a string");
@@ -193,14 +217,17 @@ struct Underlying<T, Operation<_op, Operand1Type>> {
       std::conditional_t<_op == Operator::length, SizeType, StringType>;
 };
 
-template <class T, Operator _op, class Operand1Type, class Operand2Type>
+template <class TableTupleType, Operator _op, class Operand1Type,
+          class Operand2Type>
   requires((num_operands_v<_op>) == 2 &&
            (operator_category_v<_op>) == OperatorCategory::string)
-struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
+struct Underlying<TableTupleType, Operation<_op, Operand1Type, Operand2Type>> {
   using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand1Type>>::Type;
   using Underlying2 =
-      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand2Type>>::Type;
 
   static_assert(std::is_same_v<remove_nullable_t<Underlying1>, std::string>,
                 "Must be a string");
@@ -212,12 +239,13 @@ struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
                                   std::optional<std::string>, std::string>;
 };
 
-template <class T, Operator _op, class Operand1Type>
+template <class TableTupleType, Operator _op, class Operand1Type>
   requires((num_operands_v<_op>) == 1 &&
            (operator_category_v<_op>) == OperatorCategory::numerical)
-struct Underlying<T, Operation<_op, Operand1Type>> {
+struct Underlying<TableTupleType, Operation<_op, Operand1Type>> {
   using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand1Type>>::Type;
 
   static_assert(std::is_integral_v<remove_nullable_t<Underlying1>> ||
                     std::is_floating_point_v<remove_nullable_t<Underlying1>>,
@@ -226,14 +254,17 @@ struct Underlying<T, Operation<_op, Operand1Type>> {
   using Type = Underlying1;
 };
 
-template <class T, Operator _op, class Operand1Type, class Operand2Type>
+template <class TableTupleType, Operator _op, class Operand1Type,
+          class Operand2Type>
   requires((num_operands_v<_op>) == 2 &&
            (operator_category_v<_op>) == OperatorCategory::numerical)
-struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
+struct Underlying<TableTupleType, Operation<_op, Operand1Type, Operand2Type>> {
   using Underlying1 =
-      typename Underlying<T, std::remove_cvref_t<Operand1Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand1Type>>::Type;
   using Underlying2 =
-      typename Underlying<T, std::remove_cvref_t<Operand2Type>>::Type;
+      typename Underlying<TableTupleType,
+                          std::remove_cvref_t<Operand2Type>>::Type;
 
   static_assert(
       requires(remove_nullable_t<Underlying1> op1,
@@ -249,14 +280,14 @@ struct Underlying<T, Operation<_op, Operand1Type, Operand2Type>> {
                                   std::optional<ResultType>, ResultType>;
 };
 
-template <class T, class _Type>
-struct Underlying<T, Value<_Type>> {
+template <class TableTupleType, class _Type>
+struct Underlying<TableTupleType, Value<_Type>> {
   using Type = remove_reflection_t<_Type>;
 };
 
-template <class T, class U>
-using underlying_t =
-    typename Underlying<std::remove_cvref_t<T>, std::remove_cvref_t<U>>::Type;
+template <class TableTupleType, class T>
+using underlying_t = typename Underlying<std::remove_cvref_t<TableTupleType>,
+                                         std::remove_cvref_t<T>>::Type;
 
 }  // namespace sqlgen::transpilation
 

@@ -6,6 +6,7 @@
 
 #include "../Literal.hpp"
 #include "Col.hpp"
+#include "get_table_t.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -13,8 +14,10 @@ template <class Names, class ColType>
 struct ColumnExists;
 
 template <rfl::internal::StringLiteral _col_name,
+          rfl::internal::StringLiteral _alias,
           rfl::internal::StringLiteral... _field_names>
-struct ColumnExists<Literal<_field_names...>, transpilation::Col<_col_name>> {
+struct ColumnExists<Literal<_field_names...>,
+                    transpilation::Col<_col_name, _alias>> {
   static constexpr bool value = (false || ... || (_col_name == _field_names));
   static_assert(value, "Column does not exist.");
 };
@@ -22,10 +25,12 @@ struct ColumnExists<Literal<_field_names...>, transpilation::Col<_col_name>> {
 template <class Names, class ColType>
 constexpr bool column_exists_v = ColumnExists<Names, ColType>::value;
 
-template <class T, class... ColTypes>
+template <class TableTupleType, class... ColTypes>
 consteval bool all_columns_exist() {
-  using Names = typename rfl::named_tuple_t<std::remove_cvref_t<T>>::Names;
-  return (true && ... && column_exists_v<Names, ColTypes>);
+  return (true && ... &&
+          column_exists_v<typename rfl::named_tuple_t<get_table_t<
+                              typename ColTypes::Alias, TableTupleType>>::Names,
+                          ColTypes>);
 }
 
 }  // namespace sqlgen::transpilation
