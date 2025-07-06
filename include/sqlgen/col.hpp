@@ -19,10 +19,12 @@
 
 namespace sqlgen {
 
-template <rfl::internal::StringLiteral _name>
+template <rfl::internal::StringLiteral _name,
+          rfl::internal::StringLiteral _alias = "">
 struct Col {
-  using ColType = transpilation::Col<_name>;
+  using ColType = transpilation::Col<_name, _alias>;
   using Name = rfl::Literal<_name>;
+  using Alias = rfl::Literal<_alias>;
 
   template <rfl::internal::StringLiteral _new_name>
   auto as() const noexcept {

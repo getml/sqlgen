@@ -13,9 +13,10 @@ using JoinType = dynamic::JoinType;
 template <class TableType>
 struct TableWrapper {};
 
-template <class TableOrQueryType, class ConditionType,
+template <class _TableOrQueryType, class ConditionType,
           rfl::internal::StringLiteral _alias>
 struct Join {
+  using TableOrQueryType = _TableOrQueryType;
   using Alias = Literal<_alias>;
 
   JoinType how;

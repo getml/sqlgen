@@ -20,22 +20,24 @@
 #include "transpilation/fields_to_named_tuple_t.hpp"
 #include "transpilation/group_by_t.hpp"
 #include "transpilation/order_by_t.hpp"
+#include "transpilation/table_tuple_t.hpp"
 #include "transpilation/to_select_from.hpp"
 #include "transpilation/value_t.hpp"
 #include "where.hpp"
 
 namespace sqlgen {
 
-template <class StructType, class AliasType, class FieldsType, class JoinsType,
-          class WhereType, class GroupByType, class OrderByType,
-          class LimitType, class ContainerType, class Connection>
+template <class TableTupleType, class AliasType, class FieldsType,
+          class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ContainerType,
+          class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
                       const JoinsType& _joins, const WhereType& _where,
                       const LimitType& _limit) {
   if constexpr (internal::is_range_v<ContainerType>) {
     const auto query =
-        transpilation::to_select_from<StructType, AliasType, FieldsType,
+        transpilation::to_select_from<TableTupleType, AliasType, FieldsType,
                                       JoinsType, WhereType, GroupByType,
                                       OrderByType, LimitType>(_fields, _joins,
                                                               _where, _limit);
@@ -57,25 +59,26 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
       return container;
     };
 
-    using RangeType =
-        Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>;
+    using RangeType = Range<
+        transpilation::fields_to_named_tuple_t<TableTupleType, FieldsType>>;
 
-    return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+    return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
                             WhereType, GroupByType, OrderByType, LimitType,
                             RangeType>(_conn, _fields, _joins, _where, _limit)
         .and_then(to_container);
   }
 }
 
-template <class StructType, class AliasType, class FieldsType, class JoinsType,
-          class WhereType, class GroupByType, class OrderByType,
-          class LimitType, class ContainerType, class Connection>
+template <class TableTupleType, class AliasType, class FieldsType,
+          class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ContainerType,
+          class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Result<Ref<Connection>>& _res,
                       const FieldsType& _fields, const JoinsType& _joins,
                       const WhereType& _where, const LimitType& _limit) {
   return _res.and_then([&](const auto& _conn) {
-    return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+    return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
                             WhereType, GroupByType, OrderByType, LimitType,
                             ContainerType>(_conn, _joins, _where, _limit);
   });
@@ -86,6 +89,9 @@ template <class StructType, class AliasType, class FieldsType,
           class GroupByType = Nothing, class OrderByType = Nothing,
           class LimitType = Nothing, class ToType = Nothing>
 struct SelectFrom {
+  using TableTupleType =
+      transpilation::table_tuple_t<StructType, AliasType, JoinsType>;
+
   auto operator()(const auto& _conn) const {
     if constexpr (std::is_same_v<ToType, Nothing> ||
                   std::ranges::input_range<std::remove_cvref_t<ToType>>) {
@@ -93,7 +99,7 @@ struct SelectFrom {
           std::is_same_v<ToType, Nothing>,
           Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>,
           ToType>;
-      return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+      return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
                               WhereType, GroupByType, OrderByType, LimitType,
                               ContainerType>(_conn, fields_, joins_, where_,
                                              limit_);

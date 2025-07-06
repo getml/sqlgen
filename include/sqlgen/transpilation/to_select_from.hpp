@@ -18,6 +18,7 @@
 #include "check_aggregations.hpp"
 #include "flatten_fields_t.hpp"
 #include "get_schema.hpp"
+#include "get_table_t.hpp"
 #include "get_tablename.hpp"
 #include "make_fields.hpp"
 #include "to_alias.hpp"
@@ -67,20 +68,21 @@ inline std::optional<std::vector<dynamic::Join>> to_joins(const Nothing&) {
   return std::nullopt;
 }
 
-template <class StructType, class AliasType, class FieldsType, class JoinsType,
-          class WhereType, class GroupByType, class OrderByType,
-          class LimitType>
-  requires std::is_class_v<std::remove_cvref_t<StructType>> &&
-           std::is_aggregate_v<std::remove_cvref_t<StructType>>
+template <class TableTupleType, class AliasType, class FieldsType,
+          class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType>
 dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                                    const JoinsType& _joins,
                                    const WhereType& _where,
                                    const LimitType& _limit) {
-  static_assert(
-      check_aggregations<StructType, flatten_fields_t<StructType, FieldsType>,
-                         GroupByType>(),
-      "The aggregations were not set up correctly. Please check the "
-      "trace for a more detailed error message.");
+  static_assert(check_aggregations<TableTupleType,
+                                   flatten_fields_t<TableTupleType, FieldsType>,
+                                   GroupByType>(),
+                "The aggregations were not set up correctly. Please check the "
+                "trace for a more detailed error message.");
+
+  using StructType =
+      get_table_t<std::integral_constant<size_t, 0>, TableTupleType>;
 
   const auto fields = make_fields<StructType, FieldsType>(
       _fields,
@@ -92,7 +94,7 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                               .schema = get_schema<StructType>()},
       .fields = fields,
       .joins = to_joins(_joins),
-      .where = to_condition<std::remove_cvref_t<StructType>>(_where),
+      .where = to_condition<std::remove_cvref_t<TableTupleType>>(_where),
       .group_by = to_group_by<GroupByType>(),
       .order_by = to_order_by<OrderByType>(),
       .limit = to_limit(_limit)};
