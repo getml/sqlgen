@@ -20,6 +20,7 @@
 #include "get_schema.hpp"
 #include "get_tablename.hpp"
 #include "make_fields.hpp"
+#include "to_alias.hpp"
 #include "to_condition.hpp"
 #include "to_group_by.hpp"
 #include "to_limit.hpp"
@@ -39,9 +40,11 @@ template <class TableType, class ConditionType,
           rfl::internal::StringLiteral _alias>
   requires std::is_class_v<std::remove_cvref_t<TableType>> &&
            std::is_aggregate_v<std::remove_cvref_t<TableType>>
-dynamic::Join to_join(const Join<TableType, ConditionType, _alias>& _join) {
+dynamic::Join to_join(
+    const Join<TableWrapper<TableType>, ConditionType, _alias>& _join) {
   using T = std::remove_cvref_t<TableType>;
-  using Alias = typename Join<TableType, ConditionType, _alias>::Alias;
+  using Alias =
+      typename Join<TableWrapper<TableType>, ConditionType, _alias>::Alias;
 
   return dynamic::Join{
       .how = _join.how,
@@ -64,8 +67,9 @@ inline std::optional<std::vector<dynamic::Join>> to_joins(const Nothing&) {
   return std::nullopt;
 }
 
-template <class StructType, class FieldsType, class JoinsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType>
+template <class StructType, class AliasType, class FieldsType, class JoinsType,
+          class WhereType, class GroupByType, class OrderByType,
+          class LimitType>
   requires std::is_class_v<std::remove_cvref_t<StructType>> &&
            std::is_aggregate_v<std::remove_cvref_t<StructType>>
 dynamic::SelectFrom to_select_from(const FieldsType& _fields,
@@ -83,7 +87,8 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
       std::make_integer_sequence<int, rfl::tuple_size_v<FieldsType>>());
 
   return dynamic::SelectFrom{
-      .table = dynamic::Table{.name = get_tablename<StructType>(),
+      .table = dynamic::Table{.alias = to_alias<AliasType>(),
+                              .name = get_tablename<StructType>(),
                               .schema = get_schema<StructType>()},
       .fields = fields,
       .joins = to_joins(_joins),

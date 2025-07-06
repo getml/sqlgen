@@ -16,6 +16,7 @@
 #include "limit.hpp"
 #include "order_by.hpp"
 #include "to.hpp"
+#include "transpilation/Join.hpp"
 #include "transpilation/fields_to_named_tuple_t.hpp"
 #include "transpilation/group_by_t.hpp"
 #include "transpilation/order_by_t.hpp"
@@ -25,19 +26,19 @@
 
 namespace sqlgen {
 
-template <class StructType, class FieldsType, class JoinsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType,
-          class ContainerType, class Connection>
+template <class StructType, class AliasType, class FieldsType, class JoinsType,
+          class WhereType, class GroupByType, class OrderByType,
+          class LimitType, class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
                       const JoinsType& _joins, const WhereType& _where,
                       const LimitType& _limit) {
   if constexpr (internal::is_range_v<ContainerType>) {
     const auto query =
-        transpilation::to_select_from<StructType, FieldsType, JoinsType,
-                                      WhereType, GroupByType, OrderByType,
-                                      LimitType>(_fields, _joins, _where,
-                                                 _limit);
+        transpilation::to_select_from<StructType, AliasType, FieldsType,
+                                      JoinsType, WhereType, GroupByType,
+                                      OrderByType, LimitType>(_fields, _joins,
+                                                              _where, _limit);
     return _conn->read(query).transform(
         [](auto&& _it) { return ContainerType(_it); });
 
@@ -59,31 +60,31 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
     using RangeType =
         Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>;
 
-    return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
-                            GroupByType, OrderByType, LimitType, RangeType>(
-               _conn, _fields, _joins, _where, _limit)
+    return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+                            WhereType, GroupByType, OrderByType, LimitType,
+                            RangeType>(_conn, _fields, _joins, _where, _limit)
         .and_then(to_container);
   }
 }
 
-template <class StructType, class FieldsType, class JoinsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType,
-          class ContainerType, class Connection>
+template <class StructType, class AliasType, class FieldsType, class JoinsType,
+          class WhereType, class GroupByType, class OrderByType,
+          class LimitType, class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Result<Ref<Connection>>& _res,
                       const FieldsType& _fields, const JoinsType& _joins,
                       const WhereType& _where, const LimitType& _limit) {
   return _res.and_then([&](const auto& _conn) {
-    return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
-                            GroupByType, OrderByType, LimitType, ContainerType>(
-        _conn, _joins, _where, _limit);
+    return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+                            WhereType, GroupByType, OrderByType, LimitType,
+                            ContainerType>(_conn, _joins, _where, _limit);
   });
 }
 
-template <class StructType, class FieldsType, class JoinsType = Nothing,
-          class WhereType = Nothing, class GroupByType = Nothing,
-          class OrderByType = Nothing, class LimitType = Nothing,
-          class ToType = Nothing>
+template <class StructType, class AliasType, class FieldsType,
+          class JoinsType = Nothing, class WhereType = Nothing,
+          class GroupByType = Nothing, class OrderByType = Nothing,
+          class LimitType = Nothing, class ToType = Nothing>
 struct SelectFrom {
   auto operator()(const auto& _conn) const {
     if constexpr (std::is_same_v<ToType, Nothing> ||
@@ -92,8 +93,8 @@ struct SelectFrom {
           std::is_same_v<ToType, Nothing>,
           Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>,
           ToType>;
-      return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
-                              GroupByType, OrderByType, LimitType,
+      return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+                              WhereType, GroupByType, OrderByType, LimitType,
                               ContainerType>(_conn, fields_, joins_, where_,
                                              limit_);
 
@@ -108,11 +109,39 @@ struct SelectFrom {
         return std::move(_vec[0]);
       };
 
-      return select_from_impl<StructType, FieldsType, JoinsType, WhereType,
-                              GroupByType, OrderByType, LimitType,
+      return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+                              WhereType, GroupByType, OrderByType, LimitType,
                               std::vector<std::remove_cvref_t<ToType>>>(
                  _conn, fields_, joins_, where_, limit_)
           .and_then(extract_result);
+    }
+  }
+
+  template <class TableOrQueryType, class ConditionType,
+            rfl::internal::StringLiteral _alias>
+  friend auto operator|(
+      const SelectFrom& _s,
+      const transpilation::Join<TableOrQueryType, ConditionType, _alias>&
+          _join) {
+    if constexpr (std::is_same_v<JoinsType, Nothing>) {
+      using NewJoinsType = rfl::Tuple<
+          transpilation::Join<TableOrQueryType, ConditionType, _alias>>;
+
+      return SelectFrom<StructType, FieldsType, NewJoinsType, ConditionType,
+                        GroupByType, OrderByType, LimitType, ToType>{
+          .fields_ = _s.fields_, .joins_ = NewJoinsType(_join)};
+
+    } else {
+      using TupleType = rfl::Tuple<
+          transpilation::Join<TableOrQueryType, ConditionType, _alias>>;
+
+      const auto joins = rfl::tuple_cat(_s.joins_, TupleType(_join));
+
+      using NewJoinsType = std::remove_cvref_t<decltype(joins)>;
+
+      return SelectFrom<StructType, FieldsType, NewJoinsType, ConditionType,
+                        GroupByType, OrderByType, LimitType, ToType>{
+          .fields_ = _s.fields_, .joins_ = joins};
     }
   }
 
@@ -128,8 +157,9 @@ struct SelectFrom {
                   "You cannot call limit(...) before where(...).");
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> before where(...).");
-    return SelectFrom<StructType, FieldsType, JoinsType, ConditionType,
-                      GroupByType, OrderByType, LimitType, ToType>{
+    return SelectFrom<StructType, AliasType, FieldsType, JoinsType,
+                      ConditionType, GroupByType, OrderByType, LimitType,
+                      ToType>{
         .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _where.condition};
   }
 
@@ -148,7 +178,7 @@ struct SelectFrom {
     static_assert(sizeof...(ColTypes) != 0,
                   "You must assign at least one column to group_by.");
     return SelectFrom<
-        StructType, FieldsType, JoinsType, WhereType,
+        StructType, AliasType, FieldsType, JoinsType, WhereType,
         transpilation::group_by_t<StructType, typename ColTypes::ColType...>,
         OrderByType, LimitType, ToType>{
         .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
@@ -167,7 +197,7 @@ struct SelectFrom {
     static_assert(sizeof...(ColTypes) != 0,
                   "You must assign at least one column to order_by.");
     return SelectFrom<
-        StructType, FieldsType, JoinsType, WhereType, GroupByType,
+        StructType, AliasType, FieldsType, JoinsType, WhereType, GroupByType,
         transpilation::order_by_t<
             StructType, typename std::remove_cvref_t<ColTypes>::ColType...>,
         LimitType, ToType>{
@@ -177,22 +207,24 @@ struct SelectFrom {
   friend auto operator|(const SelectFrom& _s, const Limit& _limit) {
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit twice.");
-    return SelectFrom<StructType, FieldsType, JoinsType, WhereType, GroupByType,
-                      OrderByType, Limit, ToType>{.fields_ = _s.fields_,
-                                                  .joins_ = _s.joins_,
-                                                  .where_ = _s.where_,
-                                                  .limit_ = _limit};
+    return SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
+                      GroupByType, OrderByType, Limit, ToType>{
+        .fields_ = _s.fields_,
+        .joins_ = _s.joins_,
+        .where_ = _s.where_,
+        .limit_ = _limit};
   }
 
   template <class NewToType>
   friend auto operator|(const SelectFrom& _s, const To<NewToType>&) {
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> twice.");
-    return SelectFrom<StructType, FieldsType, JoinsType, WhereType, GroupByType,
-                      OrderByType, LimitType, NewToType>{.fields_ = _s.fields_,
-                                                         .joins_ = _s.joins_,
-                                                         .where_ = _s.where_,
-                                                         .limit_ = _s.limit_};
+    return SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
+                      GroupByType, OrderByType, LimitType, NewToType>{
+        .fields_ = _s.fields_,
+        .joins_ = _s.joins_,
+        .where_ = _s.where_,
+        .limit_ = _s.limit_};
   }
 
   FieldsType fields_;
@@ -208,7 +240,17 @@ template <class StructType, class... FieldTypes>
 inline auto select_from(const FieldTypes&... _fields) {
   using FieldsType =
       rfl::Tuple<typename internal::GetColType<FieldTypes>::Type...>;
-  return SelectFrom<StructType, FieldsType>{
+  return SelectFrom<StructType, Nothing, FieldsType>{
+      .fields_ =
+          FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...)};
+}
+
+template <class StructType, rfl::internal::StringLiteral _alias,
+          class... FieldTypes>
+inline auto select_from(const FieldTypes&... _fields) {
+  using FieldsType =
+      rfl::Tuple<typename internal::GetColType<FieldTypes>::Type...>;
+  return SelectFrom<StructType, Literal<_alias>, FieldsType>{
       .fields_ =
           FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...)};
 }

@@ -29,6 +29,7 @@
 #include "sqlgen/if_not_exists.hpp"
 #include "sqlgen/insert.hpp"
 #include "sqlgen/is_connection.hpp"
+#include "sqlgen/joins.hpp"
 #include "sqlgen/limit.hpp"
 #include "sqlgen/operations.hpp"
 #include "sqlgen/order_by.hpp"

@@ -76,13 +76,14 @@ struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType>> {
   }
 };
 
-template <class StructType, class FieldsType, class JoinsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType, class ToType>
-struct ToSQL<SelectFrom<StructType, FieldsType, JoinsType, WhereType,
+template <class StructType, class AliasType, class FieldsType, class JoinsType,
+          class WhereType, class GroupByType, class OrderByType,
+          class LimitType, class ToType>
+struct ToSQL<SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
                         GroupByType, OrderByType, LimitType, ToType>> {
   dynamic::Statement operator()(const auto& _select_from) const {
-    return to_select_from<StructType, FieldsType, JoinsType, WhereType,
-                          GroupByType, OrderByType, LimitType>(
+    return to_select_from<StructType, AliasType, FieldsType, JoinsType,
+                          WhereType, GroupByType, OrderByType, LimitType>(
         _select_from.fields_, _select_from.joins_, _select_from.where_,
         _select_from.limit_);
   }

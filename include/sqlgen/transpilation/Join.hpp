@@ -10,6 +10,9 @@ namespace sqlgen::transpilation {
 
 using JoinType = dynamic::JoinType;
 
+template <class TableType>
+struct TableWrapper {};
+
 template <class TableOrQueryType, class ConditionType,
           rfl::internal::StringLiteral _alias>
 struct Join {
