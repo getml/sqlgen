@@ -10,12 +10,28 @@ char to_lower(const char ch) {
   }
 }
 
+std::string to_lower(const std::string& _str) {
+  auto str = _str;
+  for (char& ch : str) {
+    ch = to_lower(ch);
+  }
+  return str;
+}
+
 char to_upper(const char ch) {
   if (ch >= 'a' && ch <= 'z') {
     return ch + ('A' - 'a');
   } else {
     return ch;
   }
+}
+
+std::string to_upper(const std::string& _str) {
+  auto str = _str;
+  for (char& ch : str) {
+    ch = to_upper(ch);
+  }
+  return str;
 }
 
 std::string join(const std::string& _delimiter,

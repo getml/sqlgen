@@ -6,8 +6,10 @@
 #include <string>
 #include <vector>
 
+#include "../Ref.hpp"
 #include "Condition.hpp"
 #include "GroupBy.hpp"
+#include "JoinType.hpp"
 #include "Limit.hpp"
 #include "Operation.hpp"
 #include "OrderBy.hpp"
@@ -21,8 +23,16 @@ struct SelectFrom {
     std::optional<std::string> as;
   };
 
+  struct Join {
+    JoinType how;
+    rfl::Variant<Table, Ref<SelectFrom>> table_or_query;
+    std::string alias;
+    Condition on;
+  };
+
   Table table;
   std::vector<Field> fields;
+  std::optional<std::vector<Join>> joins = std::nullopt;
   std::optional<Condition> where = std::nullopt;
   std::optional<GroupBy> group_by = std::nullopt;
   std::optional<OrderBy> order_by = std::nullopt;

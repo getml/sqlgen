@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include "sqlgen/dynamic/Join.hpp"
 #include "sqlgen/dynamic/Operation.hpp"
 #include "sqlgen/internal/collect/vector.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
@@ -40,6 +41,8 @@ std::vector<std::string> get_primary_keys(
     const dynamic::CreateTable& _stmt) noexcept;
 
 std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept;
+
+std::string join_to_sql(const dynamic::Join& _stmt) noexcept;
 
 std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept;
 
@@ -366,6 +369,31 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
   return stream.str();
 }
 
+std::string join_to_sql(const dynamic::Join& _stmt) noexcept {
+  std::stringstream stream;
+
+  stream << internal::strings::to_upper(internal::strings::replace_all(
+                rfl::enum_to_string(_stmt.how), "_", " "))
+         << " ";
+
+  stream << _stmt.table_or_query.visit(
+                [](const auto& _table_or_query) -> std::string {
+                  using Type = std::remove_cvref_t<decltype(_table_or_query)>;
+                  if constexpr (std::is_same_v<Type, dynamic::Table>) {
+                    return wrap_in_quotes(_table_or_query.name);
+                  } else {
+                    return "(" + select_from_to_sql(*_table_or_query) + ")";
+                  }
+                })
+         << " ";
+
+  stream << _stmt.alias << " ";
+
+  stream << "ON " << condition_to_sql(_stmt.on);
+
+  return stream.str();
+}
+
 std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
   using namespace std::ranges::views;
   return _stmt.val.visit([](const auto& _s) -> std::string {
@@ -558,6 +586,11 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
     stream << wrap_in_quotes(*_stmt.table.schema) << ".";
   }
   stream << wrap_in_quotes(_stmt.table.name);
+
+  if (_stmt.joins) {
+    stream << internal::strings::join(
+        " ", internal::collect::vector(*_stmt.joins | transform(join_to_sql)));
+  }
 
   if (_stmt.where) {
     stream << " WHERE " << condition_to_sql(*_stmt.where);
