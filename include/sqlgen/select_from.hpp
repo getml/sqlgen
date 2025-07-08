@@ -89,16 +89,17 @@ template <class StructType, class AliasType, class FieldsType,
           class GroupByType = Nothing, class OrderByType = Nothing,
           class LimitType = Nothing, class ToType = Nothing>
 struct SelectFrom {
-  using TableTupleType =
-      transpilation::table_tuple_t<StructType, AliasType, JoinsType>;
-
   auto operator()(const auto& _conn) const {
+    using TableTupleType =
+        transpilation::table_tuple_t<StructType, AliasType, JoinsType>;
+
     if constexpr (std::is_same_v<ToType, Nothing> ||
                   std::ranges::input_range<std::remove_cvref_t<ToType>>) {
-      using ContainerType = std::conditional_t<
-          std::is_same_v<ToType, Nothing>,
-          Range<transpilation::fields_to_named_tuple_t<StructType, FieldsType>>,
-          ToType>;
+      using ContainerType =
+          std::conditional_t<std::is_same_v<ToType, Nothing>,
+                             Range<transpilation::fields_to_named_tuple_t<
+                                 TableTupleType, FieldsType>>,
+                             ToType>;
       return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
                               WhereType, GroupByType, OrderByType, LimitType,
                               ContainerType>(_conn, fields_, joins_, where_,
@@ -115,7 +116,7 @@ struct SelectFrom {
         return std::move(_vec[0]);
       };
 
-      return select_from_impl<StructType, AliasType, FieldsType, JoinsType,
+      return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
                               WhereType, GroupByType, OrderByType, LimitType,
                               std::vector<std::remove_cvref_t<ToType>>>(
                  _conn, fields_, joins_, where_, limit_)
@@ -133,9 +134,10 @@ struct SelectFrom {
       using NewJoinsType = rfl::Tuple<
           transpilation::Join<TableOrQueryType, ConditionType, _alias>>;
 
-      return SelectFrom<StructType, FieldsType, NewJoinsType, ConditionType,
-                        GroupByType, OrderByType, LimitType, ToType>{
-          .fields_ = _s.fields_, .joins_ = NewJoinsType(_join)};
+      return SelectFrom<StructType, AliasType, FieldsType, NewJoinsType,
+                        ConditionType, GroupByType, OrderByType, LimitType,
+                        ToType>{.fields_ = _s.fields_,
+                                .joins_ = NewJoinsType(_join)};
 
     } else {
       using TupleType = rfl::Tuple<
@@ -145,9 +147,9 @@ struct SelectFrom {
 
       using NewJoinsType = std::remove_cvref_t<decltype(joins)>;
 
-      return SelectFrom<StructType, FieldsType, NewJoinsType, ConditionType,
-                        GroupByType, OrderByType, LimitType, ToType>{
-          .fields_ = _s.fields_, .joins_ = joins};
+      return SelectFrom<StructType, AliasType, FieldsType, NewJoinsType,
+                        ConditionType, GroupByType, OrderByType, LimitType,
+                        ToType>{.fields_ = _s.fields_, .joins_ = joins};
     }
   }
 

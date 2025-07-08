@@ -5,13 +5,11 @@
 
 #include "../Literal.hpp"
 #include "../dynamic/JoinType.hpp"
+#include "TableWrapper.hpp"
 
 namespace sqlgen::transpilation {
 
 using JoinType = dynamic::JoinType;
-
-template <class TableType>
-struct TableWrapper {};
 
 template <class _TableOrQueryType, class ConditionType,
           rfl::internal::StringLiteral _alias>

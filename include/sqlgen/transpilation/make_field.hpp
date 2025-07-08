@@ -20,6 +20,7 @@
 #include "all_columns_exist.hpp"
 #include "dynamic_aggregation_t.hpp"
 #include "dynamic_operator_t.hpp"
+#include "get_table_t.hpp"
 #include "is_timestamp.hpp"
 #include "remove_as_t.hpp"
 #include "remove_nullable_t.hpp"
@@ -58,8 +59,11 @@ struct MakeField<TableTupleType, Col<_name, _alias>> {
   static constexpr bool is_column = true;
   static constexpr bool is_operation = false;
 
+  using TableType =
+      get_table_t<typename Col<_name, _alias>::Alias, TableTupleType>;
+
   using Name = Literal<_name>;
-  using Type = rfl::field_type_t<_name, TableTupleType>;
+  using Type = rfl::field_type_t<_name, TableType>;
 
   dynamic::SelectFrom::Field operator()(const auto&) const {
     return dynamic::SelectFrom::Field{dynamic::Operation{

@@ -31,11 +31,13 @@ struct PairWrapper {
 template <class Alias, class T>
 struct GetTableType;
 
-template <class Alias, class... TableTypes, class... AliasTypes>
-struct GetTableType<Alias, rfl::Tuple<std::pair<TableTypes, AliasTypes>...>> {
+template <rfl::internal::StringLiteral _alias, class... TableTypes,
+          class... AliasTypes>
+struct GetTableType<Literal<_alias>,
+                    rfl::Tuple<std::pair<TableTypes, AliasTypes>...>> {
   static constexpr auto wrapper =
-      (PairWrapper<Alias, Nothing, Nothing>{} || ... ||
-       PairWrapper<Alias, TableTypes, AliasTypes>{});
+      (PairWrapper<Literal<_alias>, Nothing, Nothing>{} || ... ||
+       PairWrapper<Literal<_alias>, TableTypes, AliasTypes>{});
 
   using TableType = std::remove_cvref_t<typename decltype(wrapper)::TableType>;
 
@@ -43,22 +45,22 @@ struct GetTableType<Alias, rfl::Tuple<std::pair<TableTypes, AliasTypes>...>> {
                 "Alias could not be identified.");
 };
 
-template <class T>
-struct GetTableType<Literal<"">, T> {
+template <rfl::internal::StringLiteral _alias, class T>
+struct GetTableType<Literal<_alias>, T> {
   using TableType = T;
 };
 
 template <size_t _i, class... TableTypes, class... AliasTypes>
 struct GetTableType<std::integral_constant<size_t, _i>,
                     rfl::Tuple<std::pair<TableTypes, AliasTypes>...>> {
-  using TableType = typename std::tuple_element_t<
+  using TableType = typename rfl::tuple_element_t<
       _i, rfl::Tuple<std::pair<TableTypes, AliasTypes>...>>::first_type;
 
   static_assert(!std::is_same_v<TableType, Nothing>,
                 "Alias could not be identified.");
 };
 
-template <class T, size_t _i>
+template <size_t _i, class T>
 struct GetTableType<std::integral_constant<size_t, _i>, T> {
   using TableType = T;
 };

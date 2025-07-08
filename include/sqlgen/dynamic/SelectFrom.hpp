@@ -27,11 +27,12 @@ struct SelectFrom {
     JoinType how;
     rfl::Variant<Table, Ref<SelectFrom>> table_or_query;
     std::string alias;
-    Condition on;
+    std::optional<Condition> on;
   };
 
   Table table;
   std::vector<Field> fields;
+  std::optional<std::string> alias = std::nullopt;
   std::optional<std::vector<Join>> joins = std::nullopt;
   std::optional<Condition> where = std::nullopt;
   std::optional<GroupBy> group_by = std::nullopt;

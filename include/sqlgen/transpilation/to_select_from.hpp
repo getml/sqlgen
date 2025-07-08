@@ -51,7 +51,8 @@ dynamic::Join to_join(
       .how = _join.how,
       .table_or_query =
           dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
-      .alias = Alias().str()};
+      .alias = Alias().str(),
+      .on = to_condition<T>(_join.on)};
 }
 
 template <class... JoinTypes>
@@ -93,6 +94,7 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                               .name = get_tablename<StructType>(),
                               .schema = get_schema<StructType>()},
       .fields = fields,
+      .alias = to_alias<AliasType>(),
       .joins = to_joins(_joins),
       .where = to_condition<std::remove_cvref_t<TableTupleType>>(_where),
       .group_by = to_group_by<GroupByType>(),

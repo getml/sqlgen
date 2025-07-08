@@ -7,6 +7,7 @@
 
 #include "../Literal.hpp"
 #include "../Result.hpp"
+#include "remove_table_wrapper_t.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -20,9 +21,10 @@ struct TableTupleType<StructType, AliasType, Nothing> {
 
 template <class StructType, class AliasType, class... JoinTypes>
 struct TableTupleType<StructType, AliasType, rfl::Tuple<JoinTypes...>> {
-  using Type = rfl::Tuple<std::pair<StructType, AliasType>,
-                          std::pair<typename JoinTypes::TableOrQueryType,
-                                    typename JoinTypes::Alias>...>;
+  using Type = rfl::Tuple<
+      std::pair<remove_table_wrapper_t<StructType>, AliasType>,
+      std::pair<remove_table_wrapper_t<typename JoinTypes::TableOrQueryType>,
+                typename JoinTypes::Alias>...>;
 };
 
 template <class StructType, class AliasType, class JoinsType>

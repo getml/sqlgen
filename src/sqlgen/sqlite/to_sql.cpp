@@ -140,7 +140,11 @@ std::string column_or_value_to_sql(
   return _col.visit([&](const auto& _c) -> std::string {
     using Type = std::remove_cvref_t<decltype(_c)>;
     if constexpr (std::is_same_v<Type, dynamic::Column>) {
-      return "\"" + _c.name + "\"";
+      if (_c.alias) {
+        return *_c.alias + "." + wrap_in_quotes(_c.name);
+      } else {
+        return wrap_in_quotes(_c.name);
+      }
     } else {
       return _c.val.visit(handle_value);
     }
@@ -393,7 +397,11 @@ std::string join_to_sql(const dynamic::Join& _stmt) noexcept {
 
   stream << _stmt.alias << " ";
 
-  stream << "ON " << condition_to_sql(_stmt.on);
+  if (_stmt.on) {
+    stream << "ON " << condition_to_sql(*_stmt.on);
+  } else {
+    stream << "ON 1 = 1";
+  }
 
   return stream.str();
 }
@@ -595,9 +603,15 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
   }
   stream << wrap_in_quotes(_stmt.table.name);
 
+  if (_stmt.alias) {
+    stream << " " << *_stmt.alias;
+  }
+
   if (_stmt.joins) {
-    stream << internal::strings::join(
-        " ", internal::collect::vector(*_stmt.joins | transform(join_to_sql)));
+    stream << " "
+           << internal::strings::join(
+                  " ", internal::collect::vector(*_stmt.joins |
+                                                 transform(join_to_sql)));
   }
 
   if (_stmt.where) {
