@@ -14,15 +14,17 @@ namespace sqlgen::transpilation {
 template <class _ColType>
 struct OrderByWrapper;
 
-template <rfl::internal::StringLiteral _name>
-struct OrderByWrapper<transpilation::Col<_name>> {
-  using ColType = transpilation::Col<_name>;
+template <rfl::internal::StringLiteral _name,
+          rfl::internal::StringLiteral _alias>
+struct OrderByWrapper<transpilation::Col<_name, _alias>> {
+  using ColType = transpilation::Col<_name, _alias>;
   constexpr static bool desc = false;
 };
 
-template <rfl::internal::StringLiteral _name>
-struct OrderByWrapper<Desc<transpilation::Col<_name>>> {
-  using ColType = transpilation::Col<_name>;
+template <rfl::internal::StringLiteral _name,
+          rfl::internal::StringLiteral _alias>
+struct OrderByWrapper<Desc<transpilation::Col<_name, _alias>>> {
+  using ColType = transpilation::Col<_name, _alias>;
   constexpr static bool desc = true;
 };
 

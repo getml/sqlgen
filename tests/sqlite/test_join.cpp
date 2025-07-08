@@ -1,12 +1,9 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
-
 #include <gtest/gtest.h>
 
-#include <ranges>
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
-#include <sqlgen/postgres.hpp>
+#include <sqlgen/sqlite.hpp>
 #include <vector>
 
 namespace test_join {
@@ -18,10 +15,7 @@ struct Person {
   double age;
 };
 
-TEST(postgres, test_join) {
-  static_assert(std::ranges::input_range<sqlgen::Range<Person>>,
-                "Must be an input range.");
-
+TEST(sqlite, test_join) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
@@ -29,11 +23,6 @@ TEST(postgres, test_join) {
        Person{.id = 2, .first_name = "Lisa", .last_name = "Simpson", .age = 8},
        Person{
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
-
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
 
   using namespace sqlgen;
 
@@ -44,8 +33,7 @@ TEST(postgres, test_join) {
       left_join<Person, "t2">("id"_t1 == "id"_t2) | order_by("id"_t1) |
       to<std::vector<Person>>;
 
-  const auto people = postgres::connect(credentials)
-                          .and_then(drop<Person> | if_exists)
+  const auto people = sqlite::connect()
                           .and_then(write(std::ref(people1)))
                           .and_then(get_people)
                           .value();
@@ -55,10 +43,8 @@ TEST(postgres, test_join) {
   const std::string expected =
       R"([{"id":0,"first_name":"Homer","last_name":"Simpson","age":45.0},{"id":1,"first_name":"Bart","last_name":"Simpson","age":10.0},{"id":2,"first_name":"Lisa","last_name":"Simpson","age":8.0},{"id":3,"first_name":"Maggie","last_name":"Simpson","age":0.0}])";
 
-  EXPECT_EQ(postgres::to_sql(get_people), expected_query);
+  EXPECT_EQ(sqlite::to_sql(get_people), expected_query);
   EXPECT_EQ(rfl::json::write(people), expected);
 }
 
 }  // namespace test_join
-
-#endif

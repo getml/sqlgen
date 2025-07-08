@@ -6,6 +6,7 @@
 #include "../Result.hpp"
 #include "../dynamic/OrderBy.hpp"
 #include "order_by_t.hpp"
+#include "to_alias.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -21,8 +22,9 @@ template <class... Wrappers>
 struct ToOrderBy<OrderBy<Wrappers...>> {
   template <class W>
   dynamic::Wrapper to_wrapper() const {
+    using Alias = typename W::ColType::Alias;
     using Name = typename W::ColType::Name;
-    const auto column = dynamic::Column{.alias = std::nullopt,
+    const auto column = dynamic::Column{.alias = to_alias<Alias>(),
                                         .name = Name().str(),
                                         .type = dynamic::types::Unknown{}};
     return dynamic::Wrapper{.column = column, .desc = W::desc};

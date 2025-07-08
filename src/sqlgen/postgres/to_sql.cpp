@@ -580,7 +580,7 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
   using namespace std::ranges::views;
 
   const auto order_by_to_str = [](const auto& _w) -> std::string {
-    return "\"" + _w.column.name + "\"" + (_w.desc ? " DESC" : "");
+    return column_or_value_to_sql(_w.column) + (_w.desc ? " DESC" : "");
   };
 
   std::stringstream stream;
