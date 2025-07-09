@@ -39,7 +39,7 @@ TEST(sqlite, test_join) {
                           .value();
 
   const std::string expected_query =
-      R"(SELECT t1."id" AS "id", t1."first_name" AS "first_name", t2."last_name" AS "last_name", t2."age" AS "age" FROM "Person" t1 LEFT JOIN "Person" t2 ON t1."id" = t2."id" WHERE t1."id" = t2."id" ORDER BY t1."id";)";
+      R"(SELECT t1."id" AS "id", t1."first_name" AS "first_name", t2."last_name" AS "last_name", t2."age" AS "age" FROM "Person" t1 LEFT JOIN "Person" t2 ON t1."id" = t2."id" ORDER BY t1."id";)";
   const std::string expected =
       R"([{"id":0,"first_name":"Homer","last_name":"Simpson","age":45.0},{"id":1,"first_name":"Bart","last_name":"Simpson","age":10.0},{"id":2,"first_name":"Lisa","last_name":"Simpson","age":8.0},{"id":3,"first_name":"Maggie","last_name":"Simpson","age":0.0}])";
 

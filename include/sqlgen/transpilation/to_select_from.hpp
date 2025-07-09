@@ -37,7 +37,7 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                                    const WhereType& _where,
                                    const LimitType& _limit);
 
-template <class TableType, class ConditionType,
+template <class TableTupleType, class TableType, class ConditionType,
           rfl::internal::StringLiteral _alias>
   requires std::is_class_v<std::remove_cvref_t<TableType>> &&
            std::is_aggregate_v<std::remove_cvref_t<TableType>>
@@ -52,19 +52,20 @@ dynamic::Join to_join(
       .table_or_query =
           dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
       .alias = Alias().str(),
-      .on = to_condition<T>(_join.on)};
+      .on = to_condition<TableTupleType>(_join.on)};
 }
 
-template <class... JoinTypes>
+template <class TableTupleType, class... JoinTypes>
 std::optional<std::vector<dynamic::Join>> to_joins(
     const rfl::Tuple<JoinTypes...>& _joins) {
   return rfl::apply(
       [](const auto&... _js) {
-        return std::vector<dynamic::Join>({to_join(_js)...});
+        return std::vector<dynamic::Join>({to_join<TableTupleType>(_js)...});
       },
       _joins);
 }
 
+template <class TableTupleType>
 inline std::optional<std::vector<dynamic::Join>> to_joins(const Nothing&) {
   return std::nullopt;
 }
@@ -95,7 +96,7 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                               .schema = get_schema<StructType>()},
       .fields = fields,
       .alias = to_alias<AliasType>(),
-      .joins = to_joins(_joins),
+      .joins = to_joins<TableTupleType>(_joins),
       .where = to_condition<std::remove_cvref_t<TableTupleType>>(_where),
       .group_by = to_group_by<GroupByType>(),
       .order_by = to_order_by<OrderByType>(),

@@ -135,9 +135,8 @@ struct SelectFrom {
           transpilation::Join<TableOrQueryType, ConditionType, _alias>>;
 
       return SelectFrom<StructType, AliasType, FieldsType, NewJoinsType,
-                        ConditionType, GroupByType, OrderByType, LimitType,
-                        ToType>{.fields_ = _s.fields_,
-                                .joins_ = NewJoinsType(_join)};
+                        WhereType, GroupByType, OrderByType, LimitType, ToType>{
+          .fields_ = _s.fields_, .joins_ = NewJoinsType(_join)};
 
     } else {
       using TupleType = rfl::Tuple<
@@ -148,8 +147,8 @@ struct SelectFrom {
       using NewJoinsType = std::remove_cvref_t<decltype(joins)>;
 
       return SelectFrom<StructType, AliasType, FieldsType, NewJoinsType,
-                        ConditionType, GroupByType, OrderByType, LimitType,
-                        ToType>{.fields_ = _s.fields_, .joins_ = joins};
+                        WhereType, GroupByType, OrderByType, LimitType, ToType>{
+          .fields_ = _s.fields_, .joins_ = joins};
     }
   }
 
