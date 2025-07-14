@@ -637,8 +637,6 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
     stream << " LIMIT " << _stmt.limit->val;
   }
 
-  stream << ";";
-
   return stream.str();
 }
 

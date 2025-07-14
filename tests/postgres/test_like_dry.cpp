@@ -23,7 +23,7 @@ TEST(postgres, test_like_dry) {
                        where("first_name"_c.like("H%")) | order_by("age"_c));
 
   const std::string expected =
-      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE "first_name" LIKE 'H%' ORDER BY "age";)";
+      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE "first_name" LIKE 'H%' ORDER BY "age")";
 
   EXPECT_EQ(sql, expected);
 }

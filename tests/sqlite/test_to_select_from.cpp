@@ -17,7 +17,7 @@ TEST(sqlite, test_to_select_from) {
       sqlgen::transpilation::read_to_select_from<TestTable>();
   const auto conn = sqlgen::sqlite::connect().value();
   const auto expected =
-      R"(SELECT "field1", "field2", "id", "nullable" FROM "TestTable";)";
+      R"(SELECT "field1", "field2", "id", "nullable" FROM "TestTable")";
 
   EXPECT_EQ(conn->to_sql(select_from_stmt), expected);
 }

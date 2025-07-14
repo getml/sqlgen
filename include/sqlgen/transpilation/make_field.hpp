@@ -172,10 +172,11 @@ struct MakeField<TableTupleType, Aggregation<_agg, ValueType>> {
   }
 };
 
-template <class TableTupleType, rfl::internal::StringLiteral _name>
+template <class TableTupleType, rfl::internal::StringLiteral _name,
+          rfl::internal::StringLiteral _alias>
 struct MakeField<TableTupleType,
-                 Aggregation<AggregationOp::count, Col<_name>>> {
-  static_assert(all_columns_exist<TableTupleType, Col<_name>>(),
+                 Aggregation<AggregationOp::count, Col<_name, _alias>>> {
+  static_assert(all_columns_exist<TableTupleType, Col<_name, _alias>>(),
                 "A column required in the COUNT or COUNT_DISTINCT aggregation "
                 "does not exist.");
 
@@ -189,7 +190,8 @@ struct MakeField<TableTupleType,
   dynamic::SelectFrom::Field operator()(const auto& _agg) const {
     return dynamic::SelectFrom::Field{dynamic::Operation{
         .val = dynamic::Aggregation{dynamic::Aggregation::Count{
-            .val = dynamic::Column{.name = _name.str()},
+            .val = dynamic::Column{.alias = to_alias<Literal<_alias>>(),
+                                   .name = _name.str()},
             .distinct = _agg.distinct}}}};
   }
 };

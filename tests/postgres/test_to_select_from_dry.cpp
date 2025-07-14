@@ -16,7 +16,7 @@ TEST(postgres, test_to_select_from_dry) {
   const auto query = sqlgen::read<std::vector<TestTable>>;
 
   const auto expected =
-      R"(SELECT "field1", "field2", "id", "nullable" FROM "TestTable";)";
+      R"(SELECT "field1", "field2", "id", "nullable" FROM "TestTable")";
 
   EXPECT_EQ(sqlgen::postgres::to_sql(query), expected);
 }

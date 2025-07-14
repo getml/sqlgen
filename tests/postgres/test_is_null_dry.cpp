@@ -23,7 +23,7 @@ TEST(postgres, test_is_null_dry) {
                                     order_by("first_name"_c.desc()));
 
   const std::string expected =
-      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE "age" IS NULL ORDER BY "first_name" DESC;)";
+      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE "age" IS NULL ORDER BY "first_name" DESC)";
 
   EXPECT_EQ(sql, expected);
 }

@@ -13,6 +13,9 @@ struct Col {
   using Name = rfl::Literal<_name>;
   using Alias = rfl::Literal<_alias>;
 
+  /// Returns the column alias.
+  std::string alias() const noexcept { return Alias().str(); }
+
   /// Returns the column name.
   std::string name() const noexcept { return Name().str(); }
 };

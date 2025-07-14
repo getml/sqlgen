@@ -9,6 +9,8 @@
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "col.hpp"
+#include "dynamic/Join.hpp"
+#include "dynamic/SelectFrom.hpp"
 #include "group_by.hpp"
 #include "internal/GetColType.hpp"
 #include "internal/is_range.hpp"
@@ -21,6 +23,7 @@
 #include "transpilation/group_by_t.hpp"
 #include "transpilation/order_by_t.hpp"
 #include "transpilation/table_tuple_t.hpp"
+#include "transpilation/to_joins.hpp"
 #include "transpilation/to_select_from.hpp"
 #include "transpilation/value_t.hpp"
 #include "where.hpp"
@@ -242,6 +245,47 @@ struct SelectFrom {
 
   LimitType limit_;
 };
+
+namespace transpilation {
+
+template <class StructType, class AliasType, class FieldsType, class JoinsType,
+          class... Args>
+struct ExtractTable<
+    SelectFrom<StructType, AliasType, FieldsType, JoinsType, Args...>> {
+  using TableTupleType = table_tuple_t<StructType, AliasType, JoinsType>;
+  using Type = fields_to_named_tuple_t<TableTupleType, FieldsType>;
+};
+
+template <class TableTupleType, class StructType, class AliasType,
+          class FieldsType, class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ToType>
+struct ToJoin<TableTupleType, SelectFrom<StructType, AliasType, FieldsType,
+                                         JoinsType, WhereType, GroupByType,
+                                         OrderByType, LimitType, ToType>> {
+  template <class ConditionType, rfl::internal::StringLiteral _alias>
+  dynamic::Join operator()(
+      const transpilation::Join<
+          SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
+                     GroupByType, OrderByType, LimitType, ToType>,
+          ConditionType, _alias>& _join) {
+    const auto& query = _join.table_or_query;
+
+    using NestedTableTupleType =
+        table_tuple_t<StructType, AliasType, JoinsType>;
+
+    return dynamic::Join{
+        .how = _join.how,
+        .table_or_query = Ref<dynamic::SelectFrom>::make(
+            transpilation::to_select_from<NestedTableTupleType, AliasType,
+                                          FieldsType, JoinsType, WhereType,
+                                          GroupByType, OrderByType, LimitType>(
+                query.fields_, query.joins_, query.where_, query.limit_)),
+        .alias = Literal<_alias>().str(),
+        .on = to_condition<TableTupleType>(_join.on)};
+  }
+};
+
+}  // namespace transpilation
 
 template <class StructType, class... FieldTypes>
 inline auto select_from(const FieldTypes&... _fields) {

@@ -21,7 +21,7 @@ TEST(postgres, test_where_dry) {
                      order_by("age"_c);
 
   const auto expected =
-      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE ("age" < 18) AND ("first_name" != 'Hugo') ORDER BY "age";)";
+      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE ("age" < 18) AND ("first_name" != 'Hugo') ORDER BY "age")";
 
   EXPECT_EQ(sqlgen::postgres::to_sql(query), expected);
 }

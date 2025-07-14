@@ -24,51 +24,11 @@
 #include "to_alias.hpp"
 #include "to_condition.hpp"
 #include "to_group_by.hpp"
+#include "to_joins.hpp"
 #include "to_limit.hpp"
 #include "to_order_by.hpp"
 
 namespace sqlgen::transpilation {
-
-template <class StructType, class FieldsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType>
-  requires std::is_class_v<std::remove_cvref_t<StructType>> &&
-           std::is_aggregate_v<std::remove_cvref_t<StructType>>
-dynamic::SelectFrom to_select_from(const FieldsType& _fields,
-                                   const WhereType& _where,
-                                   const LimitType& _limit);
-
-template <class TableTupleType, class TableType, class ConditionType,
-          rfl::internal::StringLiteral _alias>
-  requires std::is_class_v<std::remove_cvref_t<TableType>> &&
-           std::is_aggregate_v<std::remove_cvref_t<TableType>>
-dynamic::Join to_join(
-    const Join<TableWrapper<TableType>, ConditionType, _alias>& _join) {
-  using T = std::remove_cvref_t<TableType>;
-  using Alias =
-      typename Join<TableWrapper<TableType>, ConditionType, _alias>::Alias;
-
-  return dynamic::Join{
-      .how = _join.how,
-      .table_or_query =
-          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
-      .alias = Alias().str(),
-      .on = to_condition<TableTupleType>(_join.on)};
-}
-
-template <class TableTupleType, class... JoinTypes>
-std::optional<std::vector<dynamic::Join>> to_joins(
-    const rfl::Tuple<JoinTypes...>& _joins) {
-  return rfl::apply(
-      [](const auto&... _js) {
-        return std::vector<dynamic::Join>({to_join<TableTupleType>(_js)...});
-      },
-      _joins);
-}
-
-template <class TableTupleType>
-inline std::optional<std::vector<dynamic::Join>> to_joins(const Nothing&) {
-  return std::nullopt;
-}
 
 template <class TableTupleType, class AliasType, class FieldsType,
           class JoinsType, class WhereType, class GroupByType,

@@ -24,7 +24,7 @@ TEST(postgres, test_to_select_from2_dry) {
       order_by("field1"_c) | limit(10);
 
   const auto expected =
-      R"(SELECT "field1" AS "field", AVG("field2") AS "avg_field2", "nullable" AS "nullable_field", 1 AS "one", 'hello' AS "hello" FROM "TestTable" WHERE "id" > 0 GROUP BY "field1", "nullable" ORDER BY "field1" LIMIT 10;)";
+      R"(SELECT "field1" AS "field", AVG("field2") AS "avg_field2", "nullable" AS "nullable_field", 1 AS "one", 'hello' AS "hello" FROM "TestTable" WHERE "id" > 0 GROUP BY "field1", "nullable" ORDER BY "field1" LIMIT 10)";
 
   EXPECT_EQ(sqlgen::postgres::to_sql(query), expected);
 }
