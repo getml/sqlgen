@@ -25,6 +25,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::exec](exec.md) - How to execute raw SQL statements
 - [sqlgen::group_by and Aggregations](group_by_and_aggregations.md) - How generate GROUP BY queries and aggregate data
 - [sqlgen::insert](insert.md) - How to insert data within transactions
+- [Joins](joins.md) - How to join different tables
 - [sqlgen::update](update.md) - How to update data in a table
 
 ## Other Operations
