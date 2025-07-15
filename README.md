@@ -214,6 +214,90 @@ WHERE "age" < 18
 GROUP BY "last_name";
 ```
 
+### Joining data
+
+```cpp
+using namespace sqlgen;
+
+struct ParentAndChild {
+    std::string last_name;
+    std::string first_name_parent;
+    std::string first_name_child;
+    double parent_age_at_birth;
+};
+
+const auto get_people =
+  select_from<Person, "t1">(
+      "last_name"_t1 | as<"last_name">,
+      "first_name"_t1 | as<"first_name_parent">,
+      "first_name"_t3 | as<"first_name_child">,
+      ("age"_t1 - "age"_t3) | as<"parent_age_at_birth">) |
+  inner_join<Relationship, "t2">("id"_t1 == "parent_id"_t2) |
+  left_join<Person, "t3">("id"_t3 == "child_id"_t2) |
+  order_by("id"_t1, "id"_t3) | to<std::vector<ParentAndChild>>;
+```
+
+Generated SQL:
+```sql
+SELECT t1."last_name" AS "last_name", 
+       t1."first_name" AS "first_name_parent", 
+       t3."first_name" AS "first_name_child", 
+       t1."age" - t3."age" AS "parent_age_at_birth" 
+FROM "Person" t1 
+INNER JOIN "Relationship" t2 
+ON t1."id" = t2."parent_id" 
+LEFT JOIN "Person" t3 
+ON t3."id" = t2."child_id" 
+ORDER BY t1."id", t3."id"
+```
+
+### Nested joins
+
+```cpp
+using namespace sqlgen;
+
+struct ParentAndChild {
+    std::string last_name;
+    std::string first_name_parent;
+    std::string first_name_child;
+    double parent_age_at_birth;
+};
+
+const auto get_children =
+  select_from<Relationship, "t1">("parent_id"_t1 | as<"id">,
+                                  "first_name"_t2 | as<"first_name">,
+                                  "age"_t2 | as<"age">) |
+  left_join<Person, "t2">("id"_t2 == "child_id"_t1);
+
+const auto get_people =
+  select_from<Person, "t1">(
+      "last_name"_t1 | as<"last_name">,
+      "first_name"_t1 | as<"first_name_parent">,
+      "first_name"_t2 | as<"first_name_child">,
+      ("age"_t1 - "age"_t2) | as<"parent_age_at_birth">) |
+  inner_join<"t2">(get_children, "id"_t1 == "id"_t2) |
+  order_by("id"_t1, "id"_t2) | to<std::vector<ParentAndChild>>;
+```
+
+Generated SQL:
+```sql
+SELECT t1."last_name" AS "last_name", 
+    t1."first_name" AS "first_name_parent", 
+    t2."first_name" AS "first_name_child", 
+    t1."age" - t2."age" AS "parent_age_at_birth" 
+FROM "Person" t1 
+INNER JOIN (
+    SELECT t1."parent_id" AS "id", 
+           t2."first_name" AS "first_name", 
+           t2."age" AS "age" 
+    FROM "Relationship" t1 
+    LEFT JOIN "Person" t2 
+    ON t2."id" = t1."child_id"
+) t2 
+ON t1."id" = t2."id" 
+ORDER BY t1."id", t2."id"
+```
+
 ### Type Safety and SQL Injection Protection
 
 sqlgen provides comprehensive compile-time checks and runtime protection:
