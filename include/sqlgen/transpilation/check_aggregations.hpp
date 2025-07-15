@@ -12,24 +12,24 @@
 
 namespace sqlgen::transpilation {
 
-template <class StructType, class FieldsType, class GroupByType>
+template <class TablesType, class FieldsType, class GroupByType>
 struct CheckAggregation;
 
 /// Case: No aggregation, no group by.
-template <class StructType, class... FieldTypes>
-  requires(true && ... && !MakeField<StructType, FieldTypes>::is_aggregation)
-struct CheckAggregation<StructType, rfl::Tuple<FieldTypes...>, Nothing> {
+template <class TablesType, class... FieldTypes>
+  requires(true && ... && !MakeField<TablesType, FieldTypes>::is_aggregation)
+struct CheckAggregation<TablesType, rfl::Tuple<FieldTypes...>, Nothing> {
   static constexpr bool value = true;
 };
 
 /// Case: At least one aggregation, no group by.
-template <class StructType, class... FieldTypes>
-  requires(false || ... || MakeField<StructType, FieldTypes>::is_aggregation)
-struct CheckAggregation<StructType, rfl::Tuple<FieldTypes...>, Nothing> {
+template <class TablesType, class... FieldTypes>
+  requires(false || ... || MakeField<TablesType, FieldTypes>::is_aggregation)
+struct CheckAggregation<TablesType, rfl::Tuple<FieldTypes...>, Nothing> {
   static constexpr bool value =
       (true && ... &&
-       (MakeField<StructType, FieldTypes>::is_aggregation ||
-        !MakeField<StructType, FieldTypes>::is_column));
+       (MakeField<TablesType, FieldTypes>::is_aggregation ||
+        !MakeField<TablesType, FieldTypes>::is_column));
   static_assert(
       value,
       "If any column is aggregated and there is no GROUP BY, then all columns "
@@ -37,8 +37,8 @@ struct CheckAggregation<StructType, rfl::Tuple<FieldTypes...>, Nothing> {
 };
 
 /// Case: There is a group by.
-template <class StructType, class... FieldTypes, class... ColTypes>
-struct CheckAggregation<StructType, rfl::Tuple<FieldTypes...>,
+template <class TablesType, class... FieldTypes, class... ColTypes>
+struct CheckAggregation<TablesType, rfl::Tuple<FieldTypes...>,
                         GroupBy<ColTypes...>> {
   template <class F>
   static constexpr bool included_in_group_by =
@@ -48,9 +48,9 @@ struct CheckAggregation<StructType, rfl::Tuple<FieldTypes...>,
 
   static constexpr bool value =
       (true && ... &&
-       (MakeField<StructType, FieldTypes>::is_aggregation ||
-        (!MakeField<StructType, FieldTypes>::is_column &&
-         !MakeField<StructType, FieldTypes>::is_operation) ||
+       (MakeField<TablesType, FieldTypes>::is_aggregation ||
+        (!MakeField<TablesType, FieldTypes>::is_column &&
+         !MakeField<TablesType, FieldTypes>::is_operation) ||
         included_in_group_by<FieldTypes>));
 
   static_assert(value,
@@ -58,9 +58,9 @@ struct CheckAggregation<StructType, rfl::Tuple<FieldTypes...>,
                 "must either be aggregated or included inside the GROUP BY.");
 };
 
-template <class StructType, class FieldsType, class GroupByType>
+template <class TablesType, class FieldsType, class GroupByType>
 consteval bool check_aggregations() {
-  return CheckAggregation<std::remove_cvref_t<StructType>,
+  return CheckAggregation<std::remove_cvref_t<TablesType>,
                           std::remove_cvref_t<FieldsType>,
                           std::remove_cvref_t<GroupByType>>::value;
 }

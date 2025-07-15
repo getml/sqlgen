@@ -23,7 +23,7 @@ struct Relationship {
   sqlgen::PrimaryKey<uint32_t> child_id;
 };
 
-TEST(postgres, test_joins_nested) {
+TEST(postgres, test_joins_nested_grouped) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},

@@ -206,11 +206,16 @@ struct SelectFrom {
                   "You cannot call to<...> before order_by(...).");
     static_assert(sizeof...(ColTypes) != 0,
                   "You must assign at least one column to order_by.");
-    return SelectFrom<
-        StructType, AliasType, FieldsType, JoinsType, WhereType, GroupByType,
-        transpilation::order_by_t<
-            StructType, typename std::remove_cvref_t<ColTypes>::ColType...>,
-        LimitType, ToType>{
+
+    using TableTupleType =
+        transpilation::table_tuple_t<StructType, AliasType, JoinsType>;
+
+    using NewOrderByType = transpilation::order_by_t<
+        TableTupleType, GroupByType,
+        typename std::remove_cvref_t<ColTypes>::ColType...>;
+
+    return SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
+                      GroupByType, NewOrderByType, LimitType, ToType>{
         .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
   }
 

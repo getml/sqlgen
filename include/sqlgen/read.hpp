@@ -113,7 +113,7 @@ struct Read {
                   "You must assign at least one column to order by(...).");
     return Read<Type, WhereType,
                 transpilation::order_by_t<
-                    transpilation::value_t<Type>,
+                    transpilation::value_t<Type>, Nothing,
                     typename std::remove_cvref_t<ColTypes>::ColType...>,
                 LimitType>{.where_ = _r.where_};
   }
