@@ -27,8 +27,9 @@ struct ToSet;
 
 template <class T, rfl::internal::StringLiteral _name, class ToType>
 struct ToSet<T, Set<transpilation::Col<_name>, ToType>> {
-  static_assert(all_columns_exist<T, transpilation::Col<_name>>(),
-                "All columns must exist.");
+  static_assert(
+      all_columns_exist<T, transpilation::Col<_name>>(),
+      "At least one column referenced in your SET query does not exist.");
   static_assert(std::is_convertible_v<underlying_t<T, Col<_name>>,
                                       underlying_t<T, Value<ToType>>>,
                 "Must be convertible.");
@@ -44,14 +45,17 @@ struct ToSet<T, Set<transpilation::Col<_name>, ToType>> {
 template <class T, rfl::internal::StringLiteral _name1,
           rfl::internal::StringLiteral _name2>
 struct ToSet<T, Set<transpilation::Col<_name1>, transpilation::Col<_name2>>> {
-  static_assert(all_columns_exist<T, transpilation::Col<_name1>>(),
-                "All columns must exist.");
-  static_assert(all_columns_exist<T, transpilation::Col<_name2>>(),
-                "All columns must exist.");
+  static_assert(
+      all_columns_exist<T, transpilation::Col<_name1>>(),
+      "At least one column referenced in your SET query does not exist.");
+  static_assert(
+      all_columns_exist<T, transpilation::Col<_name2>>(),
+      "At least one column referenced in your SET query does not exist.");
   static_assert(
       std::is_convertible_v<underlying_t<T, transpilation::Col<_name2>>,
                             underlying_t<T, transpilation::Col<_name1>>>,
-      "Must be convertible.");
+      "A column referenced in your SET query is not convertible to the column "
+      "it is being assigned to.");
 
   dynamic::Update::Set operator()(const auto& _set) const {
     return dynamic::Update::Set{

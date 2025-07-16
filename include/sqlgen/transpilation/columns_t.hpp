@@ -21,7 +21,8 @@ struct Columns {
 
 template <class T, class... ColTypes>
 auto make_columns() {
-  static_assert(all_columns_exist<T, ColTypes...>(), "All columns must exist.");
+  static_assert(all_columns_exist<T, ColTypes...>(),
+                "At least one column referenced in your query does not exist.");
   return Columns<ColTypes...>{};
 }
 

@@ -133,6 +133,17 @@ struct SelectFrom {
       const SelectFrom& _s,
       const transpilation::Join<TableOrQueryType, ConditionType, _alias>&
           _join) {
+    static_assert(std::is_same_v<WhereType, Nothing>,
+                  "You cannot call where(...) before a join.");
+    static_assert(std::is_same_v<GroupByType, Nothing>,
+                  "You cannot call group_by(...) before a join.");
+    static_assert(std::is_same_v<OrderByType, Nothing>,
+                  "You cannot call order_by(...) before a join.");
+    static_assert(std::is_same_v<LimitType, Nothing>,
+                  "You cannot call limit(...) before a join.");
+    static_assert(std::is_same_v<ToType, Nothing>,
+                  "You cannot call to<...> before a join.");
+
     if constexpr (std::is_same_v<JoinsType, Nothing>) {
       using NewJoinsType = rfl::Tuple<
           transpilation::Join<TableOrQueryType, ConditionType, _alias>>;
@@ -161,6 +172,8 @@ struct SelectFrom {
     static_assert(std::is_same_v<WhereType, Nothing>,
                   "You cannot call where(...) twice (but you can apply more "
                   "than one condition by combining them with && or ||).");
+    static_assert(std::is_same_v<GroupByType, Nothing>,
+                  "You cannot call group_by(...) before where(...).");
     static_assert(std::is_same_v<OrderByType, Nothing>,
                   "You cannot call order_by(...) before where(...).");
     static_assert(std::is_same_v<LimitType, Nothing>,

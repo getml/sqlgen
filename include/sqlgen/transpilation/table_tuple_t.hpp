@@ -25,6 +25,9 @@ struct TableTupleType<StructType, AliasType, rfl::Tuple<JoinTypes...>> {
       std::pair<extract_table_t<StructType>, AliasType>,
       std::pair<extract_table_t<typename JoinTypes::TableOrQueryType>,
                 typename JoinTypes::Alias>...>;
+  static_assert(
+      !rfl::define_literal_t<typename JoinTypes::Alias...>::has_duplicates(),
+      "Your SELECT FROM query cannot contain duplicate aliases.");
 };
 
 template <class StructType, class AliasType, class JoinsType>

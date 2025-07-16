@@ -34,7 +34,7 @@ template <class TableTupleType, rfl::internal::StringLiteral _name,
           rfl::internal::StringLiteral _alias>
 struct Underlying<TableTupleType, Col<_name, _alias>> {
   static_assert(all_columns_exist<TableTupleType, Col<_name, _alias>>(),
-                "All columns must exist.");
+                "At least one column referenced in your query does not exist.");
   using Type = remove_reflection_t<
       rfl::field_type_t<_name, get_table_t<Literal<_alias>, TableTupleType>>>;
 };
