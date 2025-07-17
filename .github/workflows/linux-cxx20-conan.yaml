@@ -33,9 +33,24 @@ jobs:
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }})"
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y ninja-build pipx ${{ matrix.additional-dep }}
       - name: Install Conan 
         run: |
           pipx install conan
           conan profile detect
       - name: Compile
-        run: conan build . --build=missing -s compiler.cppstd=gnu20
+        run: |
+          if [[ "${{ matrix.compiler }}" == "llvm" ]]; then
+            export CC=clang-${{ matrix.compiler-version }}
+            export CXX=clang++-${{ matrix.compiler-version }}
+          elif [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            export CC=gcc-${{ matrix.compiler-version }}
+            export CXX=g++-${{ matrix.compiler-version }}
+          fi
+          sudo ln -s $(which ccache) /usr/local/bin/$CC
+          sudo ln -s $(which ccache) /usr/local/bin/$CXX
+          $CXX --version
+          conan build . --build=missing -s compiler.cppstd=gnu20
