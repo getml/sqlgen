@@ -38,6 +38,4 @@ jobs:
           pipx install conan
           conan profile detect
       - name: Compile
-        run: |
-          ls 
-          conan build . --build=missing -s compiler.cppstd=gnu20
+        run: conan build . --build=missing -s compiler.cppstd=gnu20
