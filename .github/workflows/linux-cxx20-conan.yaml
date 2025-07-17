@@ -39,4 +39,5 @@ jobs:
           conan profile detect
       - name: Compile
         run: |
-          conan build .. --build=missing -s compiler.cppstd=gnu20
+          ls 
+          conan build . --build=missing -s compiler.cppstd=gnu20
