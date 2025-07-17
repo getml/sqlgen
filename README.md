@@ -25,7 +25,7 @@ Together, reflect-cpp and sqlgen enable reliable and efficient ETL pipelines.
 
 ## Quick Start
 
-### Installation
+### Installation using vcpkg
 
 1. Make sure you have the required dependencies installed (skip this step on Windows):
 ```bash
@@ -52,6 +52,25 @@ cmake --build build --config Release -j 4  # MSVC
 find_package(sqlgen REQUIRED)
 target_link_libraries(your_target PRIVATE sqlgen::sqlgen)
 ```
+
+### Installation using Conan
+
+1. Install Conan (assuming you have Python and pipx installed):
+
+```bash
+pipx install conan
+conan profile detect
+```
+
+For older versions of pip, you can also use `pip` instead of `pipx`.
+
+2. Install Conan (assuming you have Python and pipx installed):
+
+```bash
+conan build . --build=missing -s compiler.cppstd=gnu20
+```
+
+You can call `conan inspect .` to get an overview of the supported options.
 
 ## Usage Examples
 
