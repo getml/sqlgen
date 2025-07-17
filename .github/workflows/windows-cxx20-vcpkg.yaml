@@ -1,4 +1,4 @@
-name: windows-cxx20 
+name: windows-cxx20-vcpkg 
 
 on: [push]
 
