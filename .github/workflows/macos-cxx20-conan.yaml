@@ -1,0 +1,34 @@
+name: macos-cxx20-conan
+
+on: [push]
+
+jobs:
+  macos-clang:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: "macos-latest"
+          - os: "macos-13"
+    name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Install dependencies
+        run: |
+        run: brew install ninja pipx 
+      - name: Install Conan 
+        run: |
+          pipx install conan
+          conan profile detect
+      - name: Compile
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          $CXX --version
+          conan build . --build=missing -s compiler.cppstd=gnu20
