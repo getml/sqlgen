@@ -10,7 +10,7 @@ jobs:
         include:
           - os: "macos-latest"
           - os: "macos-13"
-    name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
+    name: "${{ github.job }} (${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
