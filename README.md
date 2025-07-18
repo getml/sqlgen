@@ -64,7 +64,7 @@ conan profile detect
 
 For older versions of pip, you can also use `pip` instead of `pipx`.
 
-2. Install Conan (assuming you have Python and pipx installed):
+2. Build the library:
 
 ```bash
 conan build . --build=missing -s compiler.cppstd=gnu20
