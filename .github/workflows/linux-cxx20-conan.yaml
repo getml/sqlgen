@@ -19,17 +19,6 @@ jobs:
             compiler-version: 12
           - compiler: gcc
             compiler-version: 14
-          - compiler: llvm
-            compiler-version: 16
-          - compiler: llvm
-            compiler-version: 18
-          - compiler: gcc
-            compiler-version: 11
-            additional-dep: "g++-11"
-          - compiler: gcc
-            compiler-version: 12
-          - compiler: gcc
-            compiler-version: 14
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }})"
     runs-on: ubuntu-latest
     steps:
