@@ -15,7 +15,7 @@ required_conan_version = ">=2.18.1"
 
 class SQLGenConan(ConanFile):
     name = "sqlgen"
-    description = ""
+    description = "sqlgen is an ORM and SQL query generator for C++-20, similar to Python's SQLAlchemy/SQLModel or Rust's Diesel."
     license = "MIT"
     url = "https://github.com/conan-io/conan-center-index"
     homepage = "https://github.com/getml/sqlgen"
@@ -47,9 +47,9 @@ class SQLGenConan(ConanFile):
     def requirements(self):
         self.requires("reflect-cpp/0.19.0")
         if self.options.with_postgres:
-            self.requires("libpq/17.5", transitive_headers=True)
+            self.requires("libpq/17.5")
         if self.options.with_sqlite3:
-            self.requires("sqlite3/3.49.1", transitive_headers=True)
+            self.requires("sqlite3/3.49.1")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.23 <4]")
