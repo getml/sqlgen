@@ -45,11 +45,11 @@ class SQLGenConan(ConanFile):
             self.options.rm_safe("fPIC")
 
     def requirements(self):
-        self.requires("reflect-cpp/0.19.0")
+        self.requires("reflect-cpp/0.19.0", transitive_headers=True)
         if self.options.with_postgres:
-            self.requires("libpq/17.5")
+            self.requires("libpq/17.5", transitive_headers=True)
         if self.options.with_sqlite3:
-            self.requires("sqlite3/3.49.1")
+            self.requires("sqlite3/3.49.1", transitive_headers=True)
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.23 <4]")
