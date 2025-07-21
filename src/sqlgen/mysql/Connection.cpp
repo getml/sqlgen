@@ -8,6 +8,7 @@
 #include "sqlgen/internal/collect/vector.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
 #include "sqlgen/mysql/Iterator.hpp"
+#include "sqlgen/mysql/make_error.hpp"
 
 namespace sqlgen::mysql {
 
@@ -115,13 +116,6 @@ typename Connection::ConnPtr Connection::make_conn(
   }
 
   return ConnPtr::make(shared_ptr).value();
-}
-
-rfl::Unexpected<Error> Connection::make_error(const ConnPtr& _conn) noexcept {
-  const std::string msg =
-      "MySQL error (" + std::to_string(mysql_errno(_conn.get())) + ") [" +
-      mysql_sqlstate(_conn.get()) + "] " + mysql_error(_conn.get());
-  return error(msg);
 }
 
 Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
