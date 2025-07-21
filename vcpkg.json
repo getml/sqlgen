@@ -6,6 +6,15 @@
     }
   ],
   "features": {
+    "mysql": {
+      "description": "Enable MySQL/MariaDB support",
+      "dependencies": [
+        {
+          "name": "libmariadb",
+          "version>=": "3.4.5"
+        }
+      ]
+    },
     "postgres": {
       "description": "Enable PostgreSQL support",
       "dependencies": [

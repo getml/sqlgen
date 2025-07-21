@@ -41,11 +41,22 @@ git submodule update --init
 ```
 
 3. Build the library:
+
+By default, the static library will be built:
 ```bash
 cmake -S . -B build -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j 4  # gcc, clang
 cmake --build build --config Release -j 4  # MSVC
 ```
+
+To build the shared library:
+```bash
+cmake -S . -B build -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS -DVCPKG_TARGET_TRIPLET=...-dynamic
+cmake --build build -j 4  # gcc, clang
+cmake --build build --config Release -j 4  # MSVC
+```
+
+Run `./vcpkg/vcpkg help triplets` to view all supported triplets so you know what to fill in for `...`.
 
 4. Include in your CMake project:
 ```cmake
@@ -68,6 +79,12 @@ For older versions of pip, you can also use `pip` instead of `pipx`.
 
 ```bash
 conan build . --build=missing -s compiler.cppstd=gnu20
+```
+
+3. Include in your CMake project:
+```cmake
+find_package(sqlgen REQUIRED)
+target_link_libraries(your_target PRIVATE sqlgen::sqlgen)
 ```
 
 You can call `conan inspect .` to get an overview of the supported options.

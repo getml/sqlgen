@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.23)
 
 option(SQLGEN_BUILD_SHARED "Build shared library" ${BUILD_SHARED_LIBS})
 
+option(SQLGEN_MYSQL "Enable MySQL support" OFF) 
+
 option(SQLGEN_POSTGRES "Enable PostgreSQL support" ON) # enabled by default
 
 option(SQLGEN_SQLITE3 "Enable SQLite3 support" ON) # enabled by default
@@ -15,6 +17,7 @@ if (NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)
 endif()
 
+
 set(SQLGEN_USE_VCPKG_DEFAULT ON)
 
 option(SQLGEN_USE_VCPKG "Use VCPKG to download and build dependencies" ${SQLGEN_USE_VCPKG_DEFAULT})
@@ -22,6 +25,10 @@ option(SQLGEN_USE_VCPKG "Use VCPKG to download and build dependencies" ${SQLGEN_
 if (SQLGEN_USE_VCPKG)
     if (SQLGEN_BUILD_TESTS)
         list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+    endif()
+    
+    if (SQLGEN_MYSQL)
+        list(APPEND VCPKG_MANIFEST_FEATURES "mysql")
     endif()
     
     if (SQLGEN_POSTGRES)
@@ -32,10 +39,14 @@ if (SQLGEN_USE_VCPKG)
         list(APPEND VCPKG_MANIFEST_FEATURES "sqlite3")
     endif()
     
+    # if (SQLGEN_BUILD_SHARED)
+    #    set(VCPKG_TARGET_TRIPLET arm64-linux-dynamic)
+    # endif()
+
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 endif ()
 
-project(sqlgen VERSION 0.0.1 LANGUAGES CXX)
+project(sqlgen VERSION 0.1.0 LANGUAGES CXX)
 
 if (SQLGEN_BUILD_SHARED)
     add_library(sqlgen SHARED)
@@ -58,6 +69,13 @@ target_include_directories(
     sqlgen PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
+
+if(SQLGEN_MYSQL)
+  if (NOT TARGET PostgreSQL)
+    find_package(unofficial-libmariadb CONFIG REQUIRED)
+  endif()
+  target_link_libraries(sqlgen PUBLIC unofficial::libmariadb)
+endif()
 
 if (SQLGEN_POSTGRES)
     list(APPEND SQLGEN_SOURCES src/sqlgen_postgres.cpp)
