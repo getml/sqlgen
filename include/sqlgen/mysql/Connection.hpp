@@ -39,9 +39,7 @@ class Connection {
   Result<Nothing> commit() noexcept;
 
   Result<Nothing> execute(const std::string& _sql) noexcept {
-    // return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
-
-    return error("TODO");
+    return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
   }
 
   Result<Nothing> insert(
