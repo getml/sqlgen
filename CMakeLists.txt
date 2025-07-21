@@ -71,7 +71,8 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>)
 
 if(SQLGEN_MYSQL)
-  if (NOT TARGET PostgreSQL)
+    list(APPEND SQLGEN_SOURCES src/sqlgen_mysql.cpp)
+  if (NOT TARGET unofficial-libmariadb)
     find_package(unofficial-libmariadb CONFIG REQUIRED)
   endif()
   target_link_libraries(sqlgen PUBLIC unofficial::libmariadb)
