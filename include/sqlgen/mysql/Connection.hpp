@@ -34,9 +34,11 @@ class Connection {
 
   ~Connection() = default;
 
-  Result<Nothing> begin_transaction() noexcept;
+  Result<Nothing> begin_transaction() noexcept {
+    return execute("BEGIN TRANSACTION;");
+  }
 
-  Result<Nothing> commit() noexcept;
+  Result<Nothing> commit() noexcept { return execute("COMMIT;"); }
 
   Result<Nothing> execute(const std::string& _sql) noexcept {
     return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
@@ -49,25 +51,26 @@ class Connection {
 
   Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
 
-  Result<Nothing> rollback() noexcept;
+  Result<Nothing> rollback() noexcept { return execute("ROLLBACK;"); }
 
   std::string to_sql(const dynamic::Statement& _stmt) noexcept {
-    // return mysql::to_sql_impl(_stmt);
-    return "TODO";
+    return to_sql_impl(_stmt);
   }
 
-  Result<Nothing> start_write(const dynamic::Write& _stmt) {
-    // return execute(mysql::to_sql_impl(_stmt));
-    return error("TODO");
-  }
-
-  Result<Nothing> end_write();
+  Result<Nothing> start_write(const dynamic::Write& _stmt);
 
   Result<Nothing> write(
       const std::vector<std::vector<std::optional<std::string>>>& _data);
 
+  Result<Nothing> end_write();
+
  private:
+  Result<Nothing> deallocate_prepared_insert_statement() noexcept;
+
   static ConnPtr make_conn(const Credentials& _credentials);
+
+  Result<Nothing> prepare_insert_statement(
+      const std::variant<dynamic::Insert, dynamic::Write>& _stmt) noexcept;
 
   static rfl::Unexpected<Error> make_error(const ConnPtr& _conn) noexcept;
 
