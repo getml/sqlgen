@@ -1,5 +1,5 @@
-#ifndef SQLGEN_POSTGRES_TO_SQL_HPP_
-#define SQLGEN_POSTGRES_TO_SQL_HPP_
+#ifndef SQLGEN_MYSQL_TO_SQL_HPP_
+#define SQLGEN_MYSQL_TO_SQL_HPP_
 
 #include <string>
 #include <type_traits>
@@ -7,12 +7,12 @@
 #include "../dynamic/Statement.hpp"
 #include "../transpilation/to_sql.hpp"
 
-namespace sqlgen::postgres {
+namespace sqlgen::mysql {
 
-/// Transpiles a dynamic general SQL statement to the postgres dialect.
+/// Transpiles a dynamic general SQL statement to the mysql dialect.
 std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept;
 
-/// Transpiles any  SQL statement to the postgres dialect.
+/// Transpiles any  SQL statement to the mysql dialect.
 template <class T>
 std::string to_sql(const T& _t) noexcept {
   if constexpr (std::is_same_v<std::remove_cvref_t<T>, dynamic::Statement>) {
@@ -22,6 +22,6 @@ std::string to_sql(const T& _t) noexcept {
   }
 }
 
-}  // namespace sqlgen::postgres
+}  // namespace sqlgen::mysql
 
 #endif
