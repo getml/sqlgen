@@ -24,10 +24,11 @@ namespace sqlgen::mysql {
 
 class Connection {
   using ConnPtr = Ref<MYSQL>;
+  using StmtPtr = std::shared_ptr<MYSQL_STMT>;
 
  public:
   Connection(const Credentials& _credentials)
-      : conn_(make_conn(_credentials)), credentials_(_credentials) {}
+      : conn_(make_conn(_credentials)) {}
 
   static rfl::Result<Ref<Connection>> make(
       const Credentials& _credentials) noexcept;
@@ -65,19 +66,27 @@ class Connection {
   Result<Nothing> end_write();
 
  private:
-  Result<Nothing> deallocate_prepared_insert_statement() noexcept;
+  /// Actually inserts data based on a prepared statement -
+  /// used by both .insert(...) and .write(...).
+  Result<Nothing> actual_insert(
+      const std::vector<std::vector<std::optional<std::string>>>& _data,
+      MYSQL_STMT* _stmt) const noexcept;
 
   static ConnPtr make_conn(const Credentials& _credentials);
 
-  Result<Nothing> prepare_insert_statement(
-      const std::variant<dynamic::Insert, dynamic::Write>& _stmt) noexcept;
+  Result<StmtPtr> prepare_insert_statement(
+      const std::variant<dynamic::Insert, dynamic::Write>& _stmt)
+      const noexcept;
 
   static rfl::Unexpected<Error> make_error(const ConnPtr& _conn) noexcept;
 
  private:
-  ConnPtr conn_;
+  /// A prepared statement - needed for the read and write operations. Note that
+  /// we have declared it before conn_, meaning it will be destroyed first.
+  StmtPtr stmt_;
 
-  Credentials credentials_;
+  /// The underlying connection.
+  ConnPtr conn_;
 };
 
 static_assert(is_connection<Connection>,

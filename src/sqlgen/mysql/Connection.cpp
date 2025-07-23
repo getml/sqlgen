@@ -1,5 +1,6 @@
 #include "sqlgen/mysql/Connection.hpp"
 
+#include <cstring>
 #include <ranges>
 #include <rfl.hpp>
 #include <sstream>
@@ -12,8 +13,60 @@
 
 namespace sqlgen::mysql {
 
-Result<Nothing> Connection::deallocate_prepared_insert_statement() noexcept {
-  return execute("DEALLOCATE PREPARE `sqlgen_insert_into_table`;");
+Result<Nothing> Connection::actual_insert(
+    const std::vector<std::vector<std::optional<std::string>>>& _data,
+    MYSQL_STMT* _stmt) const noexcept {
+  const auto num_params = static_cast<size_t>(mysql_stmt_param_count(_stmt));
+
+  MYSQL_BIND bind[num_params];
+
+  long unsigned int lengths[num_params];
+  my_bool is_null[num_params];
+
+  for (const auto& row : _data) {
+    memset(bind, 0, sizeof(bind));
+
+    if (row.size() != num_params) {
+      return error("Expected " + std::to_string(num_params) + " fields, got " +
+                   std::to_string(row.size()) + ".");
+    }
+
+    auto buffer = row;
+
+    for (size_t i = 0; i < num_params; ++i) {
+      if (buffer[i]) {
+        lengths[i] = static_cast<long unsigned int>(row[i]->size());
+        is_null[i] = 0;
+
+        bind[i].buffer_type = MYSQL_TYPE_STRING;
+        bind[i].buffer = &((*buffer[i])[0]);
+        bind[i].buffer_length = lengths[i];
+        bind[i].is_null = &(is_null[i]);
+        bind[i].length = &(lengths[i]);
+      } else {
+        lengths[i] = 0;
+        is_null[i] = 1;
+
+        bind[i].buffer_type = MYSQL_TYPE_NULL;
+        bind[i].buffer = nullptr;
+        bind[i].buffer_length = 0;
+        bind[i].is_null = &(is_null[i]);
+        bind[i].length = 0;
+      }
+    }
+
+    const auto res1 = mysql_stmt_bind_param(_stmt, bind);
+    if (!res1) {
+      return make_error(conn_);
+    }
+
+    const auto res2 = mysql_stmt_execute(_stmt);
+    if (!res2) {
+      return make_error(conn_);
+    }
+  }
+
+  return Nothing{};
 }
 
 Result<Nothing> Connection::insert(
@@ -23,9 +76,8 @@ Result<Nothing> Connection::insert(
   if (_data.size() == 0) {
     return Nothing{};
   }
-  return prepare_insert_statement(_stmt)
-      .and_then([&](auto&&) { return write(_data); })
-      .and_then([&](auto&&) { return deallocate_prepared_insert_statement(); });
+  return prepare_insert_statement(_stmt).and_then(
+      [&](auto&& _stmt_ptr) { return actual_insert(_data, _stmt_ptr.get()); });
 }
 
 rfl::Result<Ref<Connection>> Connection::make(
@@ -57,10 +109,16 @@ typename Connection::ConnPtr Connection::make_conn(
   return ConnPtr::make(shared_ptr).value();
 }
 
-Result<Nothing> Connection::prepare_insert_statement(
-    const std::variant<dynamic::Insert, dynamic::Write>& _stmt) noexcept {
+Result<Connection::StmtPtr> Connection::prepare_insert_statement(
+    const std::variant<dynamic::Insert, dynamic::Write>& _stmt) const noexcept {
   const auto sql = std::visit(to_sql_impl, _stmt);
-  return execute("PREPARE `sqlgen_insert_into_table` FROM " + sql);
+  const auto stmt_ptr = StmtPtr(mysql_stmt_init(conn_.get()), mysql_stmt_close);
+  const auto res = mysql_stmt_prepare(stmt_ptr.get(), sql.c_str(),
+                                      static_cast<unsigned long>(sql.size()));
+  if (!res) {
+    return make_error(conn_);
+  }
+  return stmt_ptr;
 }
 
 Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
@@ -73,23 +131,41 @@ Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
   return error("TODO");
 }
 
-Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
-  return begin_transaction().and_then(
-      [&](auto&&) { return prepare_insert_statement(_stmt); });
+Result<Nothing> Connection::start_write(const dynamic::Write& _write_stmt) {
+  if (stmt_) {
+    return error(
+        "A write operation has already been launched. You need to call "
+        ".end_write() before you can start another.");
+  }
+  return begin_transaction()
+      .and_then([&](auto&&) { return prepare_insert_statement(_write_stmt); })
+      .and_then([&](auto&& _stmt) -> Result<Nothing> {
+        stmt_ = _stmt;
+        return Nothing{};
+      })
+      .or_else([&](auto&&) {
+        rollback();
+        return Nothing{};
+      });
 }
 
 Result<Nothing> Connection::write(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
-  return [&]() -> Result<Nothing> { return Nothing{}; }().or_else(
-                   [&](const auto& _err) {
-                     deallocate_prepared_insert_statement();
-                     return error(_err.what());
-                   });
+  if (!stmt_) {
+    return error(
+        " You need to call .start_write(...) before you can call "
+        ".write(...).");
+  }
+  return actual_insert(_data, stmt_.get()).or_else([&](const auto& _err) {
+    rollback();
+    stmt_ = nullptr;
+    return error(_err.what());
+  });
 }
 
 Result<Nothing> Connection::end_write() {
-  return deallocate_prepared_insert_statement().and_then(
-      [&](auto&&) { return commit(); });
+  stmt_ = nullptr;
+  return commit();
 }
 
 }  // namespace sqlgen::mysql
