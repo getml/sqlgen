@@ -14,6 +14,7 @@ struct TestTable {
 
 TEST(postgres, test_to_select_from2_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query =
       select_from<TestTable>("field1"_c.as<"field">(),

@@ -14,6 +14,7 @@ Here's a basic example of how to use transactions:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Start a transaction and chain operations
 // Note that all of these operations return
@@ -37,6 +38,7 @@ Example with error handling:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 auto conn = sqlite::connect("database.db")
             .and_then(begin_transaction)

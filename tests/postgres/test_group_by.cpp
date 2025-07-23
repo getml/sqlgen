@@ -36,6 +36,7 @@ TEST(postgres, test_group_by) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Children {
     std::string last_name;

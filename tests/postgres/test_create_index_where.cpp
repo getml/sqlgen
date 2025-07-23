@@ -24,6 +24,7 @@ TEST(postgres, test_create_index_where) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people =
       sqlgen::postgres::connect(credentials)

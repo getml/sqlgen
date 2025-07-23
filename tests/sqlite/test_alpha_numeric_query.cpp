@@ -18,6 +18,7 @@ struct Person {
 sqlgen::Result<std::vector<Person>> get_people(
     const auto& _conn, const sqlgen::AlphaNumeric& _first_name) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
   const auto query =
       sqlgen::read<std::vector<Person>> | where("first_name"_c == _first_name);
   return query(_conn);

@@ -31,6 +31,7 @@ TEST(sqlite, test_order_by) {
   sqlgen::write(conn, people1);
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query = sqlgen::read<std::vector<Person>> |
                      order_by("age"_c, "first_name"_c.desc());

@@ -15,6 +15,7 @@ struct Person {
 
 TEST(postgres, test_where_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query = sqlgen::read<std::vector<Person>> |
                      where("age"_c < 18 and "first_name"_c != "Hugo") |

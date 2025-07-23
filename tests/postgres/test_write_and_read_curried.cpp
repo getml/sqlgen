@@ -32,6 +32,7 @@ TEST(postgres, test_write_and_read_curried) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people2 = postgres::connect(credentials)
                            .and_then(drop<Person> | if_exists)

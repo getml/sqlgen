@@ -40,6 +40,7 @@ TEST(postgres, test_range_select_from_with_timestamps) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Birthday {
     Date birthday;

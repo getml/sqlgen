@@ -17,6 +17,7 @@ struct Person {
 
 TEST(sqlite, test_create_table) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people = sqlgen::sqlite::connect()
                           .and_then(create_table<Person> | if_not_exists)

@@ -12,6 +12,7 @@ Update specific columns in a table:
 const auto conn = sqlgen::sqlite::connect("database.db");
 
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = update<Person>("age"_c.set(100), "first_name"_c.set("New Name"));
 
@@ -42,6 +43,7 @@ Update specific records using a `where` clause:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = update<Person>("age"_c.set(100)) |
                    where("first_name"_c == "Hugo");
@@ -58,12 +60,14 @@ WHERE "first_name" = 'Hugo';
 ```
 
 Note that `"..."_c` refers to the name of the column. If such a field does not
-exist on the struct `Person`, the code will fail to compile.
+exist on the struct `Person`, the code will fail to compile. It is defined 
+in the namespace `sqlgen::literals`.
 
 You can also use monadic error handling here:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = update<Person>("age"_c.set(100)) |
                    where("first_name"_c == "Hugo");
@@ -78,6 +82,7 @@ You can set a column's value to another column's value:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = update<Person>("first_name"_c.set("last_name"_c)) |
                    where("age"_c > 18);
@@ -97,6 +102,7 @@ WHERE "age" > 18;
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = update<Person>(
                     "first_name"_c.set("last_name"_c),
@@ -120,7 +126,8 @@ SET
 WHERE "age" > 0;
 ```
 
-It is strongly recommended that you use `using namespace sqlgen`. However,
+It is strongly recommended that you use `using namespace sqlgen`
+and `using namespace sqlgen::literals`. However,
 if you do not want to do that, you can rewrite the example above as follows:
 
 ```cpp
@@ -137,7 +144,7 @@ const auto result = query(conn);
 - You must specify at least one column to update
 - The `where` clause is optional - if omitted, all records will be updated
 - The `Result<Ref<Connection>>` type provides error handling; use `.value()` to extract the result (will throw an exception if there's an error) or handle errors as needed or refer to the documentation on `sqlgen::Result<...>` for other forms of error handling
-- `"..."_c` refers to the name of the column
+- `"..."_c` refers to the name of the column. It is defined in the namespace `sqlgen::literals`.
 - You can set columns to either literal values or other column values
 - The update operation is atomic - either all specified columns are updated or none are
 

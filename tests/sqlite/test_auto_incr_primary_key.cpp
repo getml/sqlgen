@@ -23,6 +23,7 @@ TEST(sqlite, test_auto_incr_primary_key) {
        Person{.first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people2 = sqlite::connect()
                            .and_then(write(std::ref(people1)))

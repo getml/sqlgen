@@ -48,6 +48,7 @@ TEST(postgres, test_joins_nested) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct ParentAndChild {
     std::string last_name;

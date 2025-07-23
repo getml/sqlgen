@@ -37,6 +37,7 @@ Delete specific records using a `where` clause:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = delete_from<Person> |
                    where("first_name"_c == "Hugo");
@@ -52,12 +53,14 @@ WHERE "first_name" = 'Hugo';
 ```
 
 Note that `"..."_c` refers to the name of the column. If such a field does not
-exist on the struct `Person`, the code will fail to compile.
+exist on the struct `Person`, the code will fail to compile. `"..."_c` is
+defined in the namespace `sqlgen::literals`.
 
 You can also use monadic error handling here:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = delete_from<Person> |
                    where("first_name"_c == "Hugo");
@@ -70,6 +73,7 @@ const auto result = sqlite::connect("database.db").and_then(query);
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = delete_from<Person> |
                    where("age"_c >= 18 and "last_name"_c == "Simpson");
@@ -88,7 +92,7 @@ DELETE FROM "Person"
 WHERE ("age" >= 18) AND ("last_name" = 'Simpson');
 ```
 
-It is strongly recommended that you use `using namespace sqlgen`. However,
+It is strongly recommended that you use `using namespace sqlgen` and `using namespace sqlgen::literals`. However,
 if you do not want to do that, you can rewrite the example above as follows:
 
 ```cpp

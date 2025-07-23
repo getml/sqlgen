@@ -33,6 +33,7 @@ TEST(postgres, test_operations) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Children {
     int id_plus_age;

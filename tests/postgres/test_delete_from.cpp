@@ -34,6 +34,7 @@ TEST(postgres, test_delete_from) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto conn =
       sqlgen::postgres::connect(credentials).and_then(drop<Person> | if_exists);

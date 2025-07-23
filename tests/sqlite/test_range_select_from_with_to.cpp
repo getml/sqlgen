@@ -27,6 +27,7 @@ TEST(sqlite, test_range_select_from_with_to) {
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct FirstName {
     std::string first_name;

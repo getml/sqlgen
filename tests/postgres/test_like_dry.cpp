@@ -17,6 +17,7 @@ struct Person {
 
 TEST(postgres, test_like_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto sql =
       postgres::to_sql(sqlgen::read<std::vector<Person>> |

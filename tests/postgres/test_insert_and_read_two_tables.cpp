@@ -42,6 +42,7 @@ TEST(postgres, test_insert_and_read_two_tables) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people2 = sqlgen::postgres::connect(credentials)
                            .and_then(drop<Person> | if_exists)

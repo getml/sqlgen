@@ -14,6 +14,7 @@ struct TestTable {
 
 TEST(postgres, test_create_index_where_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query =
       create_index<"test_table_ix", TestTable>("field1"_c, "field2"_c) |

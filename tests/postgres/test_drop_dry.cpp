@@ -14,6 +14,7 @@ struct TestTable {
 
 TEST(postgres, test_drop_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query = drop<TestTable> | if_exists;
 

@@ -10,6 +10,7 @@ Perform aggregations without grouping:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 struct Children {
     int num_children;
@@ -54,6 +55,7 @@ Group data and perform aggregations:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 struct Children {
     std::string last_name;

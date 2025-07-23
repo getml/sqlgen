@@ -25,6 +25,7 @@ TEST(sqlite, test_join) {
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto get_people =
       select_from<Person, "t1">(

@@ -14,6 +14,7 @@ struct TestTable {
 
 TEST(postgres, test_delete_from_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query = delete_from<TestTable> | where("field2"_c > 0);
 

@@ -31,6 +31,7 @@ TEST(sqlite, test_drop) {
   sqlgen::write(conn, people1);
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query = drop<Person> | if_exists;
 

@@ -33,6 +33,7 @@ TEST(postgres, test_aggregations) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Children {
     int num_children;
