@@ -10,6 +10,7 @@ Reference a column using the string literal operator:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Using string literal operator
 const auto age_col = "age"_c;
@@ -26,6 +27,7 @@ Compare columns with values or other columns:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Compare with value
 const auto query1 = read<std::vector<Person>> | where("age"_c > 18);
@@ -55,6 +57,7 @@ Check for NULL or NOT NULL values:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Find records where age is NULL
 const auto query1 = read<std::vector<Person>> | 
@@ -85,6 +88,7 @@ Use LIKE and NOT LIKE for pattern matching:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Find names starting with 'H'
 const auto query1 = read<std::vector<Person>> | 
@@ -115,6 +119,7 @@ Specify column ordering in queries:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Order by age ascending
 const auto query1 = read<std::vector<Person>> | 
@@ -154,6 +159,7 @@ Set column values in UPDATE statements:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Update a single column
 const auto query1 = update<Person>("age"_c.set(46));

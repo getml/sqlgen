@@ -186,6 +186,7 @@ VALUES (?, ?, ?, ?);
 #include <sqlgen/postgres.hpp>
 
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Build a query for adults, ordered by age
 const auto query = read<std::vector<Person>> |
@@ -217,6 +218,7 @@ LIMIT 10;
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 struct Children {
     std::string last_name;
@@ -254,6 +256,7 @@ GROUP BY "last_name";
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 struct ParentAndChild {
     std::string last_name;
@@ -291,6 +294,7 @@ ORDER BY t1."id", t3."id"
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 struct ParentAndChild {
     std::string last_name;

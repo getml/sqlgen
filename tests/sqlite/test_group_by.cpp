@@ -27,6 +27,7 @@ TEST(sqlite, test_group_by) {
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Children {
     std::string last_name;

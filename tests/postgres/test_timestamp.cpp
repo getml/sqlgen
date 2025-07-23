@@ -23,6 +23,7 @@ TEST(postgres, test_timestamp) {
                                   .ts = "2000-01-01 01:00:00"}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
                                                          .password = "password",

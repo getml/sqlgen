@@ -34,6 +34,7 @@ TEST(postgres, test_transaction) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto conn =
       postgres::connect(credentials).and_then(drop<Person> | if_exists);

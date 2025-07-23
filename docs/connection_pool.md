@@ -105,6 +105,7 @@ Example of thread-safe usage with monadic style:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Create pool
 const auto pool = make_connection_pool<postgres::Connection>(config, credentials);
@@ -133,6 +134,7 @@ Sessions are managed through RAII (Resource Acquisition Is Initialization) and s
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Using monadic style for session management with exec
 session(pool)

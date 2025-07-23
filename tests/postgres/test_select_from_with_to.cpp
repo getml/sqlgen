@@ -36,6 +36,7 @@ TEST(postgres, test_range_select_from) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct FirstName {
     std::string first_name;

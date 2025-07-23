@@ -36,6 +36,7 @@ TEST(postgres, test_join) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto get_people =
       select_from<Person, "t1">(

@@ -6,6 +6,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 - [Defining Tables](defining_tables.md) - How to define tables using C++ structs
 - [sqlgen::col](col.md) - How to represent columns in queries
+- [sqlgen::literals](literals.md) - How to use column and table alias literals in queries
 - [sqlgen::Flatten](flatten.md) - How to "inherit" fields from other structs
 - [sqlgen::PrimaryKey](primary_key.md) - How to define primary keys in sqlgen
 - [sqlgen::Result](result.md) - How sqlgen handles errors and results
@@ -24,8 +25,8 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::drop](drop.md) - How to drop a table
 - [sqlgen::exec](exec.md) - How to execute raw SQL statements
 - [sqlgen::group_by and Aggregations](group_by_and_aggregations.md) - How generate GROUP BY queries and aggregate data
+- [sqlgen::inner_join, sqlgen::left_join, sqlgen::right_join, sqlgen::full_join](joins.md) - How to join different tables
 - [sqlgen::insert](insert.md) - How to insert data within transactions
-- [Joins](joins.md) - How to join different tables
 - [sqlgen::update](update.md) - How to update data in a table
 
 ## Other Operations

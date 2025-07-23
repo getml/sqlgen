@@ -28,6 +28,7 @@ TEST(sqlite, test_like) {
            .id = 4, .first_name = "Hugo", .last_name = "Simpson", .age = 10}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto conn = sqlite::connect();
 

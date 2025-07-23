@@ -31,6 +31,7 @@ TEST(sqlite, test_where_with_operations) {
   sqlgen::write(conn, people1);
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query = sqlgen::read<std::vector<Person>> |
                      where("age"_c * 2 + 4 < 40 and "first_name"_c != "Hugo") |

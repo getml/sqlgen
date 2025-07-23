@@ -29,6 +29,7 @@ TEST(sqlite, test_operations_with_nullable) {
            .id = 4, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Children {
     std::optional<int> id_plus_age;

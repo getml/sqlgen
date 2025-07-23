@@ -39,6 +39,7 @@ TEST(postgres, test_where_with_timestamps) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
   using namespace std::literals::chrono_literals;
 
   const auto conn =

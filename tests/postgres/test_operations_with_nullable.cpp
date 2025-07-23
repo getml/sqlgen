@@ -34,6 +34,7 @@ TEST(postgres, test_operations_with_nullable) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Children {
     std::optional<int> id_plus_age;

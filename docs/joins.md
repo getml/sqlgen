@@ -19,6 +19,7 @@ Each join type can be used with either a table or a subquery, and can be aliased
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 struct Person {
     sqlgen::PrimaryKey<uint32_t> id;
@@ -128,7 +129,9 @@ Where:
 
 ## Aliasing and Column References
 
-When joining tables or subqueries, you must use aliases to disambiguate columns. Use the `_t1`, `_t2`, etc. suffixes to refer to columns from different tables or subqueries:
+When joining tables or subqueries, you must use aliases to disambiguate columns. Use the `_t1`, `_t2`, etc. 
+suffixes to refer to columns from different tables or subqueries, which are defined in the 
+namespace `sqlgen::literals`:
 
 ```cpp
 "id"_t1, "first_name"_t2, "age"_t3

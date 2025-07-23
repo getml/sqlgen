@@ -31,6 +31,7 @@ TEST(sqlite, test_update) {
   sqlgen::write(conn, people1);
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query =
       update<Person>("first_name"_c.set("last_name"_c), "age"_c.set(100)) |

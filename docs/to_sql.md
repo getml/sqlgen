@@ -10,6 +10,7 @@ Transpile any SQL operation to a dialect-specific SQL string:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Define a query
 const auto query = sqlgen::read<std::vector<Person>> |
@@ -44,6 +45,7 @@ const auto sqlite_sql = sqlite::to_sql(query);
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Basic select
 const auto select_query = sqlgen::read<std::vector<Person>>;
@@ -81,6 +83,7 @@ before actually inserting the data.
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 // Define a table structure
 struct TestTable {
@@ -111,6 +114,7 @@ CREATE TABLE IF NOT EXISTS "TestTable" (
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto insert_query = Insert<TestTable>{};
 const auto sql = postgres::to_sql(insert_query);
@@ -134,6 +138,7 @@ VALUES (?, ?, ?, ?);
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto delete_query = delete_from<TestTable> | 
                          where("field2"_c > 0);

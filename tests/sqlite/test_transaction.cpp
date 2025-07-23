@@ -31,6 +31,7 @@ TEST(sqlite, test_transaction) {
   sqlgen::write(conn, people1);
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto delete_hugo =
       delete_from<Person> | where("first_name"_c == "Hugo");

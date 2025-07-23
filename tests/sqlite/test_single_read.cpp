@@ -29,6 +29,7 @@ TEST(sqlite, test_single_read) {
   sqlgen::write(conn, people1);
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people2 =
       (sqlgen::read<Person> | where("id"_c == 0))(conn).value();

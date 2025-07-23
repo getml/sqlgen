@@ -26,6 +26,7 @@ TEST(sqlite, test_is_null) {
        Person{.id = 4, .first_name = "Hugo", .last_name = "Simpson"}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto conn = sqlite::connect();
 

@@ -40,6 +40,7 @@ TEST(sqlite, test_joins_two_tables) {
                                  Relationship{.parent_id = 1, .child_id = 4}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct ParentAndChild {
     std::string last_name;

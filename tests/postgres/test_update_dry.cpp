@@ -14,6 +14,7 @@ struct TestTable {
 
 TEST(postgres, test_update_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query =
       update<TestTable>("field1"_c.set("Hello"), "nullable"_c.set("field1"_c)) |

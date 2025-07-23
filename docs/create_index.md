@@ -37,6 +37,7 @@ Create an index only if it doesn't already exist:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = create_index<"person_ix", Person>("first_name"_c, "last_name"_c) | if_not_exists;
 
@@ -53,6 +54,7 @@ You can also use monadic error handling here:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = create_index<"person_ix", Person>("first_name"_c, "last_name"_c) | if_not_exists;
 
@@ -66,6 +68,7 @@ Create a unique index to enforce uniqueness constraints:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = create_unique_index<"person_ix", Person>("first_name"_c, "last_name"_c);
 
@@ -84,6 +87,7 @@ Create a partial index by adding a WHERE clause to filter which rows are include
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = create_index<"test_table_ix", TestTable>("field1"_c, "field2"_c) | 
                   if_not_exists | 
@@ -104,6 +108,7 @@ The WHERE clause can be combined with other modifiers like `if_not_exists` and w
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = create_index<"person_ix", Person>("first_name"_c, "last_name"_c) | if_not_exists;
 
@@ -120,7 +125,7 @@ This generates the following SQL:
 CREATE INDEX IF NOT EXISTS "person_ix" ON "Person" ("first_name", "last_name");
 ```
 
-It is strongly recommended that you use `using namespace sqlgen`. However,
+It is strongly recommended that you use `using namespace sqlgen` and  `using namespace sqlgen::literals`. However,
 if you do not want to do that, you can rewrite the example above as follows:
 
 ```cpp
@@ -134,7 +139,7 @@ const auto result = query(conn);
 
 - The `if_not_exists` clause is optional - if omitted, the query will fail if the index already exists
 - The `Result<Ref<Connection>>` type provides error handling; use `.value()` to extract the result (will throw an exception if there's an error) or handle errors as needed or refer to the documentation on `sqlgen::Result<...>` for other forms of error handling.
-- `"..."_c` refers to the name of the column. If such a field does not exist on the struct (e.g., `Person`), the code will fail to compile.
+- `"..."_c` refers to the name of the column. If such a field does not exist on the struct (e.g., `Person`), the code will fail to compile. It is defined in the namespace `sqlgen::literals`.
 - Index names must be unique within a database
 - You can create indexes on multiple columns by providing multiple column names
 - Use `create_unique_index` when you need to enforce uniqueness constraints on the indexed columns

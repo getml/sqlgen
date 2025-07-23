@@ -32,6 +32,7 @@ TEST(postgres, test_is_null) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto conn = postgres::connect(credentials);
 

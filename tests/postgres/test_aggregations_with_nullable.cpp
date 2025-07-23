@@ -32,6 +32,7 @@ TEST(postgres, test_aggregations_with_nullable) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Children {
     int num_children;

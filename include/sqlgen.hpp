@@ -31,6 +31,7 @@
 #include "sqlgen/is_connection.hpp"
 #include "sqlgen/joins.hpp"
 #include "sqlgen/limit.hpp"
+#include "sqlgen/literals.hpp"
 #include "sqlgen/operations.hpp"
 #include "sqlgen/order_by.hpp"
 #include "sqlgen/patterns.hpp"

@@ -33,6 +33,7 @@ TEST(sqlite, test_range_select_from_with_timestamps) {
                                   .birthday = sqlgen::Date("2010-01-01")}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   struct Birthday {
     Date birthday;

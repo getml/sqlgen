@@ -37,6 +37,7 @@ TEST(postgres, test_write_and_read_pool) {
       pool_config, credentials);
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people2 = session(pool)
                            .and_then(drop<Person> | if_exists)

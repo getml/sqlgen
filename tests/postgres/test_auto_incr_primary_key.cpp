@@ -30,6 +30,7 @@ TEST(postgres, test_auto_incr_primary_key) {
                                                          .dbname = "postgres"};
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto people2 = postgres::connect(credentials)
                            .and_then(drop<Person> | if_exists)

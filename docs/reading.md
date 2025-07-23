@@ -38,6 +38,7 @@ Filter results using a `where` clause:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = sqlgen::read<std::vector<Person>> |
                    where("age"_c < 18 and "first_name"_c != "Hugo");
@@ -56,12 +57,14 @@ WHERE
 ```
 
 Note that `"..."_c` refers to the name of the column. If such a field does not
-exists on the struct `Person`, the code will fail to compile.
+exists on the struct `Person`, the code will fail to compile. It is defined in 
+the namespace `sqlgen::literals`.
 
 You can also use monadic error handling here:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = sqlgen::read<std::vector<Person>> |
                    where("age"_c < 18 and "first_name"_c != "Hugo");
@@ -76,6 +79,7 @@ Sort and limit results:
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = sqlgen::read<std::vector<Person>> |
                    order_by("age"_c) |
@@ -125,6 +129,7 @@ const auto adults = people_range | filter([](const sqlgen::Result<Person>& r) {
 
 ```cpp
 using namespace sqlgen;
+using namespace sqlgen::literals;
 
 const auto query = sqlgen::read<std::vector<Person>> |
                    where("age"_c >= 18) |
@@ -147,7 +152,7 @@ ORDER BY
 LIMIT 10;
 ```
 
-It is strongly recommended that you use `using namespace sqlgen`. However,
+It is strongly recommended that you use `using namespace sqlgen` and `using namespace sqlgen::literals;`. However,
 if you do not want to do that, you can rewrite the example above as follows:
 
 ```cpp

@@ -33,6 +33,7 @@ TEST(sqlite, test_where_with_timestamps) {
                                   .birthday = sqlgen::Date("2010-01-01")}});
 
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto conn = sqlgen::sqlite::connect();
 

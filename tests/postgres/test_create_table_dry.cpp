@@ -14,6 +14,7 @@ struct TestTable {
 
 TEST(postgres, test_create_table_dry) {
   using namespace sqlgen;
+  using namespace sqlgen::literals;
 
   const auto query = create_table<TestTable> | if_not_exists;
 
