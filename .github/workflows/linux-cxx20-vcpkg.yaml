@@ -43,6 +43,22 @@ jobs:
           - compiler: gcc
             compiler-version: 14
             db: sqlite
+          - compiler: llvm
+            compiler-version: 16
+            db: mysql 
+          - compiler: llvm
+            compiler-version: 18
+            db: mysql
+          - compiler: gcc
+            compiler-version: 11
+            additional-dep: "g++-11"
+            db: mysql
+          - compiler: gcc
+            compiler-version: 12
+            db: mysql
+          - compiler: gcc
+            compiler-version: 14
+            db: mysql
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }})"
     runs-on: ubuntu-latest
     steps:
@@ -98,11 +114,32 @@ jobs:
           $CXX --version
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF 
           cmake --build build
+      - name: Compile
+        if: matrix.db == 'mysql' 
+        run: |
+          if [[ "${{ matrix.compiler }}" == "llvm" ]]; then
+            export CC=clang-${{ matrix.compiler-version }}
+            export CXX=clang++-${{ matrix.compiler-version }}
+          elif [[ "${{ matrix.compiler }}" == "gcc" ]]; then
+            export CC=gcc-${{ matrix.compiler-version }}
+            export CXX=g++-${{ matrix.compiler-version }}
+          fi
+          sudo ln -s $(which ccache) /usr/local/bin/$CC
+          sudo ln -s $(which ccache) /usr/local/bin/$CXX
+          $CXX --version
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF 
+          cmake --build build
       - name: Set up postgres
         if: matrix.db == 'postgres' 
         run: |
           sudo systemctl start postgresql.service
           sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'password';"
+      - name: Set up mysql 
+        if: matrix.db == 'mysql'
+        run: |
+          sudo /etc/init.d/mysql start
+          sudo mysql -e 'CREATE USER sqlgen IDENTIFIED WITH mysql_native_password BY password;' -u root 
+          mysql -e 'CREATE DATABASE sqlgen;' -u sqlgen -p password 
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure
