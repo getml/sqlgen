@@ -9,8 +9,8 @@
 
 namespace sqlgen::mysql {
 
-Result<Ref<MYSQL_RES>> exec(const Ref<MYSQL>& _conn,
-                            const std::string& _sql) noexcept {
+Result<Nothing> exec(const Ref<MYSQL>& _conn,
+                     const std::string& _sql) noexcept {
   const auto err = mysql_real_query(_conn.get(), _sql.c_str(),
                                     static_cast<int>(_sql.size()));
 
@@ -20,8 +20,11 @@ Result<Ref<MYSQL_RES>> exec(const Ref<MYSQL>& _conn,
 
   const auto raw_ptr = mysql_store_result(_conn.get());
 
-  return Ref<MYSQL_RES>::make(
-      std::shared_ptr<MYSQL_RES>(raw_ptr, mysql_free_result));
+  if (raw_ptr) {
+    mysql_free_result(raw_ptr);
+  }
+
+  return Nothing{};
 }
 
 }  // namespace sqlgen::mysql

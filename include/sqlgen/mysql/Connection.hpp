@@ -36,13 +36,13 @@ class Connection {
   ~Connection() = default;
 
   Result<Nothing> begin_transaction() noexcept {
-    return execute("BEGIN TRANSACTION;");
+    return execute("START TRANSACTION;");
   }
 
   Result<Nothing> commit() noexcept { return execute("COMMIT;"); }
 
   Result<Nothing> execute(const std::string& _sql) noexcept {
-    return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
+    return exec(conn_, _sql);
   }
 
   Result<Nothing> insert(
@@ -74,11 +74,9 @@ class Connection {
 
   static ConnPtr make_conn(const Credentials& _credentials);
 
-  Result<StmtPtr> prepare_insert_statement(
+  Result<StmtPtr> prepare_statement(
       const std::variant<dynamic::Insert, dynamic::Write>& _stmt)
       const noexcept;
-
-  static rfl::Unexpected<Error> make_error(const ConnPtr& _conn) noexcept;
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that

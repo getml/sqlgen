@@ -10,8 +10,7 @@
 
 namespace sqlgen::mysql {
 
-Result<Ref<MYSQL_RES>> exec(const Ref<MYSQL>& _conn,
-                            const std::string& _sql) noexcept;
+Result<Nothing> exec(const Ref<MYSQL>& _conn, const std::string& _sql) noexcept;
 
 }  // namespace sqlgen::mysql
 

@@ -55,13 +55,13 @@ Result<Nothing> Connection::actual_insert(
       }
     }
 
-    const auto res1 = mysql_stmt_bind_param(_stmt, bind);
-    if (!res1) {
+    auto err = mysql_stmt_bind_param(_stmt, bind);
+    if (err) {
       return make_error(conn_);
     }
 
-    const auto res2 = mysql_stmt_execute(_stmt);
-    if (!res2) {
+    err = mysql_stmt_execute(_stmt);
+    if (err) {
       return make_error(conn_);
     }
   }
@@ -76,7 +76,7 @@ Result<Nothing> Connection::insert(
   if (_data.size() == 0) {
     return Nothing{};
   }
-  return prepare_insert_statement(_stmt).and_then(
+  return prepare_statement(_stmt).and_then(
       [&](auto&& _stmt_ptr) { return actual_insert(_data, _stmt_ptr.get()); });
 }
 
@@ -109,26 +109,29 @@ typename Connection::ConnPtr Connection::make_conn(
   return ConnPtr::make(shared_ptr).value();
 }
 
-Result<Connection::StmtPtr> Connection::prepare_insert_statement(
+Result<Connection::StmtPtr> Connection::prepare_statement(
     const std::variant<dynamic::Insert, dynamic::Write>& _stmt) const noexcept {
   const auto sql = std::visit(to_sql_impl, _stmt);
   const auto stmt_ptr = StmtPtr(mysql_stmt_init(conn_.get()), mysql_stmt_close);
-  const auto res = mysql_stmt_prepare(stmt_ptr.get(), sql.c_str(),
+  const auto err = mysql_stmt_prepare(stmt_ptr.get(), sql.c_str(),
                                       static_cast<unsigned long>(sql.size()));
-  if (!res) {
+  if (err) {
     return make_error(conn_);
   }
   return stmt_ptr;
 }
 
 Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
-  /*  const auto sql = mysql::to_sql_impl(_query);
-    try {
-      return Ref<IteratorBase>(Ref<Iterator>::make(sql, conn_));
-    } catch (std::exception& e) {
-      return error(e.what());
-    }*/
-  return error("TODO");
+  const auto sql = mysql::to_sql_impl(_query);
+  const auto err =
+      mysql_real_query(conn_.get(), sql.c_str(), static_cast<int>(sql.size()));
+  if (err) {
+    return make_error(conn_);
+  }
+  const auto raw_ptr = mysql_use_result(conn_.get());
+  return Ref<MYSQL_RES>::make(
+             std::shared_ptr<MYSQL_RES>(raw_ptr, mysql_free_result))
+      .transform([&](auto&& _res) { return Ref<Iterator>::make(_res, conn_); });
 }
 
 Result<Nothing> Connection::start_write(const dynamic::Write& _write_stmt) {
@@ -138,14 +141,14 @@ Result<Nothing> Connection::start_write(const dynamic::Write& _write_stmt) {
         ".end_write() before you can start another.");
   }
   return begin_transaction()
-      .and_then([&](auto&&) { return prepare_insert_statement(_write_stmt); })
-      .and_then([&](auto&& _stmt) -> Result<Nothing> {
+      .and_then([&](auto&&) { return prepare_statement(_write_stmt); })
+      .transform([&](auto&& _stmt) {
         stmt_ = _stmt;
         return Nothing{};
       })
-      .or_else([&](auto&&) {
+      .or_else([&](auto&& _err) {
         rollback();
-        return Nothing{};
+        return error(_err.what());
       });
 }
 
