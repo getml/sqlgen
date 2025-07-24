@@ -8,6 +8,10 @@ if (SQLGEN_BUILD_DRY_TESTS_ONLY)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSQLGEN_BUILD_DRY_TESTS_ONLY")
 endif()
 
+if(SQLGEN_MYSQL)
+    add_subdirectory(mysql)
+endif()
+
 if(SQLGEN_POSTGRES)
     add_subdirectory(postgres)
 endif()
