@@ -432,12 +432,12 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << column_or_value_to_sql(_s);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Concat>) {
-      stream << "("
+      stream << "concat("
              << internal::strings::join(
-                    " || ", internal::collect::vector(
-                                _s.ops | transform([](const auto& _op) {
-                                  return operation_to_sql(*_op);
-                                })))
+                    ", ", internal::collect::vector(
+                              _s.ops | transform([](const auto& _op) {
+                                return operation_to_sql(*_op);
+                              })))
              << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cos>) {
@@ -487,8 +487,8 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << "lower(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::LTrim>) {
-      stream << "ltrim(" << operation_to_sql(*_s.op1) << ", "
-             << operation_to_sql(*_s.op2) << ")";
+      stream << "trim(leading " << operation_to_sql(*_s.op2) << " FROM "
+             << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Minus>) {
       stream << "(" << operation_to_sql(*_s.op1) << ") - ("
@@ -522,8 +522,8 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
              << operation_to_sql(*_s.op2) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::RTrim>) {
-      stream << "rtrim(" << operation_to_sql(*_s.op1) << ", "
-             << operation_to_sql(*_s.op2) << ")";
+      stream << "trim(trailing " << operation_to_sql(*_s.op2) << " FROM "
+             << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Second>) {
       stream << "extract(SECOND from " << operation_to_sql(*_s.op1) << ")";
@@ -538,8 +538,8 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << "tan(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Trim>) {
-      stream << "trim(" << operation_to_sql(*_s.op1) << ", "
-             << operation_to_sql(*_s.op2) << ")";
+      stream << "trim(both " << operation_to_sql(*_s.op2) << " FROM "
+             << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Unixepoch>) {
       stream << "extract(EPOCH FROM " << operation_to_sql(*_s.op1) << ")";
@@ -684,7 +684,7 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
       return "BIGINT UNSIGNED";
     } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
                          std::is_same_v<T, dynamic::types::Float64>) {
-      return "NUMERIC";
+      return "DECIMAL";
     } else if constexpr (std::is_same_v<T, dynamic::types::Text>) {
       return "TEXT";
     } else if constexpr (std::is_same_v<T, dynamic::types::VarChar>) {
