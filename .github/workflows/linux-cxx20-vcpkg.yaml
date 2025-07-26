@@ -127,7 +127,7 @@ jobs:
           sudo ln -s $(which ccache) /usr/local/bin/$CC
           sudo ln -s $(which ccache) /usr/local/bin/$CXX
           $CXX --version
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF 
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS -DVCPKG_TARGET_TRIPLET=x64-linux-dynamic
           cmake --build build
       - name: Set up postgres
         if: matrix.db == 'postgres' 

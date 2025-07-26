@@ -38,10 +38,6 @@ if (SQLGEN_USE_VCPKG)
     if (SQLGEN_SQLITE3)
         list(APPEND VCPKG_MANIFEST_FEATURES "sqlite3")
     endif()
-    
-    # if (SQLGEN_BUILD_SHARED)
-    #    set(VCPKG_TARGET_TRIPLET arm64-linux-dynamic)
-    # endif()
 
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 endif ()
