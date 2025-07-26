@@ -51,7 +51,7 @@ cmake --build build --config Release -j 4  # MSVC
 
 To build the shared library:
 ```bash
-cmake -S . -B build -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS -DVCPKG_TARGET_TRIPLET=...-dynamic
+cmake -S . -B build -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=...-dynamic
 cmake --build build -j 4  # gcc, clang
 cmake --build build --config Release -j 4  # MSVC
 ```
