@@ -137,8 +137,8 @@ jobs:
       - name: Set up mysql 
         if: matrix.db == 'mysql'
         run: |
-          mysql -h 127.0.0.1 -uroot -ppassword -e 'CREATE USER sqlgen IDENTIFIED WITH mysql_native_password BY password;'
-          mysql -h 127.0.0.1 -usqlgen -ppassword -e 'CREATE DATABASE sqlgen;'
+          mysql -uroot -ppassword -e 'CREATE USER sqlgen IDENTIFIED WITH mysql_native_password BY password;'
+          mysql -usqlgen -ppassword -e 'CREATE DATABASE sqlgen;'
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure
