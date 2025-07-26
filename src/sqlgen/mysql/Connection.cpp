@@ -5,6 +5,7 @@
 #include <rfl.hpp>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 #include "sqlgen/internal/collect/vector.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
@@ -18,13 +19,13 @@ Result<Nothing> Connection::actual_insert(
     MYSQL_STMT* _stmt) const noexcept {
   const auto num_params = static_cast<size_t>(mysql_stmt_param_count(_stmt));
 
-  MYSQL_BIND bind[num_params];
+  std::vector<MYSQL_BIND> bind(num_params);
 
-  long unsigned int lengths[num_params];
-  my_bool is_null[num_params];
+  std::vector<long unsigned int> lengths(num_params);
+  std::vector<my_bool> is_null(num_params);
 
   for (const auto& row : _data) {
-    memset(bind, 0, sizeof(bind));
+    memset(bind.data(), 0, sizeof(MYSQL_BIND) * num_params);
 
     if (row.size() != num_params) {
       return error("Expected " + std::to_string(num_params) + " fields, got " +
@@ -55,7 +56,7 @@ Result<Nothing> Connection::actual_insert(
       }
     }
 
-    auto err = mysql_stmt_bind_param(_stmt, bind);
+    auto err = mysql_stmt_bind_param(_stmt, bind.data());
     if (err) {
       return make_error(conn_);
     }
