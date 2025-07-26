@@ -140,6 +140,7 @@ jobs:
         run: |
           sudo systemctl start mysql
           sudo mysql -uroot -proot -e "CREATE USER sqlgen IDENTIFIED WITH mysql_native_password BY 'password';"
+          sudo mysql -uroot -proot -e "GRANT ALL PRIVILEGES ON *.* TO 'sqlgen'@'localhost';"
           mysql -usqlgen -ppassword -e 'CREATE DATABASE sqlgen;'
       - name: Run tests
         run: |
