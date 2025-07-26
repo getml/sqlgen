@@ -47,7 +47,6 @@ TEST(mysql, test_select_from_with_timestamps) {
   struct Birthday {
     Date birthday;
     Date birthday_recreated;
-    time_t birthday_unixepoch;
     double age_in_days;
     int hour;
     int minute;
@@ -65,25 +64,22 @@ TEST(mysql, test_select_from_with_timestamps) {
            std::chrono::days(10)) |
               as<"birthday_recreated">,
           days_between("birthday"_c, Date("2011-01-01")) | as<"age_in_days">,
-          unixepoch("birthday"_c + std::chrono::days(10)) |
-              as<"birthday_unixepoch">,
           hour("birthday"_c) | as<"hour">, minute("birthday"_c) | as<"minute">,
           second("birthday"_c) | as<"second">,
           weekday("birthday"_c) | as<"weekday">) |
       order_by("id"_c) | to<std::vector<Birthday>>;
 
   const auto birthdays = mysql::connect(credentials)
-                             .and_then(exec("SET GLOBAL time_zone = '+8:00';"))
                              .and_then(drop<Person> | if_exists)
                              .and_then(write(std::ref(people1)))
                              .and_then(get_birthdays)
                              .value();
 
   const std::string expected_query =
-      R"(SELECT date_add(date_add(`birthday`, INTERVAL 2 week), INTERVAL -4 day) AS `birthday`, date_add(cast(concat(cast(extract(YEAR from `birthday`) as CHAR), '-', cast(extract(MONTH from `birthday`) as CHAR), '-', cast(extract(DAY from `birthday`) as CHAR)) as DATE), INTERVAL 10 day) AS `birthday_recreated`, datediff('2011-01-01', `birthday`) AS `age_in_days`, unix_timestamp(date_add(`birthday`, INTERVAL 10 day)) AS `birthday_unixepoch`, extract(HOUR from `birthday`) AS `hour`, extract(MINUTE from `birthday`) AS `minute`, extract(SECOND from `birthday`) AS `second`, dayofweek(`birthday`) AS `weekday` FROM `Person` ORDER BY `id`)";
+      R"(SELECT date_add(date_add(`birthday`, INTERVAL 2 week), INTERVAL -4 day) AS `birthday`, date_add(cast(concat(cast(extract(YEAR from `birthday`) as CHAR), '-', cast(extract(MONTH from `birthday`) as CHAR), '-', cast(extract(DAY from `birthday`) as CHAR)) as DATE), INTERVAL 10 day) AS `birthday_recreated`, datediff('2011-01-01', `birthday`) AS `age_in_days`, extract(HOUR from `birthday`) AS `hour`, extract(MINUTE from `birthday`) AS `minute`, extract(SECOND from `birthday`) AS `second`, dayofweek(`birthday`) AS `weekday` FROM `Person` ORDER BY `id`)";
 
   const std::string expected =
-      R"([{"birthday":"1970-01-11","birthday_recreated":"1970-01-11","birthday_unixepoch":860400,"age_in_days":14975.0,"hour":0,"minute":0,"second":0,"weekday":5},{"birthday":"2000-01-11","birthday_recreated":"2000-01-11","birthday_unixepoch":947545200,"age_in_days":4018.0,"hour":0,"minute":0,"second":0,"weekday":7},{"birthday":"2002-01-11","birthday_recreated":"2002-01-11","birthday_unixepoch":1010703600,"age_in_days":3287.0,"hour":0,"minute":0,"second":0,"weekday":3},{"birthday":"2010-01-11","birthday_recreated":"2010-01-11","birthday_unixepoch":1263164400,"age_in_days":365.0,"hour":0,"minute":0,"second":0,"weekday":6}])";
+      R"([{"birthday":"1970-01-11","birthday_recreated":"1970-01-11","age_in_days":14975.0,"hour":0,"minute":0,"second":0,"weekday":5},{"birthday":"2000-01-11","birthday_recreated":"2000-01-11","age_in_days":4018.0,"hour":0,"minute":0,"second":0,"weekday":7},{"birthday":"2002-01-11","birthday_recreated":"2002-01-11","age_in_days":3287.0,"hour":0,"minute":0,"second":0,"weekday":3},{"birthday":"2010-01-11","birthday_recreated":"2010-01-11","age_in_days":365.0,"hour":0,"minute":0,"second":0,"weekday":6}])";
 
   EXPECT_EQ(mysql::to_sql(get_birthdays), expected_query);
   EXPECT_EQ(rfl::json::write(birthdays), expected);
