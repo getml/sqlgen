@@ -15,10 +15,14 @@ jobs:
             db: postgres
           - os: "macos-latest"
             db: sqlite
+          - os: "macos-latest"
+            db: mysql 
           - os: "macos-13"
             db: postgres
           - os: "macos-13"
             db: sqlite
+          - os: "macos-13"
+            db: mysql 
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
     runs-on: ${{ matrix.os }}
     steps:
@@ -69,6 +73,23 @@ jobs:
           fi
           $CXX --version
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF 
+          cmake --build build -j 4
+      - name: Compile
+        if: matrix.db == 'mysql' 
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          if [[ "${{ matrix.os == 'macos-latest' }}" == "true" ]]; then
+            export VCPKG_FORCE_SYSTEM_BINARIES=arm
+            export CMAKE_GENERATOR=Ninja
+          fi
+          $CXX --version
+          if [[ "${{ matrix.os == 'macos-latest' }}" == "true" ]]; then
+            cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=x64-macos-dynamic -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
+          else
+            cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=arm-macos-dynamic -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
+          fi
           cmake --build build -j 4
       - name: Run tests
         run: |
