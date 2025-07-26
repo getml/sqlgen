@@ -12,7 +12,7 @@ using Type =
     rfl::TaggedUnion<"type", types::Unknown, types::Boolean, types::Float32,
                      types::Float64, types::Int8, types::Int16, types::Int32,
                      types::Int64, types::UInt8, types::UInt16, types::UInt32,
-                     types::UInt64, types::Text, types::Timestamp,
+                     types::UInt64, types::Text, types::Date, types::Timestamp,
                      types::TimestampWithTZ, types::VarChar>;
 
 }  // namespace sqlgen::dynamic

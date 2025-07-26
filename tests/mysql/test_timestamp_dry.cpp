@@ -16,7 +16,7 @@ TEST(mysql, test_timestamp_dry) {
   const auto query = sqlgen::CreateTable<TestTable>{};
 
   const auto expected =
-      R"(CREATE TABLE IF NOT EXISTS `TestTable` (`field1` TEXT NOT NULL, `field2` INT NOT NULL, `id` INT UNSIGNED NOT NULL, `ts` TIMESTAMP NOT NULL, PRIMARY KEY (`id`));)";
+      R"(CREATE TABLE IF NOT EXISTS `TestTable` (`field1` TEXT NOT NULL, `field2` INT NOT NULL, `id` BIGINT NOT NULL, `ts` DATETIME NOT NULL, PRIMARY KEY (`id`));)";
 
   EXPECT_EQ(sqlgen::mysql::to_sql(query), expected);
 }

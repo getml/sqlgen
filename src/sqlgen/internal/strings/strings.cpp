@@ -1,5 +1,7 @@
 #include "sqlgen/internal/strings/strings.hpp"
 
+#include <algorithm>
+
 namespace sqlgen::internal::strings {
 
 char to_lower(const char ch) {
@@ -69,6 +71,28 @@ std::vector<std::string> split(const std::string& _str,
   }
   result.emplace_back(std::move(str));
   return result;
+}
+
+std::string ltrim(const std::string& _str, const std::string& _chars) {
+  auto str = _str;
+  str.erase(str.begin(), std::find_if(str.begin(), str.end(), [&](char ch1) {
+              return std::none_of(_chars.begin(), _chars.end(),
+                                  [&](char ch2) { return ch1 == ch2; });
+            }));
+  return str;
+}
+
+std::string rtrim(const std::string& _str, const std::string& _chars) {
+  auto str = _str;
+  str.erase(std::find_if(str.rbegin(), str.rend(),
+                         [&](char ch1) {
+                           return std::none_of(
+                               _chars.begin(), _chars.end(),
+                               [&](char ch2) { return ch1 == ch2; });
+                         })
+                .base(),
+            str.end());
+  return str;
 }
 
 }  // namespace sqlgen::internal::strings

@@ -16,6 +16,8 @@ namespace sqlgen::mysql {
 std::string aggregation_to_sql(
     const dynamic::Aggregation& _aggregation) noexcept;
 
+std::string cast_type_to_sql(const dynamic::Type& _type) noexcept;
+
 std::string column_or_value_to_sql(const dynamic::ColumnOrValue& _col) noexcept;
 
 std::string condition_to_sql(const dynamic::Condition& _cond) noexcept;
@@ -28,6 +30,10 @@ std::string column_to_sql_definition(const dynamic::Column& _col) noexcept;
 std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept;
 
 std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept;
+
+std::string date_plus_duration_to_sql(
+    const dynamic::Operation::DatePlusDuration& _stmt,
+    const size_t _ix = 0) noexcept;
 
 std::string delete_from_to_sql(const dynamic::DeleteFrom& _stmt) noexcept;
 
@@ -95,6 +101,48 @@ std::string aggregation_to_sql(
   });
 }
 
+std::string cast_type_to_sql(const dynamic::Type& _type) noexcept {
+  return _type.visit([](const auto _t) -> std::string {
+    using T = std::remove_cvref_t<decltype(_t)>;
+    if constexpr (std::is_same_v<T, dynamic::types::Boolean>) {
+      return "BOOLEAN";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Int8> ||
+                         std::is_same_v<T, dynamic::types::Int16> ||
+                         std::is_same_v<T, dynamic::types::Int32> ||
+                         std::is_same_v<T, dynamic::types::Int64>) {
+      return "SIGNED";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt8> ||
+                         std::is_same_v<T, dynamic::types::UInt16> ||
+                         std::is_same_v<T, dynamic::types::UInt32> ||
+                         std::is_same_v<T, dynamic::types::UInt64>) {
+      return "UNSIGNED";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
+                         std::is_same_v<T, dynamic::types::Float64>) {
+      return "DECIMAL";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Text> ||
+                         std::is_same_v<T, dynamic::types::VarChar>) {
+      return "CHAR";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Date>) {
+      return "DATE";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Timestamp> ||
+                         std::is_same_v<T, dynamic::types::TimestampWithTZ>) {
+      return "DATETIME";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Unknown>) {
+      return "CHAR";
+
+    } else {
+      static_assert(rfl::always_false_v<T>, "Not all cases were covered.");
+    }
+  });
+}
+
 std::string column_or_value_to_sql(
     const dynamic::ColumnOrValue& _col) noexcept {
   const auto handle_value = [](const auto& _v) -> std::string {
@@ -103,8 +151,11 @@ std::string column_or_value_to_sql(
       return "'" + escape_single_quote(_v.val) + "'";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Duration>) {
-      return "INTERVAL '" + std::to_string(_v.val) + " " +
-             rfl::enum_to_string(_v.unit) + "'";
+      const auto unit =
+          _v.unit == dynamic::TimeUnit::milliseconds
+              ? std::string("* 1000 microsecond")
+              : internal::strings::rtrim(rfl::enum_to_string(_v.unit), "s");
+      return "INTERVAL " + std::to_string(_v.val) + " " + unit;
 
     } else if constexpr (std::is_same_v<Type, dynamic::Timestamp>) {
       return "to_timestamp(" + std::to_string(_v.seconds_since_unix) + ")";
@@ -274,6 +325,27 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
   return stream.str();
 }
 
+std::string date_plus_duration_to_sql(
+    const dynamic::Operation::DatePlusDuration& _stmt,
+    const size_t _ix) noexcept {
+  using namespace std::ranges::views;
+  std::stringstream stream;
+  stream << internal::strings::join(
+                "",
+                internal::collect::vector(
+                    _stmt.durations | transform([](const auto&) -> std::string {
+                      return "date_add(";
+                    })))
+         << operation_to_sql(*_stmt.date) << ", "
+         << internal::strings::join(
+                "), ", internal::collect::vector(
+                           _stmt.durations | transform([](const auto& _d) {
+                             return column_or_value_to_sql(dynamic::Value{_d});
+                           })))
+         << ")";
+  return stream.str();
+}
+
 std::string delete_from_to_sql(const dynamic::DeleteFrom& _stmt) noexcept {
   std::stringstream stream;
 
@@ -414,7 +486,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Cast>) {
       stream << "cast(" << operation_to_sql(*_s.op1) << " as "
-             << type_to_sql(_s.target_type) << ")";
+             << cast_type_to_sql(_s.target_type) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Coalesce>) {
       stream << "coalesce("
@@ -445,21 +517,15 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<Type,
                                         dynamic::Operation::DatePlusDuration>) {
-      stream << operation_to_sql(*_s.date) << " + "
-             << internal::strings::join(
-                    " + ",
-                    internal::collect::vector(
-                        _s.durations | transform([](const auto& _d) {
-                          return column_or_value_to_sql(dynamic::Value{_d});
-                        })));
+      return date_plus_duration_to_sql(_s);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Day>) {
       stream << "extract(DAY from " << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type,
                                         dynamic::Operation::DaysBetween>) {
-      stream << "cast(" << operation_to_sql(*_s.op2) << " as DATE) - cast("
-             << operation_to_sql(*_s.op1) << " as DATE)";
+      stream << "datediff(" << operation_to_sql(*_s.op2) << ", "
+             << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Divides>) {
       stream << "(" << operation_to_sql(*_s.op1) << ") / ("
@@ -542,7 +608,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
              << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Unixepoch>) {
-      stream << "extract(EPOCH FROM " << operation_to_sql(*_s.op1) << ")";
+      stream << "unix_timestamp(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Upper>) {
       stream << "upper(" << operation_to_sql(*_s.op1) << ")";
@@ -551,7 +617,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << column_or_value_to_sql(_s);
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Weekday>) {
-      stream << "extract(DOW from " << operation_to_sql(*_s.op1) << ")";
+      stream << "dayofweek(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Year>) {
       stream << "extract(YEAR from " << operation_to_sql(*_s.op1) << ")";
@@ -666,34 +732,43 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
     using T = std::remove_cvref_t<decltype(_t)>;
     if constexpr (std::is_same_v<T, dynamic::types::Boolean>) {
       return "BOOLEAN";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Int8>) {
       return "TINYINT";
-    } else if constexpr (std::is_same_v<T, dynamic::types::UInt8>) {
-      return "TINYINT UNSIGNED";
-    } else if constexpr (std::is_same_v<T, dynamic::types::Int16>) {
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt8> ||
+                         std::is_same_v<T, dynamic::types::Int16>) {
       return "SMALLINT";
-    } else if constexpr (std::is_same_v<T, dynamic::types::UInt16>) {
-      return "SMALLINT UNSIGNED";
-    } else if constexpr (std::is_same_v<T, dynamic::types::Int32>) {
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt16> ||
+                         std::is_same_v<T, dynamic::types::Int32>) {
       return "INT";
-    } else if constexpr (std::is_same_v<T, dynamic::types::UInt32>) {
-      return "INT UNSIGNED";
-    } else if constexpr (std::is_same_v<T, dynamic::types::Int64>) {
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt32> ||
+                         std::is_same_v<T, dynamic::types::Int64> ||
+                         std::is_same_v<T, dynamic::types::UInt64>) {
       return "BIGINT";
-    } else if constexpr (std::is_same_v<T, dynamic::types::UInt64>) {
-      return "BIGINT UNSIGNED";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
                          std::is_same_v<T, dynamic::types::Float64>) {
       return "DECIMAL";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Text>) {
       return "TEXT";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::VarChar>) {
       return "VARCHAR(" + std::to_string(_t.length) + ")";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Date>) {
+      return "DATE";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Timestamp> ||
                          std::is_same_v<T, dynamic::types::TimestampWithTZ>) {
-      return "TIMESTAMP";
+      return "DATETIME";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Unknown>) {
       return "TEXT";
+
     } else {
       static_assert(rfl::always_false_v<T>, "Not all cases were covered.");
     }

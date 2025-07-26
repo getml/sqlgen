@@ -23,6 +23,15 @@ std::string replace_all(const std::string& _str, const std::string& _from,
 std::vector<std::string> split(const std::string& _str,
                                const std::string& _delimiter);
 
+std::string ltrim(const std::string& _str, const std::string& _chars = " ");
+
+std::string rtrim(const std::string& _str, const std::string& _chars = " ");
+
+inline std::string trim(const std::string& _str,
+                        const std::string& _chars = " ") {
+  return ltrim(rtrim(_str, _chars), _chars);
+}
+
 }  // namespace sqlgen::internal::strings
 
 #endif

@@ -55,11 +55,11 @@ TEST(mysql, test_operations) {
   const auto get_children =
       select_from<Person>(
           ("id"_c + "age"_c) | as<"id_plus_age">,
-          ("age"_c * 2) | as<"age_times_2">, ("age"_c % 3) | as<"age_mod_3">,
-          abs("age"_c * (-1)) | as<"abs_age">,
+          ("age"_c * 2) | as<"age_times_2">,
+          ("id"_c + 2 - "age"_c) | as<"id_plus_2_minus_age">,
+          ("age"_c % 3) | as<"age_mod_3">, abs("age"_c * (-1)) | as<"abs_age">,
           round(exp(cast<double>("age"_c)), 2) | as<"exp_age">,
           round(sqrt(cast<double>("age"_c)), 2) | as<"sqrt_age">,
-          ("id"_c + 2 - "age"_c) | as<"id_plus_2_minus_age">,
           length(trim("first_name"_c)) | as<"length_first_name">,
           concat(ltrim("first_name"_c), " ", rtrim("last_name"_c)) |
               as<"full_name">,
@@ -68,8 +68,6 @@ TEST(mysql, test_operations) {
           replace("first_name"_c, "Bart", "Hugo") | as<"first_name_replaced">) |
       where("age"_c < 18) | order_by("age"_c.desc()) |
       to<std::vector<Children>>;
-
-  std::cout << mysql::to_sql(get_children) << std::endl;
 
   const auto children = mysql::connect(credentials)
                             .and_then(drop<Person> | if_exists)

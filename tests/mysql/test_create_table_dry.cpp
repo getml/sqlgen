@@ -19,7 +19,7 @@ TEST(mysql, test_create_table_dry) {
   const auto query = create_table<TestTable> | if_not_exists;
 
   const auto expected =
-      R"(CREATE TABLE IF NOT EXISTS `TestTable` (`field1` TEXT NOT NULL, `field2` INT NOT NULL, `id` INT UNSIGNED NOT NULL, `nullable` TEXT, PRIMARY KEY (`id`));)";
+      R"(CREATE TABLE IF NOT EXISTS `TestTable` (`field1` TEXT NOT NULL, `field2` INT NOT NULL, `id` BIGINT NOT NULL, `nullable` TEXT, PRIMARY KEY (`id`));)";
 
   EXPECT_EQ(sqlgen::mysql::to_sql(query), expected);
 }

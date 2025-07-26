@@ -29,10 +29,16 @@ struct Parser<Timestamp<_format>> {
 
   static dynamic::Type to_type() noexcept {
     const std::string format = typename TSType::Format().str();
-    if (format.find("%z") == std::string::npos) {
+    if (format.find("%z") != std::string::npos) {
+      return dynamic::types::TimestampWithTZ{};
+    } else if (format.find("%H") != std::string::npos ||
+               format.find("%M") != std::string::npos ||
+               format.find("%S") != std::string::npos ||
+               format.find("%R") != std::string::npos ||
+               format.find("%T") != std::string::npos) {
       return dynamic::types::Timestamp{};
     } else {
-      return dynamic::types::TimestampWithTZ{};
+      return dynamic::types::Date{};
     }
   }
 };

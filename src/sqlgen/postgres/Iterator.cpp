@@ -58,19 +58,15 @@ Result<std::vector<std::vector<std::optional<std::string>>>> Iterator::next(
     return vec;
   };
 
-  const auto shutdown_if_necessary =
-      [this](std::vector<std::vector<std::optional<std::string>>>&& _vec)
-      -> std::vector<std::vector<std::optional<std::string>>> {
-    if (_vec.size() == 0) {
-      shutdown();
-    }
-    return std::move(_vec);
-  };
-
   return exec(conn_, "FETCH FORWARD " + std::to_string(_batch_size) + " FROM " +
                          cursor_name_ + ";")
       .transform(to_vector)
-      .transform(shutdown_if_necessary);
+      .transform([this](auto&& _vec) {
+        if (_vec.size() == 0) {
+          shutdown();
+        }
+        return std::move(_vec);
+      });
 }
 
 Iterator& Iterator::operator=(Iterator&& _other) noexcept {

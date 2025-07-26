@@ -12,7 +12,7 @@
 namespace test_operations_with_nullable {
 
 struct Person {
-  sqlgen::PrimaryKey<uint32_t> id;
+  sqlgen::PrimaryKey<int> id;
   std::string first_name;
   std::optional<std::string> last_name;
   std::optional<int> age;

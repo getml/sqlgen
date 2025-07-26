@@ -671,30 +671,43 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
     using T = std::remove_cvref_t<decltype(_t)>;
     if constexpr (std::is_same_v<T, dynamic::types::Boolean>) {
       return "BOOLEAN";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Int8> ||
                          std::is_same_v<T, dynamic::types::Int16> ||
                          std::is_same_v<T, dynamic::types::UInt8> ||
                          std::is_same_v<T, dynamic::types::UInt16>) {
       return "SMALLINT";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Int32> ||
                          std::is_same_v<T, dynamic::types::UInt32>) {
       return "INTEGER";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Int64> ||
                          std::is_same_v<T, dynamic::types::UInt64>) {
       return "BIGINT";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
                          std::is_same_v<T, dynamic::types::Float64>) {
       return "NUMERIC";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Text>) {
       return "TEXT";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::VarChar>) {
       return "VARCHAR(" + std::to_string(_t.length) + ")";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Date>) {
+      return "DATE";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Timestamp>) {
       return "TIMESTAMP";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::TimestampWithTZ>) {
       return "TIMESTAMP WITH TIME ZONE";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Unknown>) {
       return "TEXT";
+
     } else {
       static_assert(rfl::always_false_v<T>, "Not all cases were covered.");
     }

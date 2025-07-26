@@ -129,6 +129,9 @@ Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
     return make_error(conn_);
   }
   const auto raw_ptr = mysql_use_result(conn_.get());
+  if (!raw_ptr) {
+    return make_error(conn_);
+  }
   return Ref<MYSQL_RES>::make(
              std::shared_ptr<MYSQL_RES>(raw_ptr, mysql_free_result))
       .transform([&](auto&& _res) { return Ref<Iterator>::make(_res, conn_); });

@@ -10,29 +10,29 @@
 #include <sqlgen/mysql.hpp>
 #include <vector>
 
-namespace test_range_select_from_with_timestamps {
+namespace test_select_from_with_timestamps {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t, sqlgen::auto_incr> id;
   std::string first_name;
   std::string last_name;
-  sqlgen::Timestamp<"%Y-%m-%d"> birthday;
+  sqlgen::Date birthday;
 };
 
-TEST(mysql, test_range_select_from_with_timestamps) {
-  const auto people1 = std::vector<Person>(
-      {Person{.first_name = "Homer",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("1970-01-01")},
-       Person{.first_name = "Bart",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("2000-01-01")},
-       Person{.first_name = "Lisa",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("2002-01-01")},
-       Person{.first_name = "Maggie",
-              .last_name = "Simpson",
-              .birthday = sqlgen::Timestamp<"%Y-%m-%d">("2010-01-01")}});
+TEST(mysql, test_select_from_with_timestamps) {
+  const auto people1 =
+      std::vector<Person>({Person{.first_name = "Homer",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("1970-01-01")},
+                           Person{.first_name = "Bart",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("2000-01-01")},
+                           Person{.first_name = "Lisa",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("2002-01-01")},
+                           Person{.first_name = "Maggie",
+                                  .last_name = "Simpson",
+                                  .birthday = sqlgen::Date("2010-01-01")}});
 
   const auto credentials =
       sqlgen::mysql::Credentials{.host = "localhost",
@@ -57,7 +57,8 @@ TEST(mysql, test_range_select_from_with_timestamps) {
 
   const auto get_birthdays =
       select_from<Person>(
-          ("birthday"_c + std::chrono::days(10)) | as<"birthday">,
+          ("birthday"_c + std::chrono::weeks(2) + std::chrono::days(-4)) |
+              as<"birthday">,
           ((cast<Date>(concat(cast<std::string>(year("birthday"_c)), "-",
                               cast<std::string>(month("birthday"_c)), "-",
                               cast<std::string>(day("birthday"_c))))) +
@@ -78,15 +79,15 @@ TEST(mysql, test_range_select_from_with_timestamps) {
                              .value();
 
   const std::string expected_query =
-      R"(SELECT "birthday" + INTERVAL '10 days' AS "birthday", cast((cast(extract(YEAR from "birthday") as TEXT) || '-' || cast(extract(MONTH from "birthday") as TEXT) || '-' || cast(extract(DAY from "birthday") as TEXT)) as TIMESTAMP) + INTERVAL '10 days' AS "birthday_recreated", cast('2011-01-01' as DATE) - cast("birthday" as DATE) AS "age_in_days", extract(EPOCH FROM "birthday" + INTERVAL '10 days') AS "birthday_unixepoch", extract(HOUR from "birthday") AS "hour", extract(MINUTE from "birthday") AS "minute", extract(SECOND from "birthday") AS "second", extract(DOW from "birthday") AS "weekday" FROM "Person" ORDER BY "id")";
+      R"(SELECT date_add(date_add(`birthday`, INTERVAL 2 week), INTERVAL -4 day) AS `birthday`, date_add(cast(concat(cast(extract(YEAR from `birthday`) as CHAR), '-', cast(extract(MONTH from `birthday`) as CHAR), '-', cast(extract(DAY from `birthday`) as CHAR)) as DATE), INTERVAL 10 day) AS `birthday_recreated`, datediff('2011-01-01', `birthday`) AS `age_in_days`, unix_timestamp(date_add(`birthday`, INTERVAL 10 day)) AS `birthday_unixepoch`, extract(HOUR from `birthday`) AS `hour`, extract(MINUTE from `birthday`) AS `minute`, extract(SECOND from `birthday`) AS `second`, dayofweek(`birthday`) AS `weekday` FROM `Person` ORDER BY `id`)";
 
   const std::string expected =
-      R"([{"birthday":"1970-01-11","birthday_recreated":"1970-01-11","birthday_unixepoch":864000,"age_in_days":14975.0,"hour":0,"minute":0,"second":0,"weekday":4},{"birthday":"2000-01-11","birthday_recreated":"2000-01-11","birthday_unixepoch":947548800,"age_in_days":4018.0,"hour":0,"minute":0,"second":0,"weekday":6},{"birthday":"2002-01-11","birthday_recreated":"2002-01-11","birthday_unixepoch":1010707200,"age_in_days":3287.0,"hour":0,"minute":0,"second":0,"weekday":2},{"birthday":"2010-01-11","birthday_recreated":"2010-01-11","birthday_unixepoch":1263168000,"age_in_days":365.0,"hour":0,"minute":0,"second":0,"weekday":5}])";
+      R"([{"birthday":"1970-01-11","birthday_recreated":"1970-01-11","birthday_unixepoch":860400,"age_in_days":14975.0,"hour":0,"minute":0,"second":0,"weekday":5},{"birthday":"2000-01-11","birthday_recreated":"2000-01-11","birthday_unixepoch":947545200,"age_in_days":4018.0,"hour":0,"minute":0,"second":0,"weekday":7},{"birthday":"2002-01-11","birthday_recreated":"2002-01-11","birthday_unixepoch":1010703600,"age_in_days":3287.0,"hour":0,"minute":0,"second":0,"weekday":3},{"birthday":"2010-01-11","birthday_recreated":"2010-01-11","birthday_unixepoch":1263164400,"age_in_days":365.0,"hour":0,"minute":0,"second":0,"weekday":6}])";
 
   EXPECT_EQ(mysql::to_sql(get_birthdays), expected_query);
   EXPECT_EQ(rfl::json::write(birthdays), expected);
 }
 
-}  // namespace test_range_select_from_with_timestamps
+}  // namespace test_select_from_with_timestamps
 
 #endif

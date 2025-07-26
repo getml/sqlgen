@@ -65,6 +65,11 @@ struct Text {
   Properties properties;
 };
 
+struct Date {
+  std::string tz;
+  Properties properties;
+};
+
 struct Timestamp {
   std::string tz;
   Properties properties;
