@@ -73,6 +73,7 @@ TEST(mysql, test_select_from_with_timestamps) {
       order_by("id"_c) | to<std::vector<Birthday>>;
 
   const auto birthdays = mysql::connect(credentials)
+                             .and_then(exec("SET GLOBAL time_zone = '+8:00';"))
                              .and_then(drop<Person> | if_exists)
                              .and_then(write(std::ref(people1)))
                              .and_then(get_birthdays)
