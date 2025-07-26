@@ -61,6 +61,15 @@ jobs:
             db: mysql
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }})"
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        if: matrix.db == 'mysql'
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+            - '8888:3306'
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -137,9 +146,8 @@ jobs:
       - name: Set up mysql 
         if: matrix.db == 'mysql'
         run: |
-          sudo /etc/init.d/mysql start
-          sudo mysql -e 'CREATE USER sqlgen IDENTIFIED WITH mysql_native_password BY password;' -u root 
-          mysql -e 'CREATE DATABASE sqlgen;' -u sqlgen -p password 
+          mysql -h 127.0.0.1 --port 8888 -u root -p password -e 'CREATE USER sqlgen IDENTIFIED WITH mysql_native_password BY password;'
+          mysql -h 127.0.0.1 --port 8888 -u sqlgen -p password -e 'CREATE DATABASE sqlgen;'
       - name: Run tests
         run: |
           ctest --test-dir build --output-on-failure
