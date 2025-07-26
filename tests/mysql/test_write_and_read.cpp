@@ -1,3 +1,5 @@
+#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
+
 #include <gtest/gtest.h>
 
 #include <rfl.hpp>
@@ -47,3 +49,5 @@ TEST(mysql, test_write_and_read) {
 }
 
 }  // namespace test_write_and_read
+
+#endif
