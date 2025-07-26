@@ -547,7 +547,7 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
       stream << "ln(" << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Log2>) {
-      stream << "log(2.0, " << operation_to_sql(*_s.op1) << ")";
+      stream << "log2( " << operation_to_sql(*_s.op1) << ")";
 
     } else if constexpr (std::is_same_v<Type, dynamic::Operation::Lower>) {
       stream << "lower(" << operation_to_sql(*_s.op1) << ")";
