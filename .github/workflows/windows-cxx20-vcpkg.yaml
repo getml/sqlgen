@@ -43,7 +43,7 @@ jobs:
       - name: Compile
         if: matrix.db == 'mysql' 
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=x64-windows -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
           cmake --build build --config Release -j4 
       - name: Run tests
         run: |
