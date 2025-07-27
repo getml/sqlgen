@@ -40,7 +40,7 @@ jobs:
           - compiler: gcc
             compiler-version: 14
             link: "shared" 
-    name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }})"
+    name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.link }})"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
