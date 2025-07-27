@@ -31,3 +31,4 @@ jobs:
         run: |
           $CXX --version
           conan build . --build=missing -s compiler.cppstd=gnu20
+          conan build . --build=missing -s compiler.cppstd=gnu20 -o sqlgen/*:with_mysql=True -o */*:shared=True
