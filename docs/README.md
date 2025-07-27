@@ -50,6 +50,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 ## Supported Databases
 
+- [MySQL](mysql.md) - How to interact with MariaDB and MySQL 
 - [PostgreSQL](postgres.md) - How to interact with PostgreSQL and compatible databases (Redshift, Aurora, Greenplum, CockroachDB, ...)
 - [SQLite](sqlite.md) - How to interact with SQLite3
 

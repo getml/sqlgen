@@ -23,6 +23,16 @@ Together, reflect-cpp and sqlgen enable reliable and efficient ETL pipelines.
 - 🔌 **Multiple Backends**: Support for PostgreSQL and SQLite
 - 🔍 **Reflection Integration**: Seamless integration with [reflect-cpp](https://github.com/getml/reflect-cpp) 
 
+## Supported databases 
+
+The following table lists the databases currently supported by sqlgen and the underlying libraries used:
+
+| Database      | Library                                                                  | Version      | License       | Remarks                                              |
+|---------------|--------------------------------------------------------------------------|--------------|---------------| -----------------------------------------------------|
+| MariaDB/MySQL | [libmariadb](https://github.com/mariadb-corporation/mariadb-connector-c) | >= 3.4.5     | LGPL          |                                                      |
+| PostgreSQL    | [libpq](https://github.com/postgres/postgres)                            | >= 16.4      | PostgreSQL    | Will work for all libpq-compatible databases         |
+| sqlite        | [sqlite](https://sqlite.org/index.html)                                  | >= 3.49.1    | Public Domain |                                                      |
+
 ## Quick Start
 
 ### Installation using vcpkg
@@ -41,22 +51,17 @@ git submodule update --init
 ```
 
 3. Build the library:
-
-By default, the static library will be built:
 ```bash
 cmake -S . -B build -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j 4  # gcc, clang
 cmake --build build --config Release -j 4  # MSVC
 ```
 
-To build the shared library:
-```bash
-cmake -S . -B build -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=...-dynamic
-cmake --build build -j 4  # gcc, clang
-cmake --build build --config Release -j 4  # MSVC
-```
-
-Run `./vcpkg/vcpkg help triplets` to view all supported triplets so you know what to fill in for `...`.
+This will build the static library. To build the shared library 
+add `-DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=...` to the first line.
+Run `./vcpkg/vcpkg help triplets` to view all supported triplets. 
+Common triplets for shared libraries are `x64-linux-dynamic`, 
+`arm64-osx-dynamic` or `x64-osx-dynamic`.   
 
 4. Include in your CMake project:
 ```cmake
