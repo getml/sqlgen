@@ -26,12 +26,10 @@ TEST(mysql, test_aggregations_with_nullable) {
        Person{.id = 2, .first_name = "Lisa", .last_name = "Simpson", .age = 8},
        Person{.id = 3, .first_name = "Maggie", .last_name = "Simpson"}});
 
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

@@ -42,12 +42,10 @@ TEST(mysql, test_joins_nested) {
                                  Relationship{.parent_id = 1, .child_id = 3},
                                  Relationship{.parent_id = 1, .child_id = 4}});
 
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

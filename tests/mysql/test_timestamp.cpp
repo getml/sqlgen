@@ -25,12 +25,10 @@ TEST(mysql, test_timestamp) {
   using namespace sqlgen;
   using namespace sqlgen::literals;
 
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   const auto conn =
       sqlgen::mysql::connect(credentials).and_then(drop<Person> | if_exists);

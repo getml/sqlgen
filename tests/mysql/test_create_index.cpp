@@ -18,12 +18,10 @@ struct Person {
 };
 
 TEST(mysql, test_create_index) {
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

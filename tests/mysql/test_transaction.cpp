@@ -28,12 +28,10 @@ TEST(mysql, test_transaction) {
        Person{
            .id = 4, .first_name = "Hugo", .last_name = "Simpson", .age = 10}});
 
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

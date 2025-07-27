@@ -30,12 +30,10 @@ TEST(mysql, test_group_by_with_operations) {
        Person{
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

@@ -9,9 +9,9 @@ struct Credentials {
   std::string host;
   std::string user;
   std::string password;
-  std::string dbname;
-  int port;
-  std::string unix_socket;
+  std::string dbname = "mysql";
+  int port = 3306;
+  std::string unix_socket = "/var/run/mysqld/mysqld.sock";
 };
 
 }  // namespace sqlgen::mysql

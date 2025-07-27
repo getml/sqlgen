@@ -28,12 +28,10 @@ TEST(mysql, test_write_and_read_pool) {
 
   const auto pool_config = sqlgen::ConnectionPoolConfig{.size = 2};
 
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   const auto pool = sqlgen::make_connection_pool<sqlgen::mysql::Connection>(
       pool_config, credentials);

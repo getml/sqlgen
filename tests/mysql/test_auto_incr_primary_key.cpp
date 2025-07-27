@@ -24,12 +24,10 @@ TEST(mysql, test_auto_incr_primary_key) {
        Person{.first_name = "Lisa", .last_name = "Simpson", .age = 8},
        Person{.first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-  const auto credentials =
-      sqlgen::mysql::Credentials{.host = "localhost",
-                                 .user = "sqlgen",
-                                 .password = "password",
-                                 .dbname = "mysql",
-                                 .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

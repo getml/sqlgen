@@ -28,12 +28,10 @@ TEST(mysql, test_write_and_read) {
 
   using namespace sqlgen;
 
-  const auto credentials =
-      mysql::Credentials{.host = "localhost",
-                         .user = "sqlgen",
-                         .password = "password",
-                         .dbname = "mysql",
-                         .unix_socket = "/var/run/mysqld/mysqld.sock"};
+  const auto credentials = mysql::Credentials{.host = "localhost",
+                                              .user = "sqlgen",
+                                              .password = "password",
+                                              .dbname = "mysql"};
 
   const auto conn =
       mysql::connect(credentials).and_then(drop<Person> | if_exists);
