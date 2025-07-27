@@ -10,15 +10,36 @@ jobs:
         include:
           - compiler: llvm
             compiler-version: 16
+            link: "static" 
           - compiler: llvm
             compiler-version: 18
+            link: "static" 
           - compiler: gcc
             compiler-version: 11
             additional-dep: "g++-11"
+            link: "static" 
           - compiler: gcc
             compiler-version: 12
+            link: "static" 
           - compiler: gcc
             compiler-version: 14
+            link: "static" 
+          - compiler: llvm
+            compiler-version: 16
+            link: "shared" 
+          - compiler: llvm
+            compiler-version: 18
+            link: "shared" 
+          - compiler: gcc
+            compiler-version: 11
+            additional-dep: "g++-11"
+            link: "shared" 
+          - compiler: gcc
+            compiler-version: 12
+            link: "shared" 
+          - compiler: gcc
+            compiler-version: 14
+            link: "shared" 
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }})"
     runs-on: ubuntu-latest
     steps:
@@ -47,5 +68,8 @@ jobs:
           sudo ln -s $(which ccache) /usr/local/bin/$CC
           sudo ln -s $(which ccache) /usr/local/bin/$CXX
           $CXX --version
-          conan build . --build=missing -s compiler.cppstd=gnu20
-          conan build . --build=missing -s compiler.cppstd=gnu20 -o sqlgen/*:with_mysql=True -o */*:shared=True
+          if [[ "${{ matrix.link }}" == "static" ]]; then
+            conan build . --build=missing -s compiler.cppstd=gnu20
+          else
+            conan build . --build=missing -s compiler.cppstd=gnu20 -o sqlgen/*:with_mysql=True -o */*:shared=True
+          fi

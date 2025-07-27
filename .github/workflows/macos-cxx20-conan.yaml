@@ -9,7 +9,13 @@ jobs:
       matrix:
         include:
           - os: "macos-latest"
+            link: "static" 
           - os: "macos-13"
+            link: "static" 
+          - os: "macos-latest"
+            link: "shared" 
+          - os: "macos-13"
+            link: "shared" 
     name: "${{ github.job }} (${{ matrix.os }})"
     runs-on: ${{ matrix.os }}
     steps:
@@ -30,5 +36,8 @@ jobs:
           CXX: clang++
         run: |
           $CXX --version
-          conan build . --build=missing -s compiler.cppstd=gnu20
-          conan build . --build=missing -s compiler.cppstd=gnu20 -o sqlgen/*:with_mysql=True -o */*:shared=True
+          if [[ "${{ matrix.link }}" == "static" ]]; then
+            conan build . --build=missing -s compiler.cppstd=gnu20
+          else
+            conan build . --build=missing -s compiler.cppstd=gnu20 -o sqlgen/*:with_mysql=True -o */*:shared=True
+          fi
