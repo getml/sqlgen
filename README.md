@@ -7,7 +7,9 @@
 [![Generic badge](https://img.shields.io/badge/clang-14+-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://shields.io/)
 
-sqlgen is a modern, type-safe ORM and SQL query generator for C++20, inspired by Python's [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy)/[SQLModel](https://github.com/fastapi/sqlmodel) and Rust's [Diesel](https://github.com/diesel-rs/diesel). It provides a fluent, composable interface for database operations with compile-time type checking and SQL injection protection.
+**📖 Documentation**: [Click here](docs/README.md)
+
+**sqlgen** is a modern, type-safe ORM and SQL query generator for C++20, inspired by Python's [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy)/[SQLModel](https://github.com/fastapi/sqlmodel) and Rust's [Diesel](https://github.com/diesel-rs/diesel). It provides a fluent, composable interface for database operations with compile-time type checking and SQL injection protection.
 
 sqlgen is based on and tightly integrated with [reflect-cpp](https://github.com/getml/reflect-cpp), a C++-20 library for fast serialization, deserialization and validation using reflection, similar to pydantic in Python, serde in Rust, encoding in Go or aeson in Haskell.
 
@@ -178,8 +180,25 @@ if (!result) {
 }
 ```
 
+Or:
+
+```cpp
+...
+
+// write(...) abstracts these steps away, but
+// if you prefer more granular control, you
+// can use sqlgen::insert.
+const auto result = begin_transaction(conn)
+                        .and_then(create_table<Person> | if_not_exists)
+                        .and_then(insert(std::ref(people)))
+                        .and_then(commit);
+
+...
+```
+
 Generated SQL:
 ```sql
+BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS "Person" (
     "first_name" TEXT NOT NULL,
     "last_name" TEXT NOT NULL,
@@ -189,6 +208,7 @@ CREATE TABLE IF NOT EXISTS "Person" (
 
 INSERT INTO "Person" ("first_name", "last_name", "age", "email") 
 VALUES (?, ?, ?, ?);
+COMMIT;
 ```
 
 ### Querying Data
