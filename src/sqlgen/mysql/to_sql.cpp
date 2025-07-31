@@ -31,6 +31,9 @@ std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept;
 
 std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept;
 
+std::string create_table_as_to_sql(
+    const dynamic::CreateTableAs& _stmt) noexcept;
+
 std::string date_plus_duration_to_sql(
     const dynamic::Operation::DatePlusDuration& _stmt,
     const size_t _ix = 0) noexcept;
@@ -343,6 +346,26 @@ std::string date_plus_duration_to_sql(
                              return column_or_value_to_sql(dynamic::Value{_d});
                            })))
          << ")";
+  return stream.str();
+}
+
+std::string create_table_as_to_sql(
+    const dynamic::CreateTableAs& _stmt) noexcept {
+  std::stringstream stream;
+
+  stream << "CREATE TABLE ";
+
+  if (_stmt.if_not_exists) {
+    stream << "IF NOT EXISTS ";
+  }
+
+  if (_stmt.table.schema) {
+    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
+  }
+  stream << wrap_in_quotes(_stmt.table.name) << " AS ";
+
+  stream << select_from_to_sql(_stmt.as);
+
   return stream.str();
 }
 
@@ -704,6 +727,9 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
 
     } else if constexpr (std::is_same_v<S, dynamic::CreateTable>) {
       return create_table_to_sql(_s);
+
+    } else if constexpr (std::is_same_v<S, dynamic::CreateTableAs>) {
+      return create_table_as_to_sql(_s);
 
     } else if constexpr (std::is_same_v<S, dynamic::DeleteFrom>) {
       return delete_from_to_sql(_s);

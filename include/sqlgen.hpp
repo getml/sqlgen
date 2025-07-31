@@ -21,6 +21,7 @@
 #include "sqlgen/commit.hpp"
 #include "sqlgen/create_index.hpp"
 #include "sqlgen/create_table.hpp"
+#include "sqlgen/create_table_as.hpp"
 #include "sqlgen/delete_from.hpp"
 #include "sqlgen/drop.hpp"
 #include "sqlgen/exec.hpp"
