@@ -173,6 +173,7 @@ const auto people = std::vector<Person>({
 });
 
 // Automatically creates table if it doesn't exist
+// (recall that the table is fully defined at compile time)
 const auto result = sqlgen::write(conn, people);
 
 if (!result) {
