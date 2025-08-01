@@ -2,14 +2,21 @@
 #define SQLGEN_DYNAMIC_TABLE_TYPES_HPP_
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 namespace sqlgen::dynamic::types {
+
+struct ForeignKeyReference {
+  std::string table;
+  std::string column;
+};
 
 struct Properties {
   bool auto_incr = false;
   bool primary = false;
   bool nullable = false;
+  std::optional<ForeignKeyReference> foreign_key_reference = std::nullopt;
 };
 
 // To be used as the default value.

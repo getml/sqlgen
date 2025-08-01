@@ -57,7 +57,7 @@ struct ToSQL<DeleteFrom<T, WhereType>> {
 template <class T>
 struct ToSQL<Drop<T>> {
   dynamic::Statement operator()(const auto& _drop) const {
-    return to_drop<T>(_drop.if_exists_);
+    return to_drop<T>(_drop.if_exists_, _drop.cascade_);
   }
 };
 

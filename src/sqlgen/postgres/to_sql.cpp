@@ -46,7 +46,8 @@ std::string join_to_sql(const dynamic::Join& _stmt) noexcept;
 
 std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept;
 
-std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept;
+std::string properties_to_sql(
+    const dynamic::types::Properties& _properties) noexcept;
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept;
 
@@ -308,6 +309,10 @@ std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept {
   }
   stream << wrap_in_quotes(_stmt.table.name);
 
+  if (_stmt.cascade) {
+    stream << " CASCADE";
+  }
+
   stream << ";";
 
   return stream.str();
@@ -567,13 +572,22 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 }
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
-  if (_p.auto_incr) {
-    return " GENERATED ALWAYS AS IDENTITY";
-  } else if (!_p.nullable) {
-    return " NOT NULL";
-  } else {
-    return "";
-  }
+  return [&]() -> std::string {
+    if (_p.auto_incr) {
+      return " GENERATED ALWAYS AS IDENTITY";
+    } else if (!_p.nullable) {
+      return " NOT NULL";
+    } else {
+      return "";
+    }
+  }() + [&]() -> std::string {
+    if (!_p.foreign_key_reference) {
+      return "";
+    }
+    const auto& ref = *_p.foreign_key_reference;
+    return " REFERENCES " + wrap_in_quotes(ref.table) + "(" +
+           wrap_in_quotes(ref.column) + ")";
+  }();
 }
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {

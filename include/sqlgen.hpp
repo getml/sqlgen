@@ -3,6 +3,7 @@
 
 #include "sqlgen/ConnectionPool.hpp"
 #include "sqlgen/Flatten.hpp"
+#include "sqlgen/ForeignKey.hpp"
 #include "sqlgen/Iterator.hpp"
 #include "sqlgen/IteratorBase.hpp"
 #include "sqlgen/Literal.hpp"
@@ -17,6 +18,7 @@
 #include "sqlgen/aggregations.hpp"
 #include "sqlgen/as.hpp"
 #include "sqlgen/begin_transaction.hpp"
+#include "sqlgen/cascade.hpp"
 #include "sqlgen/col.hpp"
 #include "sqlgen/commit.hpp"
 #include "sqlgen/create_index.hpp"
