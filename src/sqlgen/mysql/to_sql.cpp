@@ -440,20 +440,23 @@ std::vector<std::pair<std::string, dynamic::types::ForeignKeyReference>>
 get_foreign_keys(const dynamic::CreateTable& _stmt) noexcept {
   using namespace std::ranges::views;
 
-  const auto to_pair = [](const auto& _col) {
-    return _col.type.visit([&](const auto& _t) {
-      if (_t.properties.foreign_key_reference) {
-        return std::vector<
-            std::pair<std::string, dynamic::types::ForeignKeyReference>>(
-            {std::make_pair(get_name(_col),
-                            *_t.properties.foreign_key_reference)});
-      }
-      return std::vector<
-          std::pair<std::string, dynamic::types::ForeignKeyReference>>();
-    });
+  const auto get_foreign_key_ref = [](const auto& _col)
+      -> std::optional<dynamic::types::ForeignKeyReference> {
+    return _col.type.visit(
+        [](const auto& _t) { return _t.properties.foreign_key_reference; });
   };
 
-  return internal::collect::vector(_stmt.columns | transform(to_pair) | join);
+  const auto has_reference = [&](const auto& _col) -> bool {
+    return (true && get_foreign_key_ref(_col));
+  };
+
+  const auto to_pair = [&](const auto& _col)
+      -> std::pair<std::string, dynamic::types::ForeignKeyReference> {
+    return std::make_pair(get_name(_col), get_foreign_key_ref(_col).value());
+  };
+
+  return internal::collect::vector(_stmt.columns | filter(has_reference) |
+                                   transform(to_pair));
 }
 
 std::vector<std::string> get_primary_keys(
