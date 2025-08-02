@@ -39,6 +39,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 ## Data Types and Validation
 
+- [sqlgen::ForeignKey](foreign_key.md) - How to establish referential integrity between tables
 - [sqlgen::Pattern](pattern.md) - How to add regex pattern validation to avoid SQL injection
 - [sqlgen::Timestamp](timestamp.md) - How timestamps work in sqlgen
 - [sqlgen::Varchar](varchar.md) - How varchars work in sqlgen
