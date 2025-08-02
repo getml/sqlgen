@@ -579,9 +579,18 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 }
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
-  return std::string(_p.primary ? " PRIMARY KEY" : "") +
-         std::string(_p.auto_incr ? " AUTOINCREMENT" : "") +
-         std::string(_p.nullable ? "" : " NOT NULL");
+  return [&]() -> std::string {
+    return std::string(_p.primary ? " PRIMARY KEY" : "") +
+           std::string(_p.auto_incr ? " AUTOINCREMENT" : "") +
+           std::string(_p.nullable ? "" : " NOT NULL");
+  }() + [&]() -> std::string {
+    if (!_p.foreign_key_reference) {
+      return "";
+    }
+    const auto& ref = *_p.foreign_key_reference;
+    return " REFERENCES " + wrap_in_quotes(ref.table) + "(" +
+           wrap_in_quotes(ref.column) + ")";
+  }();
 }
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
