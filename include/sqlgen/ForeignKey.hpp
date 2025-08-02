@@ -7,6 +7,7 @@
 #include "Literal.hpp"
 #include "transpilation/Col.hpp"
 #include "transpilation/all_columns_exist.hpp"
+#include "transpilation/is_primary_key.hpp"
 #include "transpilation/remove_reflection_t.hpp"
 #include "transpilation/underlying_t.hpp"
 
@@ -33,6 +34,10 @@ struct ForeignKey {
                   ForeignTableType, transpilation::Col<_col_name>>>>>,
       "The type of the column and the type of the referenced column must be "
       "the same.");
+  static_assert(
+      transpilation::is_primary_key_v<
+          std::remove_cvref_t<rfl::field_type_t<_col_name, ForeignTableType>>>,
+      "The referenced column must be a primary key.");
 
   ForeignKey() : value_(T()) {}
 
