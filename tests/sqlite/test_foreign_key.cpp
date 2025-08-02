@@ -1,5 +1,3 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
-
 #include <gtest/gtest.h>
 
 #include <rfl.hpp>
@@ -58,4 +56,3 @@ TEST(sqlite, test_foreign_key) {
 
 }  // namespace test_foreign_key
 
-#endif
