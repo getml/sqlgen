@@ -43,6 +43,11 @@ std::string escape_single_quote(const std::string& _str) noexcept;
 
 std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept;
 
+std::string foreign_keys_to_sql(
+    const std::vector<
+        std::pair<std::string, dynamic::types::ForeignKeyReference>>&
+        _foreign_keys) noexcept;
+
 std::vector<std::pair<std::string, dynamic::types::ForeignKeyReference>>
 get_foreign_keys(const dynamic::CreateTable& _stmt) noexcept;
 
@@ -325,6 +330,10 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
 
   const auto foreign_keys = get_foreign_keys(_stmt);
 
+  if (foreign_keys.size() != 0) {
+    stream << ", " << foreign_keys_to_sql(foreign_keys);
+  }
+
   stream << ");";
 
   return stream.str();
@@ -407,6 +416,24 @@ std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept {
   }
 
   return stream.str();
+}
+
+std::string foreign_keys_to_sql(
+    const std::vector<
+        std::pair<std::string, dynamic::types::ForeignKeyReference>>&
+        _foreign_keys) noexcept {
+  using namespace std::ranges::views;
+
+  const auto to_str =
+      [](const std::pair<std::string, dynamic::types::ForeignKeyReference>&
+             _p) {
+        return "FOREIGN KEY (" + wrap_in_quotes(_p.first) + ") REFERENCES " +
+               wrap_in_quotes(_p.second.table) + "(" +
+               wrap_in_quotes(_p.second.column) + ")";
+      };
+
+  return internal::strings::join(
+      ", ", internal::collect::vector(_foreign_keys | transform(to_str)));
 }
 
 std::vector<std::pair<std::string, dynamic::types::ForeignKeyReference>>
