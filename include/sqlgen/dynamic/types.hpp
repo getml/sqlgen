@@ -16,6 +16,7 @@ struct Properties {
   bool auto_incr = false;
   bool primary = false;
   bool nullable = false;
+  bool unique = false;
   std::optional<ForeignKeyReference> foreign_key_reference = std::nullopt;
 };
 

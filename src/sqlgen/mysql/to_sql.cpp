@@ -689,13 +689,15 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 }
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
-  if (_p.auto_incr) {
-    return " AUTO_INCREMENT";
-  } else if (!_p.nullable) {
-    return " NOT NULL";
-  } else {
-    return "";
-  }
+  return [&]() -> std::string {
+    if (_p.auto_incr) {
+      return " AUTO_INCREMENT";
+    } else if (!_p.nullable) {
+      return " NOT NULL";
+    } else {
+      return "";
+    }
+  }() + [&]() -> std::string { return _p.unique ? " UNIQUE" : ""; }();
 }
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {

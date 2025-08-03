@@ -582,7 +582,8 @@ std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
   return [&]() -> std::string {
     return std::string(_p.primary ? " PRIMARY KEY" : "") +
            std::string(_p.auto_incr ? " AUTOINCREMENT" : "") +
-           std::string(_p.nullable ? "" : " NOT NULL");
+           std::string(_p.nullable ? "" : " NOT NULL") +
+           std::string(_p.unique ? " UNIQUE" : "");
   }() + [&]() -> std::string {
     if (!_p.foreign_key_reference) {
       return "";

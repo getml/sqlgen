@@ -14,6 +14,7 @@
 #include "sqlgen/Result.hpp"
 #include "sqlgen/Session.hpp"
 #include "sqlgen/Timestamp.hpp"
+#include "sqlgen/Unique.hpp"
 #include "sqlgen/Varchar.hpp"
 #include "sqlgen/aggregations.hpp"
 #include "sqlgen/as.hpp"
