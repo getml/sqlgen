@@ -336,19 +336,23 @@ struct ParentAndChild {
     double parent_age_at_birth;
 };
 
+// First, create a subquery
 const auto get_children =
   select_from<Relationship, "t1">("parent_id"_t1 | as<"id">,
                                   "first_name"_t2 | as<"first_name">,
                                   "age"_t2 | as<"age">) |
   left_join<Person, "t2">("id"_t2 == "child_id"_t1);
 
+// Then use it as a source for another query
 const auto get_people =
   select_from<Person, "t1">(
       "last_name"_t1 | as<"last_name">,
       "first_name"_t1 | as<"first_name_parent">,
       "first_name"_t2 | as<"first_name_child">,
       ("age"_t1 - "age"_t2) | as<"parent_age_at_birth">) |
-  inner_join<"t2">(get_children, "id"_t1 == "id"_t2) |
+  inner_join<"t2">(
+    get_children, // Use the subquery as the source
+    "id"_t1 == "id"_t2) | 
   order_by("id"_t1, "id"_t2) | to<std::vector<ParentAndChild>>;
 ```
 
@@ -368,6 +372,57 @@ INNER JOIN (
     ON t2."id" = t1."child_id"
 ) t2 
 ON t1."id" = t2."id" 
+ORDER BY t1."id", t2."id"
+```
+
+Or:
+```cpp
+using namespace sqlgen;
+using namespace sqlgen::literals;
+
+struct ParentAndChild {
+    std::string last_name;
+    std::string first_name_parent;
+    std::string first_name_child;
+    double parent_age_at_birth;
+};
+
+// First, create a subquery
+const auto get_parents = select_from<Person, "t1">(
+    "child_id"_t2 | as<"id">,
+    "first_name"_t1 | as<"first_name">,
+    "last_name"_t1 | as<"last_name">,
+    "age"_t1 | as<"age">
+) | left_join<Relationship, "t2">("id"_t1 == "parent_id"_t2);
+
+// Then use it as a source for another query
+const auto get_people = select_from<"t1">(
+    get_parents,  // Use the subquery as the source
+    "last_name"_t1 | as<"last_name">,
+    "first_name"_t1 | as<"first_name_parent">,
+    "first_name"_t2 | as<"first_name_child">,
+    ("age"_t1 - "age"_t2) | as<"parent_age_at_birth">) | 
+ inner_join<Person, "t2">("id"_t1 == "id"_t2) | 
+ order_by("id"_t1, "id"_t2) | to<std::vector<ParentAndChild>>;
+```
+
+Generated SQL:
+```sql
+SELECT t1."last_name" AS "last_name", 
+       t1."first_name" AS "first_name_parent", 
+       t2."first_name" AS "first_name_child", 
+       (t1."age") - (t2."age") AS "parent_age_at_birth" 
+FROM (
+    SELECT t2."child_id" AS "id", 
+           t1."first_name" AS "first_name", 
+           t1."last_name" AS "last_name", 
+           t1."age" AS "age" 
+    FROM "Person" t1 
+    LEFT JOIN "Relationship" t2 
+    ON t1."id" = t2."parent_id"
+) t1 
+INNER JOIN "Person" t2 
+ON t1."id" = t2."id"
 ORDER BY t1."id", t2."id"
 ```
 
