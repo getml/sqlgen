@@ -19,6 +19,7 @@
 #include "order_by.hpp"
 #include "to.hpp"
 #include "transpilation/Join.hpp"
+#include "transpilation/TableWrapper.hpp"
 #include "transpilation/fields_to_named_tuple_t.hpp"
 #include "transpilation/group_by_t.hpp"
 #include "transpilation/order_by_t.hpp"
@@ -31,19 +32,20 @@
 namespace sqlgen {
 
 template <class TableTupleType, class AliasType, class FieldsType,
-          class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ContainerType,
-          class Connection>
+          class TableOrQueryType, class JoinsType, class WhereType,
+          class GroupByType, class OrderByType, class LimitType,
+          class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
+                      const TableOrQueryType& _table_or_query,
                       const JoinsType& _joins, const WhereType& _where,
                       const LimitType& _limit) {
   if constexpr (internal::is_range_v<ContainerType>) {
     const auto query =
         transpilation::to_select_from<TableTupleType, AliasType, FieldsType,
-                                      JoinsType, WhereType, GroupByType,
-                                      OrderByType, LimitType>(_fields, _joins,
-                                                              _where, _limit);
+                                      TableOrQueryType, JoinsType, WhereType,
+                                      GroupByType, OrderByType, LimitType>(
+            _fields, _table_or_query, _joins, _where, _limit);
     return _conn->read(query).transform(
         [](auto&& _it) { return ContainerType(_it); });
 
@@ -65,25 +67,29 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
     using RangeType = Range<
         transpilation::fields_to_named_tuple_t<TableTupleType, FieldsType>>;
 
-    return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
-                            WhereType, GroupByType, OrderByType, LimitType,
-                            RangeType>(_conn, _fields, _joins, _where, _limit)
+    return select_from_impl<TableTupleType, AliasType, FieldsType,
+                            TableOrQueryType, JoinsType, WhereType, GroupByType,
+                            OrderByType, LimitType, RangeType>(
+               _conn, _fields, _table_or_query, _joins, _where, _limit)
         .and_then(to_container);
   }
 }
 
 template <class TableTupleType, class AliasType, class FieldsType,
-          class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ContainerType,
-          class Connection>
+          class TableOrQueryType, class JoinsType, class WhereType,
+          class GroupByType, class OrderByType, class LimitType,
+          class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Result<Ref<Connection>>& _res,
-                      const FieldsType& _fields, const JoinsType& _joins,
-                      const WhereType& _where, const LimitType& _limit) {
+                      const FieldsType& _fields,
+                      const TableOrQueryType& _table_or_query,
+                      const JoinsType& _joins, const WhereType& _where,
+                      const LimitType& _limit) {
   return _res.and_then([&](const auto& _conn) {
-    return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
-                            WhereType, GroupByType, OrderByType, LimitType,
-                            ContainerType>(_conn, _joins, _where, _limit);
+    return select_from_impl<TableTupleType, AliasType, FieldsType,
+                            TableOrQueryType, JoinsType, WhereType, GroupByType,
+                            OrderByType, LimitType, ContainerType>(
+        _conn, _table_or_query, _joins, _where, _limit);
   });
 }
 
@@ -103,10 +109,10 @@ struct SelectFrom {
                              Range<transpilation::fields_to_named_tuple_t<
                                  TableTupleType, FieldsType>>,
                              ToType>;
-      return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
-                              WhereType, GroupByType, OrderByType, LimitType,
-                              ContainerType>(_conn, fields_, joins_, where_,
-                                             limit_);
+      return select_from_impl<
+          TableTupleType, AliasType, FieldsType, TableOrQueryType, JoinsType,
+          WhereType, GroupByType, OrderByType, LimitType, ContainerType>(
+          _conn, fields_, from_, joins_, where_, limit_);
 
     } else {
       const auto extract_result = [](auto&& _vec) -> Result<ToType> {
@@ -119,10 +125,11 @@ struct SelectFrom {
         return std::move(_vec[0]);
       };
 
-      return select_from_impl<TableTupleType, AliasType, FieldsType, JoinsType,
-                              WhereType, GroupByType, OrderByType, LimitType,
+      return select_from_impl<TableTupleType, AliasType, FieldsType,
+                              TableOrQueryType, JoinsType, WhereType,
+                              GroupByType, OrderByType, LimitType,
                               std::vector<std::remove_cvref_t<ToType>>>(
-                 _conn, fields_, joins_, where_, limit_)
+                 _conn, fields_, from_, joins_, where_, limit_)
           .and_then(extract_result);
     }
   }
@@ -150,7 +157,9 @@ struct SelectFrom {
 
       return SelectFrom<TableOrQueryType, AliasType, FieldsType, NewJoinsType,
                         WhereType, GroupByType, OrderByType, LimitType, ToType>{
-          .fields_ = _s.fields_, .joins_ = NewJoinsType(_join)};
+          .fields_ = _s.fields_,
+          .from_ = _s.from_,
+          .joins_ = NewJoinsType(_join)};
 
     } else {
       using TupleType = rfl::Tuple<
@@ -162,7 +171,7 @@ struct SelectFrom {
 
       return SelectFrom<TableOrQueryType, AliasType, FieldsType, NewJoinsType,
                         WhereType, GroupByType, OrderByType, LimitType, ToType>{
-          .fields_ = _s.fields_, .joins_ = joins};
+          .fields_ = _s.fields_, .from_ = _s.from_, .joins_ = joins};
     }
   }
 
@@ -182,8 +191,10 @@ struct SelectFrom {
                   "You cannot call to<...> before where(...).");
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                       ConditionType, GroupByType, OrderByType, LimitType,
-                      ToType>{
-        .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _where.condition};
+                      ToType>{.fields_ = _s.fields_,
+                              .from_ = _s.from_,
+                              .joins_ = _s.joins_,
+                              .where_ = _where.condition};
   }
 
   template <class... ColTypes>
@@ -204,8 +215,10 @@ struct SelectFrom {
                       WhereType,
                       transpilation::group_by_t<TableOrQueryType,
                                                 typename ColTypes::ColType...>,
-                      OrderByType, LimitType, ToType>{
-        .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
+                      OrderByType, LimitType, ToType>{.fields_ = _s.fields_,
+                                                      .from_ = _s.from_,
+                                                      .joins_ = _s.joins_,
+                                                      .where_ = _s.where_};
   }
 
   template <class... ColTypes>
@@ -230,8 +243,10 @@ struct SelectFrom {
 
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                       WhereType, GroupByType, NewOrderByType, LimitType,
-                      ToType>{
-        .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
+                      ToType>{.fields_ = _s.fields_,
+                              .from_ = _s.from_,
+                              .joins_ = _s.joins_,
+                              .where_ = _s.where_};
   }
 
   friend auto operator|(const SelectFrom& _s, const Limit& _limit) {
@@ -240,6 +255,7 @@ struct SelectFrom {
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                       WhereType, GroupByType, OrderByType, Limit, ToType>{
         .fields_ = _s.fields_,
+        .from_ = _s.from_,
         .joins_ = _s.joins_,
         .where_ = _s.where_,
         .limit_ = _limit};
@@ -252,12 +268,15 @@ struct SelectFrom {
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                       WhereType, GroupByType, OrderByType, LimitType,
                       NewToType>{.fields_ = _s.fields_,
+                                 .from_ = _s.from_,
                                  .joins_ = _s.joins_,
                                  .where_ = _s.where_,
                                  .limit_ = _s.limit_};
   }
 
   FieldsType fields_;
+
+  TableOrQueryType from_;
 
   JoinsType joins_;
 
@@ -297,10 +316,11 @@ struct ToJoin<
     return dynamic::Join{
         .how = _join.how,
         .table_or_query = Ref<dynamic::SelectFrom>::make(
-            transpilation::to_select_from<NestedTableTupleType, AliasType,
-                                          FieldsType, JoinsType, WhereType,
-                                          GroupByType, OrderByType, LimitType>(
-                query.fields_, query.joins_, query.where_, query.limit_)),
+            transpilation::to_select_from<
+                NestedTableTupleType, AliasType, FieldsType, TableOrQueryType,
+                JoinsType, WhereType, GroupByType, OrderByType, LimitType>(
+                query.fields_, query.from_, query.joins_, query.where_,
+                query.limit_)),
         .alias = Literal<_alias>().str(),
         .on = to_condition<TableTupleType>(_join.on)};
   }
@@ -308,23 +328,27 @@ struct ToJoin<
 
 }  // namespace transpilation
 
-template <class TableOrQueryType, class... FieldTypes>
+template <class TableType, class... FieldTypes>
 inline auto select_from(const FieldTypes&... _fields) {
   using FieldsType =
       rfl::Tuple<typename internal::GetColType<FieldTypes>::Type...>;
-  return SelectFrom<TableOrQueryType, Nothing, FieldsType>{
+  return SelectFrom<transpilation::TableWrapper<TableType>, Nothing,
+                    FieldsType>{
       .fields_ =
-          FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...)};
+          FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...),
+      .from_ = transpilation::TableWrapper<TableType>{}};
 }
 
-template <class TableOrQueryType, rfl::internal::StringLiteral _alias,
+template <class TableType, rfl::internal::StringLiteral _alias,
           class... FieldTypes>
 inline auto select_from(const FieldTypes&... _fields) {
   using FieldsType =
       rfl::Tuple<typename internal::GetColType<FieldTypes>::Type...>;
-  return SelectFrom<TableOrQueryType, Literal<_alias>, FieldsType>{
+  return SelectFrom<transpilation::TableWrapper<TableType>, Literal<_alias>,
+                    FieldsType>{
       .fields_ =
-          FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...)};
+          FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...),
+      .from_ = transpilation::TableWrapper<TableType>{}};
 }
 
 }  // namespace sqlgen
