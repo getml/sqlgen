@@ -16,7 +16,7 @@ struct Person {
   double age;
 };
 
-TEST(postgres, test_unique) {
+TEST(sqlite, test_unique) {
   const auto people = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
