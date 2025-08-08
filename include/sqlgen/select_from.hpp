@@ -338,6 +338,17 @@ inline auto select_from(const FieldTypes&... _fields) {
       .from_ = transpilation::TableWrapper<TableType>{}};
 }
 
+template <rfl::internal::StringLiteral _alias, class QueryType,
+          class... FieldTypes>
+inline auto select_from(const QueryType& _query, const FieldTypes&... _fields) {
+  using FieldsType =
+      rfl::Tuple<typename internal::GetColType<FieldTypes>::Type...>;
+  return SelectFrom<QueryType, Literal<_alias>, FieldsType>{
+      .fields_ =
+          FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...),
+      .from_ = _query};
+}
+
 }  // namespace sqlgen
 
 #endif
