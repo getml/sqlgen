@@ -42,7 +42,7 @@ dynamic::SelectFrom read_to_select_from(const WhereType& _where = WhereType{},
       }));
 
   return dynamic::SelectFrom{
-      .table =
+      .table_or_query =
           dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
       .fields = fields,
       .where = to_condition<std::remove_cvref_t<T>>(_where),

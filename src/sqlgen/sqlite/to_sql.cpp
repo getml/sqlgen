@@ -46,6 +46,9 @@ std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept;
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept;
 
+std::string table_or_query_to_sql(
+    const dynamic::SelectFrom::TableOrQueryType& _table_or_query) noexcept;
+
 std::string type_to_sql(const dynamic::Type& _type) noexcept;
 
 std::string update_to_sql(const dynamic::Update& _stmt) noexcept;
@@ -384,16 +387,7 @@ std::string join_to_sql(const dynamic::Join& _stmt) noexcept {
                 rfl::enum_to_string(_stmt.how), "_", " "))
          << " ";
 
-  stream << _stmt.table_or_query.visit(
-                [](const auto& _table_or_query) -> std::string {
-                  using Type = std::remove_cvref_t<decltype(_table_or_query)>;
-                  if constexpr (std::is_same_v<Type, dynamic::Table>) {
-                    return wrap_in_quotes(_table_or_query.name);
-                  } else {
-                    return "(" + select_from_to_sql(*_table_or_query) + ")";
-                  }
-                })
-         << " ";
+  stream << table_or_query_to_sql(_stmt.table_or_query) << " ";
 
   stream << _stmt.alias << " ";
 
@@ -607,11 +601,7 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
   stream << internal::strings::join(
       ", ", internal::collect::vector(_stmt.fields | transform(field_to_str)));
 
-  stream << " FROM ";
-  if (_stmt.table.schema) {
-    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
-  }
-  stream << wrap_in_quotes(_stmt.table.name);
+  stream << " FROM " << table_or_query_to_sql(_stmt.table_or_query);
 
   if (_stmt.alias) {
     stream << " " << *_stmt.alias;
@@ -648,6 +638,18 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
   }
 
   return stream.str();
+}
+
+std::string table_or_query_to_sql(
+    const dynamic::SelectFrom::TableOrQueryType& _table_or_query) noexcept {
+  return _table_or_query.visit([](const auto& _t) -> std::string {
+    using Type = std::remove_cvref_t<decltype(_t)>;
+    if constexpr (std::is_same_v<Type, dynamic::Table>) {
+      return wrap_in_quotes(_t.name);
+    } else {
+      return "(" + select_from_to_sql(*_t) + ")";
+    }
+  });
 }
 
 std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {

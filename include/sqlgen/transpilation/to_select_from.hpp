@@ -51,9 +51,9 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
       std::make_integer_sequence<int, rfl::tuple_size_v<FieldsType>>());
 
   return dynamic::SelectFrom{
-      .table = dynamic::Table{.alias = to_alias<AliasType>(),
-                              .name = get_tablename<StructType>(),
-                              .schema = get_schema<StructType>()},
+      .table_or_query = dynamic::Table{.alias = to_alias<AliasType>(),
+                                       .name = get_tablename<StructType>(),
+                                       .schema = get_schema<StructType>()},
       .fields = fields,
       .alias = to_alias<AliasType>(),
       .joins = to_joins<TableTupleType>(_joins),
