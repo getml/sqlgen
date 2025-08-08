@@ -19,6 +19,19 @@ namespace sqlgen::transpilation {
 template <class TableTupleType, class T>
 struct ToJoin;
 
+template <class TableTupleType, class QueryType>
+struct ToJoin {
+  template <class ConditionType, rfl::internal::StringLiteral _alias>
+  dynamic::Join operator()(
+      const transpilation::Join<QueryType, ConditionType, _alias>& _join) {
+    return dynamic::Join{
+        .how = _join.how,
+        .table_or_query = to_table_or_query(_join.table_or_query),
+        .alias = Literal<_alias>().str(),
+        .on = to_condition<TableTupleType>(_join.on)};
+  }
+};
+
 template <class TableTupleType, class TableType>
 struct ToJoin<TableTupleType, TableWrapper<TableType>> {
   template <class ConditionType, rfl::internal::StringLiteral _alias>

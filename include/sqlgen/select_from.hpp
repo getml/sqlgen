@@ -295,34 +295,21 @@ struct ExtractTable<
   using Type = fields_to_named_tuple_t<TableTupleType, FieldsType>;
 };
 
-template <class TableTupleType, class TableOrQueryType, class AliasType,
-          class FieldsType, class JoinsType, class WhereType, class GroupByType,
+template <class TableOrQueryType, class AliasType, class FieldsType,
+          class JoinsType, class WhereType, class GroupByType,
           class OrderByType, class LimitType, class ToType>
-struct ToJoin<
-    TableTupleType,
+struct ToTableOrQuery<
     SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
                GroupByType, OrderByType, LimitType, ToType>> {
-  template <class ConditionType, rfl::internal::StringLiteral _alias>
-  dynamic::Join operator()(
-      const transpilation::Join<
-          SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                     WhereType, GroupByType, OrderByType, LimitType, ToType>,
-          ConditionType, _alias>& _join) {
-    const auto& query = _join.table_or_query;
-
-    using NestedTableTupleType =
+  dynamic::SelectFrom::TableOrQueryType operator()(const auto& _query) {
+    using TableTupleType =
         table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
-
-    return dynamic::Join{
-        .how = _join.how,
-        .table_or_query = Ref<dynamic::SelectFrom>::make(
-            transpilation::to_select_from<
-                NestedTableTupleType, AliasType, FieldsType, TableOrQueryType,
-                JoinsType, WhereType, GroupByType, OrderByType, LimitType>(
-                query.fields_, query.from_, query.joins_, query.where_,
-                query.limit_)),
-        .alias = Literal<_alias>().str(),
-        .on = to_condition<TableTupleType>(_join.on)};
+    return Ref<dynamic::SelectFrom>::make(
+        transpilation::to_select_from<TableTupleType, AliasType, FieldsType,
+                                      TableOrQueryType, JoinsType, WhereType,
+                                      GroupByType, OrderByType, LimitType>(
+            _query.fields_, _query.from_, _query.joins_, _query.where_,
+            _query.limit_));
   }
 };
 
