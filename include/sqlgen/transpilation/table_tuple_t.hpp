@@ -11,18 +11,18 @@
 
 namespace sqlgen::transpilation {
 
-template <class StructType, class AliasType, class JoinsType>
+template <class TableOrQueryType, class AliasType, class JoinsType>
 struct TableTupleType;
 
-template <class StructType, class AliasType>
-struct TableTupleType<StructType, AliasType, Nothing> {
-  using Type = StructType;
+template <class TableOrQueryType, class AliasType>
+struct TableTupleType<TableOrQueryType, AliasType, Nothing> {
+  using Type = TableOrQueryType;
 };
 
-template <class StructType, class AliasType, class... JoinTypes>
-struct TableTupleType<StructType, AliasType, rfl::Tuple<JoinTypes...>> {
+template <class TableOrQueryType, class AliasType, class... JoinTypes>
+struct TableTupleType<TableOrQueryType, AliasType, rfl::Tuple<JoinTypes...>> {
   using Type = rfl::Tuple<
-      std::pair<extract_table_t<StructType>, AliasType>,
+      std::pair<extract_table_t<TableOrQueryType>, AliasType>,
       std::pair<extract_table_t<typename JoinTypes::TableOrQueryType>,
                 typename JoinTypes::Alias>...>;
   static_assert(
@@ -30,9 +30,9 @@ struct TableTupleType<StructType, AliasType, rfl::Tuple<JoinTypes...>> {
       "Your SELECT FROM query cannot contain duplicate aliases.");
 };
 
-template <class StructType, class AliasType, class JoinsType>
+template <class TableOrQueryType, class AliasType, class JoinsType>
 using table_tuple_t =
-    typename TableTupleType<std::remove_cvref_t<StructType>,
+    typename TableTupleType<std::remove_cvref_t<TableOrQueryType>,
                             std::remove_cvref_t<AliasType>,
                             std::remove_cvref_t<JoinsType>>::Type;
 

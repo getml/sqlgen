@@ -87,14 +87,14 @@ auto select_from_impl(const Result<Ref<Connection>>& _res,
   });
 }
 
-template <class StructType, class AliasType, class FieldsType,
+template <class TableOrQueryType, class AliasType, class FieldsType,
           class JoinsType = Nothing, class WhereType = Nothing,
           class GroupByType = Nothing, class OrderByType = Nothing,
           class LimitType = Nothing, class ToType = Nothing>
 struct SelectFrom {
   auto operator()(const auto& _conn) const {
     using TableTupleType =
-        transpilation::table_tuple_t<StructType, AliasType, JoinsType>;
+        transpilation::table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
 
     if constexpr (std::is_same_v<ToType, Nothing> ||
                   std::ranges::input_range<std::remove_cvref_t<ToType>>) {
@@ -127,11 +127,11 @@ struct SelectFrom {
     }
   }
 
-  template <class TableOrQueryType, class ConditionType,
+  template <class OtherTableOrQueryType, class ConditionType,
             rfl::internal::StringLiteral _alias>
   friend auto operator|(
       const SelectFrom& _s,
-      const transpilation::Join<TableOrQueryType, ConditionType, _alias>&
+      const transpilation::Join<OtherTableOrQueryType, ConditionType, _alias>&
           _join) {
     static_assert(std::is_same_v<WhereType, Nothing>,
                   "You cannot call where(...) before a join.");
@@ -146,21 +146,21 @@ struct SelectFrom {
 
     if constexpr (std::is_same_v<JoinsType, Nothing>) {
       using NewJoinsType = rfl::Tuple<
-          transpilation::Join<TableOrQueryType, ConditionType, _alias>>;
+          transpilation::Join<OtherTableOrQueryType, ConditionType, _alias>>;
 
-      return SelectFrom<StructType, AliasType, FieldsType, NewJoinsType,
+      return SelectFrom<TableOrQueryType, AliasType, FieldsType, NewJoinsType,
                         WhereType, GroupByType, OrderByType, LimitType, ToType>{
           .fields_ = _s.fields_, .joins_ = NewJoinsType(_join)};
 
     } else {
       using TupleType = rfl::Tuple<
-          transpilation::Join<TableOrQueryType, ConditionType, _alias>>;
+          transpilation::Join<OtherTableOrQueryType, ConditionType, _alias>>;
 
       const auto joins = rfl::tuple_cat(_s.joins_, TupleType(_join));
 
       using NewJoinsType = std::remove_cvref_t<decltype(joins)>;
 
-      return SelectFrom<StructType, AliasType, FieldsType, NewJoinsType,
+      return SelectFrom<TableOrQueryType, AliasType, FieldsType, NewJoinsType,
                         WhereType, GroupByType, OrderByType, LimitType, ToType>{
           .fields_ = _s.fields_, .joins_ = joins};
     }
@@ -180,7 +180,7 @@ struct SelectFrom {
                   "You cannot call limit(...) before where(...).");
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> before where(...).");
-    return SelectFrom<StructType, AliasType, FieldsType, JoinsType,
+    return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                       ConditionType, GroupByType, OrderByType, LimitType,
                       ToType>{
         .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _where.condition};
@@ -200,10 +200,11 @@ struct SelectFrom {
                   "You cannot call to<...> before group_by(...).");
     static_assert(sizeof...(ColTypes) != 0,
                   "You must assign at least one column to group_by.");
-    return SelectFrom<
-        StructType, AliasType, FieldsType, JoinsType, WhereType,
-        transpilation::group_by_t<StructType, typename ColTypes::ColType...>,
-        OrderByType, LimitType, ToType>{
+    return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                      WhereType,
+                      transpilation::group_by_t<TableOrQueryType,
+                                                typename ColTypes::ColType...>,
+                      OrderByType, LimitType, ToType>{
         .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
   }
 
@@ -221,22 +222,23 @@ struct SelectFrom {
                   "You must assign at least one column to order_by.");
 
     using TableTupleType =
-        transpilation::table_tuple_t<StructType, AliasType, JoinsType>;
+        transpilation::table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
 
     using NewOrderByType = transpilation::order_by_t<
         TableTupleType, GroupByType,
         typename std::remove_cvref_t<ColTypes>::ColType...>;
 
-    return SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
-                      GroupByType, NewOrderByType, LimitType, ToType>{
+    return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                      WhereType, GroupByType, NewOrderByType, LimitType,
+                      ToType>{
         .fields_ = _s.fields_, .joins_ = _s.joins_, .where_ = _s.where_};
   }
 
   friend auto operator|(const SelectFrom& _s, const Limit& _limit) {
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit twice.");
-    return SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
-                      GroupByType, OrderByType, Limit, ToType>{
+    return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                      WhereType, GroupByType, OrderByType, Limit, ToType>{
         .fields_ = _s.fields_,
         .joins_ = _s.joins_,
         .where_ = _s.where_,
@@ -247,12 +249,12 @@ struct SelectFrom {
   friend auto operator|(const SelectFrom& _s, const To<NewToType>&) {
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> twice.");
-    return SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
-                      GroupByType, OrderByType, LimitType, NewToType>{
-        .fields_ = _s.fields_,
-        .joins_ = _s.joins_,
-        .where_ = _s.where_,
-        .limit_ = _s.limit_};
+    return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                      WhereType, GroupByType, OrderByType, LimitType,
+                      NewToType>{.fields_ = _s.fields_,
+                                 .joins_ = _s.joins_,
+                                 .where_ = _s.where_,
+                                 .limit_ = _s.limit_};
   }
 
   FieldsType fields_;
@@ -266,30 +268,31 @@ struct SelectFrom {
 
 namespace transpilation {
 
-template <class StructType, class AliasType, class FieldsType, class JoinsType,
-          class... Args>
+template <class TableOrQueryType, class AliasType, class FieldsType,
+          class JoinsType, class... Args>
 struct ExtractTable<
-    SelectFrom<StructType, AliasType, FieldsType, JoinsType, Args...>> {
-  using TableTupleType = table_tuple_t<StructType, AliasType, JoinsType>;
+    SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, Args...>> {
+  using TableTupleType = table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
   using Type = fields_to_named_tuple_t<TableTupleType, FieldsType>;
 };
 
-template <class TableTupleType, class StructType, class AliasType,
+template <class TableTupleType, class TableOrQueryType, class AliasType,
           class FieldsType, class JoinsType, class WhereType, class GroupByType,
           class OrderByType, class LimitType, class ToType>
-struct ToJoin<TableTupleType, SelectFrom<StructType, AliasType, FieldsType,
-                                         JoinsType, WhereType, GroupByType,
-                                         OrderByType, LimitType, ToType>> {
+struct ToJoin<
+    TableTupleType,
+    SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
+               GroupByType, OrderByType, LimitType, ToType>> {
   template <class ConditionType, rfl::internal::StringLiteral _alias>
   dynamic::Join operator()(
       const transpilation::Join<
-          SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
-                     GroupByType, OrderByType, LimitType, ToType>,
+          SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                     WhereType, GroupByType, OrderByType, LimitType, ToType>,
           ConditionType, _alias>& _join) {
     const auto& query = _join.table_or_query;
 
     using NestedTableTupleType =
-        table_tuple_t<StructType, AliasType, JoinsType>;
+        table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
 
     return dynamic::Join{
         .how = _join.how,
@@ -305,21 +308,21 @@ struct ToJoin<TableTupleType, SelectFrom<StructType, AliasType, FieldsType,
 
 }  // namespace transpilation
 
-template <class StructType, class... FieldTypes>
+template <class TableOrQueryType, class... FieldTypes>
 inline auto select_from(const FieldTypes&... _fields) {
   using FieldsType =
       rfl::Tuple<typename internal::GetColType<FieldTypes>::Type...>;
-  return SelectFrom<StructType, Nothing, FieldsType>{
+  return SelectFrom<TableOrQueryType, Nothing, FieldsType>{
       .fields_ =
           FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...)};
 }
 
-template <class StructType, rfl::internal::StringLiteral _alias,
+template <class TableOrQueryType, rfl::internal::StringLiteral _alias,
           class... FieldTypes>
 inline auto select_from(const FieldTypes&... _fields) {
   using FieldsType =
       rfl::Tuple<typename internal::GetColType<FieldTypes>::Type...>;
-  return SelectFrom<StructType, Literal<_alias>, FieldsType>{
+  return SelectFrom<TableOrQueryType, Literal<_alias>, FieldsType>{
       .fields_ =
           FieldsType(internal::GetColType<FieldTypes>::get_value(_fields)...)};
 }
