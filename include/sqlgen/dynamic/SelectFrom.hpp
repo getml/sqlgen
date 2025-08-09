@@ -18,6 +18,8 @@
 namespace sqlgen::dynamic {
 
 struct SelectFrom {
+  using TableOrQueryType = rfl::Variant<Table, Ref<SelectFrom>>;
+
   struct Field {
     Operation val;
     std::optional<std::string> as;
@@ -25,12 +27,12 @@ struct SelectFrom {
 
   struct Join {
     JoinType how;
-    rfl::Variant<Table, Ref<SelectFrom>> table_or_query;
+    TableOrQueryType table_or_query;
     std::string alias;
     std::optional<Condition> on;
   };
 
-  Table table;
+  TableOrQueryType table_or_query;
   std::vector<Field> fields;
   std::optional<std::string> alias = std::nullopt;
   std::optional<std::vector<Join>> joins = std::nullopt;

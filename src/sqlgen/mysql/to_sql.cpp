@@ -45,6 +45,14 @@ std::string escape_single_quote(const std::string& _str) noexcept;
 
 std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept;
 
+std::string foreign_keys_to_sql(
+    const std::vector<
+        std::pair<std::string, dynamic::types::ForeignKeyReference>>&
+        _foreign_keys) noexcept;
+
+std::vector<std::pair<std::string, dynamic::types::ForeignKeyReference>>
+get_foreign_keys(const dynamic::CreateTable& _stmt) noexcept;
+
 std::vector<std::string> get_primary_keys(
     const dynamic::CreateTable& _stmt) noexcept;
 
@@ -58,6 +66,9 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept;
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept;
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept;
+
+std::string table_or_query_to_sql(
+    const dynamic::SelectFrom::TableOrQueryType& _table_or_query) noexcept;
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept;
 
@@ -322,6 +333,12 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
            << ")";
   }
 
+  const auto foreign_keys = get_foreign_keys(_stmt);
+
+  if (foreign_keys.size() != 0) {
+    stream << ", " << foreign_keys_to_sql(foreign_keys);
+  }
+
   stream << ");";
 
   return stream.str();
@@ -404,6 +421,10 @@ std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept {
   }
   stream << wrap_in_quotes(_stmt.table.name);
 
+  if (_stmt.cascade) {
+    stream << " CASCADE";
+  }
+
   stream << ";";
 
   return stream.str();
@@ -423,6 +444,47 @@ std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept {
   }
 
   return stream.str();
+}
+
+std::string foreign_keys_to_sql(
+    const std::vector<
+        std::pair<std::string, dynamic::types::ForeignKeyReference>>&
+        _foreign_keys) noexcept {
+  using namespace std::ranges::views;
+
+  const auto to_str =
+      [](const std::pair<std::string, dynamic::types::ForeignKeyReference>&
+             _p) {
+        return "FOREIGN KEY (" + wrap_in_quotes(_p.first) + ") REFERENCES " +
+               wrap_in_quotes(_p.second.table) + "(" +
+               wrap_in_quotes(_p.second.column) + ")";
+      };
+
+  return internal::strings::join(
+      ", ", internal::collect::vector(_foreign_keys | transform(to_str)));
+}
+
+std::vector<std::pair<std::string, dynamic::types::ForeignKeyReference>>
+get_foreign_keys(const dynamic::CreateTable& _stmt) noexcept {
+  using namespace std::ranges::views;
+
+  const auto get_foreign_key_ref = [](const auto& _col)
+      -> std::optional<dynamic::types::ForeignKeyReference> {
+    return _col.type.visit(
+        [](const auto& _t) { return _t.properties.foreign_key_reference; });
+  };
+
+  const auto has_reference = [&](const auto& _col) -> bool {
+    return (true && get_foreign_key_ref(_col));
+  };
+
+  const auto to_pair = [&](const auto& _col)
+      -> std::pair<std::string, dynamic::types::ForeignKeyReference> {
+    return std::make_pair(get_name(_col), get_foreign_key_ref(_col).value());
+  };
+
+  return internal::collect::vector(_stmt.columns | filter(has_reference) |
+                                   transform(to_pair));
 }
 
 std::vector<std::string> get_primary_keys(
@@ -474,16 +536,7 @@ std::string join_to_sql(const dynamic::Join& _stmt) noexcept {
                 rfl::enum_to_string(_stmt.how), "_", " "))
          << " ";
 
-  stream << _stmt.table_or_query.visit(
-                [](const auto& _table_or_query) -> std::string {
-                  using Type = std::remove_cvref_t<decltype(_table_or_query)>;
-                  if constexpr (std::is_same_v<Type, dynamic::Table>) {
-                    return wrap_in_quotes(_table_or_query.name);
-                  } else {
-                    return "(" + select_from_to_sql(*_table_or_query) + ")";
-                  }
-                })
-         << " ";
+  stream << table_or_query_to_sql(_stmt.table_or_query) << " ";
 
   stream << _stmt.alias << " ";
 
@@ -655,13 +708,15 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 }
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
-  if (_p.auto_incr) {
-    return " AUTO_INCREMENT";
-  } else if (!_p.nullable) {
-    return " NOT NULL";
-  } else {
-    return "";
-  }
+  return [&]() -> std::string {
+    if (_p.auto_incr) {
+      return " AUTO_INCREMENT";
+    } else if (!_p.nullable) {
+      return " NOT NULL";
+    } else {
+      return "";
+    }
+  }() + [&]() -> std::string { return _p.unique ? " UNIQUE" : ""; }();
 }
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
@@ -677,11 +732,7 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
   stream << internal::strings::join(
       ", ", internal::collect::vector(_stmt.fields | transform(field_to_str)));
 
-  stream << " FROM ";
-  if (_stmt.table.schema) {
-    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
-  }
-  stream << wrap_in_quotes(_stmt.table.name);
+  stream << " FROM " << table_or_query_to_sql(_stmt.table_or_query);
 
   if (_stmt.alias) {
     stream << " " << *_stmt.alias;
@@ -718,6 +769,18 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
   }
 
   return stream.str();
+}
+
+std::string table_or_query_to_sql(
+    const dynamic::SelectFrom::TableOrQueryType& _table_or_query) noexcept {
+  return _table_or_query.visit([](const auto& _t) -> std::string {
+    using Type = std::remove_cvref_t<decltype(_t)>;
+    if constexpr (std::is_same_v<Type, dynamic::Table>) {
+      return wrap_in_quotes(_t.name);
+    } else {
+      return "(" + select_from_to_sql(*_t) + ")";
+    }
+  });
 }
 
 std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {

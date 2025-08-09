@@ -8,7 +8,8 @@
 namespace sqlgen::dynamic {
 
 struct Drop {
-  bool if_exists = true;
+  bool if_exists = false;
+  bool cascade = false;
   Table table;
 };
 

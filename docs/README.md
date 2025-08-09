@@ -27,6 +27,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::group_by and Aggregations](group_by_and_aggregations.md) - How generate GROUP BY queries and aggregate data
 - [sqlgen::inner_join, sqlgen::left_join, sqlgen::right_join, sqlgen::full_join](joins.md) - How to join different tables
 - [sqlgen::insert](insert.md) - How to insert data within transactions
+- [sqlgen::select_from](select_from.md) - How to read data from a database using more complex queries
 - [sqlgen::update](update.md) - How to update data in a table
 
 ## Other Operations
@@ -39,8 +40,10 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 ## Data Types and Validation
 
+- [sqlgen::ForeignKey](foreign_key.md) - How to establish referential integrity between tables
 - [sqlgen::Pattern](pattern.md) - How to add regex pattern validation to avoid SQL injection
 - [sqlgen::Timestamp](timestamp.md) - How timestamps work in sqlgen
+- [sqlgen::Unique](unique.md) - How to enforce uniqueness constraints on table columns
 - [sqlgen::Varchar](varchar.md) - How varchars work in sqlgen
 
 ## Other concepts

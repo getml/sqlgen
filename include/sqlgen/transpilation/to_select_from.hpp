@@ -15,11 +15,10 @@
 #include "../dynamic/Table.hpp"
 #include "../internal/collect/vector.hpp"
 #include "Join.hpp"
+#include "TableWrapper.hpp"
 #include "check_aggregations.hpp"
 #include "flatten_fields_t.hpp"
-#include "get_schema.hpp"
 #include "get_table_t.hpp"
-#include "get_tablename.hpp"
 #include "make_fields.hpp"
 #include "to_alias.hpp"
 #include "to_condition.hpp"
@@ -27,13 +26,15 @@
 #include "to_joins.hpp"
 #include "to_limit.hpp"
 #include "to_order_by.hpp"
+#include "to_table_or_query.hpp"
 
 namespace sqlgen::transpilation {
 
 template <class TableTupleType, class AliasType, class FieldsType,
-          class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType>
+          class TableOrQueryType, class JoinsType, class WhereType,
+          class GroupByType, class OrderByType, class LimitType>
 dynamic::SelectFrom to_select_from(const FieldsType& _fields,
+                                   const TableOrQueryType& _table_or_query,
                                    const JoinsType& _joins,
                                    const WhereType& _where,
                                    const LimitType& _limit) {
@@ -43,17 +44,12 @@ dynamic::SelectFrom to_select_from(const FieldsType& _fields,
                 "The aggregations were not set up correctly. Please check the "
                 "trace for a more detailed error message.");
 
-  using StructType =
-      get_table_t<std::integral_constant<size_t, 0>, TableTupleType>;
-
   const auto fields = make_fields<TableTupleType, FieldsType>(
       _fields,
       std::make_integer_sequence<int, rfl::tuple_size_v<FieldsType>>());
 
   return dynamic::SelectFrom{
-      .table = dynamic::Table{.alias = to_alias<AliasType>(),
-                              .name = get_tablename<StructType>(),
-                              .schema = get_schema<StructType>()},
+      .table_or_query = to_table_or_query(_table_or_query),
       .fields = fields,
       .alias = to_alias<AliasType>(),
       .joins = to_joins<TableTupleType>(_joins),

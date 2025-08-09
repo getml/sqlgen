@@ -63,7 +63,7 @@ struct ToSQL<DeleteFrom<T, WhereType>> {
 template <class T>
 struct ToSQL<Drop<T>> {
   dynamic::Statement operator()(const auto& _drop) const {
-    return to_drop<T>(_drop.if_exists_);
+    return to_drop<T>(_drop.if_exists_, _drop.cascade_);
   }
 };
 
@@ -83,17 +83,20 @@ struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType>> {
   }
 };
 
-template <class StructType, class AliasType, class FieldsType, class JoinsType,
-          class WhereType, class GroupByType, class OrderByType,
-          class LimitType, class ToType>
-struct ToSQL<SelectFrom<StructType, AliasType, FieldsType, JoinsType, WhereType,
-                        GroupByType, OrderByType, LimitType, ToType>> {
+template <class TableOrQueryType, class AliasType, class FieldsType,
+          class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ToType>
+struct ToSQL<
+    SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
+               GroupByType, OrderByType, LimitType, ToType>> {
   dynamic::Statement operator()(const auto& _select_from) const {
-    using TableTupleType = table_tuple_t<StructType, AliasType, JoinsType>;
-    return to_select_from<TableTupleType, AliasType, FieldsType, JoinsType,
-                          WhereType, GroupByType, OrderByType, LimitType>(
-        _select_from.fields_, _select_from.joins_, _select_from.where_,
-        _select_from.limit_);
+    using TableTupleType =
+        table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
+    return to_select_from<TableTupleType, AliasType, FieldsType,
+                          TableOrQueryType, JoinsType, WhereType, GroupByType,
+                          OrderByType, LimitType>(
+        _select_from.fields_, _select_from.from_, _select_from.joins_,
+        _select_from.where_, _select_from.limit_);
   }
 };
 

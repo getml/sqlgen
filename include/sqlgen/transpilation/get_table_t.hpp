@@ -8,6 +8,7 @@
 
 #include "../Literal.hpp"
 #include "../dynamic/JoinType.hpp"
+#include "TableWrapper.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -46,6 +47,11 @@ struct GetTableType<Literal<_alias>,
 };
 
 template <rfl::internal::StringLiteral _alias, class T>
+struct GetTableType<Literal<_alias>, TableWrapper<T>> {
+  using TableType = T;
+};
+
+template <rfl::internal::StringLiteral _alias, class T>
 struct GetTableType<Literal<_alias>, T> {
   using TableType = T;
 };
@@ -58,6 +64,11 @@ struct GetTableType<std::integral_constant<size_t, _i>,
 
   static_assert(!std::is_same_v<TableType, Nothing>,
                 "Alias could not be identified.");
+};
+
+template <size_t _i, class T>
+struct GetTableType<std::integral_constant<size_t, _i>, TableWrapper<T>> {
+  using TableType = T;
 };
 
 template <size_t _i, class T>
