@@ -21,6 +21,7 @@ template <class T, class TableTupleType, class AliasType, class FieldsType,
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
 dynamic::CreateAs to_create_as(const dynamic::CreateAs::What _what,
+                               const bool _or_replace,
                                const bool _if_not_exists,
                                const FieldsType& _fields,
                                const TableOrQueryType& _table_or_query,
@@ -34,6 +35,7 @@ dynamic::CreateAs to_create_as(const dynamic::CreateAs::What _what,
                               TableOrQueryType, JoinsType, WhereType,
                               GroupByType, OrderByType, LimitType>(
           _fields, _table_or_query, _joins, _where, _limit),
+      .or_replace = _or_replace,
       .if_not_exists = _if_not_exists};
 }
 

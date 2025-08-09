@@ -12,6 +12,7 @@ struct CreateAs {
   What what;
   Table table_or_view;
   SelectFrom query;
+  bool or_replace;
   bool if_not_exists;
 };
 

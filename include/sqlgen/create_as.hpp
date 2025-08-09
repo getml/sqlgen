@@ -24,15 +24,15 @@ Result<Ref<Connection>> create_as_impl(
     const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                      WhereType, GroupByType, OrderByType, LimitType, ToType>&
         _as,
-    const bool _if_not_exists) {
+    const bool _or_replace, const bool _if_not_exists) {
   using TableTupleType =
       transpilation::table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
 
   const auto query = transpilation::to_create_as<
       ValueType, TableTupleType, AliasType, FieldsType, TableOrQueryType,
       JoinsType, WhereType, GroupByType, OrderByType, LimitType>(
-      _what, _if_not_exists, _as.fields_, _as.from_, _as.joins_, _as.where_,
-      _as.limit_);
+      _what, _or_replace, _if_not_exists, _as.fields_, _as.from_, _as.joins_,
+      _as.where_, _as.limit_);
 
   return _conn->execute(_conn->to_sql(query)).transform([&](const auto&) {
     return _conn;
@@ -48,9 +48,10 @@ Result<Ref<Connection>> create_as_impl(
     const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                      WhereType, GroupByType, OrderByType, LimitType, ToType>&
         _as,
-    const bool _if_not_exists) {
+    const bool _or_replace, const bool _if_not_exists) {
   return _res.and_then([&](const auto& _conn) {
-    return create_as_impl<ValueType>(_conn, _what, _as, _if_not_exists);
+    return create_as_impl<ValueType>(_conn, _what, _as, _or_replace,
+                                     _if_not_exists);
   });
 }
 
@@ -69,11 +70,13 @@ struct CreateAs {
       "the output struct.");
 
   auto operator()(const auto& _conn) const {
-    return create_as_impl<ValueType>(_conn, what_, as_, if_not_exists_);
+    return create_as_impl<ValueType>(_conn, what_, as_, or_replace_,
+                                     if_not_exists_);
   }
 
   dynamic::CreateAs::What what_;
   As as_;
+  bool or_replace_;
   bool if_not_exists_;
 };
 
@@ -82,6 +85,7 @@ inline auto create_table_as(const SelectFrom<Args...>& _as) {
   return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
       .what_ = dynamic::CreateAs::What::table,
       .as_ = _as,
+      .or_replace_ = false,
       .if_not_exists_ = false};
 }
 
@@ -90,6 +94,25 @@ inline auto create_view_as(const SelectFrom<Args...>& _as) {
   return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
       .what_ = dynamic::CreateAs::What::view,
       .as_ = _as,
+      .or_replace_ = false,
+      .if_not_exists_ = false};
+}
+
+template <class ValueType, class... Args>
+inline auto create_or_replace_view_as(const SelectFrom<Args...>& _as) {
+  return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
+      .what_ = dynamic::CreateAs::What::view,
+      .as_ = _as,
+      .or_replace_ = true,
+      .if_not_exists_ = false};
+}
+
+template <class ValueType, class... Args>
+inline auto create_materialized_view_as(const SelectFrom<Args...>& _as) {
+  return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
+      .what_ = dynamic::CreateAs::What::materialized_view,
+      .as_ = _as,
+      .or_replace_ = false,
       .if_not_exists_ = false};
 }
 

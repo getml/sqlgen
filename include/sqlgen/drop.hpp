@@ -51,6 +51,10 @@ const auto drop_table = drop<ValueType>;
 template <class ValueType>
 const auto drop_view = Drop<ValueType>{.what_ = dynamic::Drop::What::view};
 
+template <class ValueType>
+const auto drop_materialized_view =
+    Drop<ValueType>{.what_ = dynamic::Drop::What::materialized_view};
+
 }  // namespace sqlgen
 
 #endif

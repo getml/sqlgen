@@ -8,7 +8,7 @@
 namespace sqlgen::dynamic {
 
 struct Drop {
-  enum struct What { table, view };
+  enum struct What { table, view, materialized_view };
   What what;
   bool if_exists = false;
   bool cascade = false;

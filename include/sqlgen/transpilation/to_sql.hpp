@@ -42,9 +42,9 @@ struct ToSQL<
     return to_create_as<ValueType, TableTupleType, AliasType, FieldsType,
                         TableOrQueryType, JoinsType, WhereType, GroupByType,
                         OrderByType, LimitType>(
-        _create_as.what_, _create_as.if_not_exists_, _create_as.as_.fields_,
-        _create_as.as_.from_, _create_as.as_.joins_, _create_as.as_.where_,
-        _create_as.as_.limit_);
+        _create_as.what_, _create_as.or_replace_, _create_as.if_not_exists_,
+        _create_as.as_.fields_, _create_as.as_.from_, _create_as.as_.joins_,
+        _create_as.as_.where_, _create_as.as_.limit_);
   }
 };
 

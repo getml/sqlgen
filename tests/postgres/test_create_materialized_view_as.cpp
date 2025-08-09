@@ -8,9 +8,10 @@
 #include <sqlgen/postgres.hpp>
 #include <vector>
 
-namespace test_create_view_as {
+namespace test_create_materialized_view_as {
 
 struct Person {
+  constexpr static const char* tablename = "PEOPLE";
   sqlgen::PrimaryKey<uint32_t> id;
   std::string first_name;
   std::string last_name;
@@ -18,11 +19,12 @@ struct Person {
 };
 
 struct Name {
+  constexpr static const char* tablename = "NAMES";
   std::string first_name;
   std::string last_name;
 };
 
-TEST(postgres, test_create_view_as) {
+TEST(postgres, test_create_materialized_view_as) {
   const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
                                                          .password = "password",
                                                          .host = "localhost",
@@ -43,7 +45,8 @@ TEST(postgres, test_create_view_as) {
 
   const auto names_query = select_from<Person>("first_name"_c, "last_name"_c);
 
-  const auto get_names = create_or_replace_view_as<Name>(names_query);
+  const auto get_names =
+      create_materialized_view_as<Name>(names_query) | if_not_exists;
 
   const auto conn = sqlgen::postgres::connect(credentials);
 
@@ -54,10 +57,10 @@ TEST(postgres, test_create_view_as) {
                          .and_then(sqlgen::read<std::vector<Name>>)
                          .value();
 
-  conn.and_then(drop_view<Name> | if_exists).value();
+  conn.and_then(drop_materialized_view<Name> | if_exists).value();
 
   const std::string expected_query =
-      R"(CREATE OR REPLACE VIEW "Name" AS SELECT "first_name", "last_name" FROM "Person")";
+      R"(CREATE MATERIALIZED VIEW IF NOT EXISTS "NAMES" AS SELECT "first_name", "last_name" FROM "PEOPLE")";
 
   const std::string expected =
       R"([{"first_name":"Homer","last_name":"Simpson"},{"first_name":"Marge","last_name":"Simpson"},{"first_name":"Bart","last_name":"Simpson"},{"first_name":"Lisa","last_name":"Simpson"},{"first_name":"Maggie","last_name":"Simpson"}])";
@@ -66,6 +69,6 @@ TEST(postgres, test_create_view_as) {
   EXPECT_EQ(rfl::json::write(names), expected);
 }
 
-}  // namespace test_create_view_as
+}  // namespace test_create_materialized_view_as
 
 #endif
