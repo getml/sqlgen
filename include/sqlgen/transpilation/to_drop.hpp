@@ -18,8 +18,10 @@ namespace sqlgen::transpilation {
 template <class T>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
-dynamic::Drop to_drop(const bool _if_exists, const bool _cascade) {
-  return dynamic::Drop{.if_exists = _if_exists,
+dynamic::Drop to_drop(const dynamic::Drop::What _what, const bool _if_exists,
+                      const bool _cascade) {
+  return dynamic::Drop{.what = _what,
+                       .if_exists = _if_exists,
                        .cascade = _cascade,
                        .table = dynamic::Table{.name = get_tablename<T>(),
                                                .schema = get_schema<T>()}};

@@ -410,7 +410,8 @@ std::string delete_from_to_sql(const dynamic::DeleteFrom& _stmt) noexcept {
 std::string drop_to_sql(const dynamic::Drop& _stmt) noexcept {
   std::stringstream stream;
 
-  stream << "DROP TABLE ";
+  stream << "DROP "
+         << internal::strings::to_upper(rfl::enum_to_string(_stmt.what)) << " ";
 
   if (_stmt.if_exists) {
     stream << "IF EXISTS ";
