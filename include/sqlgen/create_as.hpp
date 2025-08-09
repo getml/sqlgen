@@ -11,31 +11,45 @@
 
 namespace sqlgen {
 
-template <class ValueType, class SelectFromType, class Connection>
+template <class ValueType, class TableOrQueryType, class AliasType,
+          class FieldsType, class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ToType, class Connection>
   requires is_connection<Connection>
-Result<Ref<Connection>> create_as_impl(const Ref<Connection>& _conn,
-                                       const dynamic::CreateAs::What _what,
-                                       const SelectFromType& _as,
-                                       const bool _if_not_exists) {
+Result<Ref<Connection>> create_as_impl(
+    const Ref<Connection>& _conn, const dynamic::CreateAs::What _what,
+    const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                     WhereType, GroupByType, OrderByType, LimitType, ToType>&
+        _as,
+    const bool _if_not_exists) {
   const auto query =
-      transpilation::to_create_as<ValueType>(_what, _as, _if_not_exists);
+      transpilation::to_create_as<ValueType, TableOrQueryType, AliasType,
+                                  FieldsType, JoinsType, WhereType, GroupByType,
+                                  OrderByType, LimitType>(
+          _what, _if_not_exists, _as.fields_, _as.table_or_query_, _as.joins_,
+          _as.where_, _as.limit_);
   return _conn->execute(_conn->to_sql(query)).transform([&](const auto&) {
     return _conn;
   });
 }
 
-template <class ValueType, class SelectFromType, class Connection>
+template <class ValueType, class TableOrQueryType, class AliasType,
+          class FieldsType, class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ToType, class Connection>
   requires is_connection<Connection>
-Result<Ref<Connection>> create_as_impl(const Result<Ref<Connection>>& _res,
-                                       const dynamic::CreateAs::What _what,
-                                       const SelectFromType& _as,
-                                       const bool _if_not_exists) {
+Result<Ref<Connection>> create_as_impl(
+    const Result<Ref<Connection>>& _res, const dynamic::CreateAs::What _what,
+    const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                     WhereType, GroupByType, OrderByType, LimitType, ToType>&
+        _as,
+    const bool _if_not_exists) {
   return _res.and_then([&](const auto& _conn) {
     return create_as_impl<ValueType>(_conn, _what, _as, _if_not_exists);
   });
 }
 
-template <class ValueType, class SelectFromType>
+template <class ValueType, class TableOrQueryType, class AliasType,
+          class FieldsType, class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ToType>
 struct CreateAs {
   auto operator()(const auto& _conn) const {
     return create_as_impl<ValueType>(_conn, dynamic::CreateAs::What::table, as_,
@@ -43,12 +57,19 @@ struct CreateAs {
   }
 
   dynamic::CreateAs::What what_;
-  SelectFromType as_;
+  SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
+             GroupByType, OrderByType, LimitType, ToType>
+      as_;
   bool if_not_exists_;
 };
 
-template <class ValueType, class... Args>
-inline auto create_table_as(const SelectFrom<Args...>& _as) {
+template <class ValueType, class TableOrQueryType, class AliasType,
+          class FieldsType, class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ToType>
+inline auto create_table_as(
+    const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                     WhereType, GroupByType, OrderByType, LimitType, ToType>&
+        _as) {
   return CreateTableAs<std::remove_cvref_t<ValueType>, SelectFrom<Args...>>{
       .as_ = _as, .if_not_exists_ = false};
 }
