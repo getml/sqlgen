@@ -1,12 +1,15 @@
 #ifndef SQLGEN_CREATEAS_HPP_
 #define SQLGEN_CREATEAS_HPP_
 
+#include <concepts>
 #include <rfl.hpp>
+#include <type_traits>
 
 #include "Result.hpp"
 #include "dynamic/CreateAs.hpp"
 #include "is_connection.hpp"
 #include "select_from.hpp"
+#include "transpilation/extract_table_t.hpp"
 #include "transpilation/table_tuple_t.hpp"
 #include "transpilation/to_create_as.hpp"
 
@@ -23,7 +26,7 @@ Result<Ref<Connection>> create_as_impl(
         _as,
     const bool _if_not_exists) {
   using TableTupleType =
-      transpilation::table_tuple_t<ValueType, AliasType, JoinsType>;
+      transpilation::table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
 
   const auto query = transpilation::to_create_as<
       ValueType, TableTupleType, AliasType, FieldsType, TableOrQueryType,
@@ -55,15 +58,23 @@ template <class ValueType, class TableOrQueryType, class AliasType,
           class FieldsType, class JoinsType, class WhereType, class GroupByType,
           class OrderByType, class LimitType, class ToType>
 struct CreateAs {
+  using As = SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                        WhereType, GroupByType, OrderByType, LimitType, ToType>;
+
+  static_assert(
+      requires(transpilation::extract_table_t<As> a) {
+        { rfl::from_named_tuple<ValueType>(a) } -> std::same_as<ValueType>;
+      },
+      "The query inserted into create_..._as must be convertible to "
+      "the output struct.");
+
   auto operator()(const auto& _conn) const {
     return create_as_impl<ValueType>(_conn, dynamic::CreateAs::What::table, as_,
                                      if_not_exists_);
   }
 
   dynamic::CreateAs::What what_;
-  SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
-             GroupByType, OrderByType, LimitType, ToType>
-      as_;
+  As as_;
   bool if_not_exists_;
 };
 

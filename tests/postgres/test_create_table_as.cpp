@@ -41,9 +41,9 @@ TEST(postgres, test_create_table_as) {
        Person{
            .id = 4, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-  const auto get_names = create_table_as<Name>(select_from<Person>(
-                             "first_name"_c, "last_name"_c)) |
-                         if_not_exists;
+  const auto names_query = select_from<Person>("first_name"_c, "last_name"_c);
+
+  const auto get_names = create_table_as<Name>(names_query) | if_not_exists;
 
   const auto names = sqlgen::postgres::connect(credentials)
                          .and_then(drop<Name> | if_exists)
