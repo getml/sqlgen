@@ -69,8 +69,7 @@ struct CreateAs {
       "the output struct.");
 
   auto operator()(const auto& _conn) const {
-    return create_as_impl<ValueType>(_conn, dynamic::CreateAs::What::table, as_,
-                                     if_not_exists_);
+    return create_as_impl<ValueType>(_conn, what_, as_, if_not_exists_);
   }
 
   dynamic::CreateAs::What what_;
@@ -78,16 +77,20 @@ struct CreateAs {
   bool if_not_exists_;
 };
 
-template <class ValueType, class TableOrQueryType, class AliasType,
-          class FieldsType, class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ToType>
-inline auto create_table_as(
-    const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                     WhereType, GroupByType, OrderByType, LimitType, ToType>&
-        _as) {
-  return CreateAs<std::remove_cvref_t<ValueType>, TableOrQueryType, AliasType,
-                  FieldsType, JoinsType, WhereType, GroupByType, OrderByType,
-                  LimitType, ToType>{.as_ = _as, .if_not_exists_ = false};
+template <class ValueType, class... Args>
+inline auto create_table_as(const SelectFrom<Args...>& _as) {
+  return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
+      .what_ = dynamic::CreateAs::What::table,
+      .as_ = _as,
+      .if_not_exists_ = false};
+}
+
+template <class ValueType, class... Args>
+inline auto create_view_as(const SelectFrom<Args...>& _as) {
+  return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
+      .what_ = dynamic::CreateAs::What::view,
+      .as_ = _as,
+      .if_not_exists_ = false};
 }
 
 };  // namespace sqlgen
