@@ -1,5 +1,5 @@
-#ifndef SQLGEN_TRANSPILATION_TO_CREATE_TABLE_AS_HPP_
-#define SQLGEN_TRANSPILATION_TO_CREATE_TABLE_AS_HPP_
+#ifndef SQLGEN_TRANSPILATION_TO_CREATE_AS_HPP_
+#define SQLGEN_TRANSPILATION_TO_CREATE_AS_HPP_
 
 #include <rfl.hpp>
 #include <string>
@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "../dynamic/CreateTableAs.hpp"
+#include "../dynamic/CreateAs.hpp"
 #include "../dynamic/Table.hpp"
 #include "get_schema.hpp"
 #include "get_tablename.hpp"
@@ -20,11 +20,11 @@ template <class T, class TableTupleType, class AliasType, class FieldsType,
           class OrderByType, class LimitType>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
-dynamic::CreateTableAs to_create_table_as(const FieldsType& _fields,
-                                          const JoinsType& _joins,
-                                          const WhereType& _where,
-                                          const LimitType& _limit,
-                                          const bool _if_not_exists) {
+dynamic::CreateTableAs to_create_as(const FieldsType& _fields,
+                                    const JoinsType& _joins,
+                                    const WhereType& _where,
+                                    const LimitType& _limit,
+                                    const bool _if_not_exists) {
   return dynamic::CreateTableAs{
       .table =
           dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},

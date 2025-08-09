@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "../create_as.hpp"
 #include "../create_index.hpp"
 #include "../create_table.hpp"
 #include "../delete_from.hpp"
@@ -28,6 +29,11 @@ namespace sqlgen::transpilation {
 
 template <class T>
 struct ToSQL;
+
+template <class T>
+struct ToSQL<CreateAs<T>> {
+  dynamic::Statement operator()(const auto&) const { return to_create_as<T>(); }
+};
 
 template <rfl::internal::StringLiteral _name, class ValueType, class WhereType,
           class... ColTypes>
