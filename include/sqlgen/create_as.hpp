@@ -7,6 +7,7 @@
 #include "dynamic/CreateAs.hpp"
 #include "is_connection.hpp"
 #include "select_from.hpp"
+#include "transpilation/table_tuple_t.hpp"
 #include "transpilation/to_create_as.hpp"
 
 namespace sqlgen {
@@ -21,12 +22,15 @@ Result<Ref<Connection>> create_as_impl(
                      WhereType, GroupByType, OrderByType, LimitType, ToType>&
         _as,
     const bool _if_not_exists) {
-  const auto query =
-      transpilation::to_create_as<ValueType, TableOrQueryType, AliasType,
-                                  FieldsType, JoinsType, WhereType, GroupByType,
-                                  OrderByType, LimitType>(
-          _what, _if_not_exists, _as.fields_, _as.table_or_query_, _as.joins_,
-          _as.where_, _as.limit_);
+  using TableTupleType =
+      transpilation::table_tuple_t<ValueType, AliasType, JoinsType>;
+
+  const auto query = transpilation::to_create_as<
+      ValueType, TableTupleType, AliasType, FieldsType, TableOrQueryType,
+      JoinsType, WhereType, GroupByType, OrderByType, LimitType>(
+      _what, _if_not_exists, _as.fields_, _as.from_, _as.joins_, _as.where_,
+      _as.limit_);
+
   return _conn->execute(_conn->to_sql(query)).transform([&](const auto&) {
     return _conn;
   });
@@ -70,8 +74,9 @@ inline auto create_table_as(
     const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                      WhereType, GroupByType, OrderByType, LimitType, ToType>&
         _as) {
-  return CreateTableAs<std::remove_cvref_t<ValueType>, SelectFrom<Args...>>{
-      .as_ = _as, .if_not_exists_ = false};
+  return CreateAs<std::remove_cvref_t<ValueType>, TableOrQueryType, AliasType,
+                  FieldsType, JoinsType, WhereType, GroupByType, OrderByType,
+                  LimitType, ToType>{.as_ = _as, .if_not_exists_ = false};
 }
 
 };  // namespace sqlgen

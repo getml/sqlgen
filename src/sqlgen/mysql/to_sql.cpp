@@ -31,7 +31,7 @@ std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept;
 
 std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept;
 
-std::string create_as_to_sql(const dynamic::CreateTableAs& _stmt) noexcept;
+std::string create_as_to_sql(const dynamic::CreateAs& _stmt) noexcept;
 
 std::string date_plus_duration_to_sql(
     const dynamic::Operation::DatePlusDuration& _stmt,
@@ -365,7 +365,7 @@ std::string date_plus_duration_to_sql(
   return stream.str();
 }
 
-std::string create_as_to_sql(const dynamic::CreateTableAs& _stmt) noexcept {
+std::string create_as_to_sql(const dynamic::CreateAs& _stmt) noexcept {
   std::stringstream stream;
 
   stream << "CREATE "
@@ -378,12 +378,12 @@ std::string create_as_to_sql(const dynamic::CreateTableAs& _stmt) noexcept {
     stream << "IF NOT EXISTS ";
   }
 
-  if (_stmt.table.schema) {
-    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
+  if (_stmt.table_or_view.schema) {
+    stream << wrap_in_quotes(*_stmt.table_or_view.schema) << ".";
   }
-  stream << wrap_in_quotes(_stmt.table.name) << " AS ";
+  stream << wrap_in_quotes(_stmt.table_or_view.name) << " AS ";
 
-  stream << select_from_to_sql(_stmt.as);
+  stream << select_from_to_sql(_stmt.query);
 
   return stream.str();
 }

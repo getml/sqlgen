@@ -29,8 +29,7 @@ std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept;
 
 std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept;
 
-std::string create_table_as_to_sql(
-    const dynamic::CreateTableAs& _stmt) noexcept;
+std::string create_as_to_sql(const dynamic::CreateAs& _stmt) noexcept;
 
 std::string delete_from_to_sql(const dynamic::DeleteFrom& _stmt) noexcept;
 
@@ -282,22 +281,25 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
   return stream.str();
 }
 
-std::string create_table_as_to_sql(
-    const dynamic::CreateTableAs& _stmt) noexcept {
+std::string create_as_to_sql(const dynamic::CreateAs& _stmt) noexcept {
   std::stringstream stream;
 
-  stream << "CREATE TABLE ";
+  stream << "CREATE "
+         << internal::strings::replace_all(
+                internal::strings::to_upper(rfl::enum_to_string(_stmt.what)),
+                "_", " ")
+         << " ";
 
   if (_stmt.if_not_exists) {
     stream << "IF NOT EXISTS ";
   }
 
-  if (_stmt.table.schema) {
-    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
+  if (_stmt.table_or_view.schema) {
+    stream << wrap_in_quotes(*_stmt.table_or_view.schema) << ".";
   }
-  stream << wrap_in_quotes(_stmt.table.name) << " AS ";
+  stream << wrap_in_quotes(_stmt.table_or_view.name) << " AS ";
 
-  stream << select_from_to_sql(_stmt.as);
+  stream << select_from_to_sql(_stmt.query);
 
   return stream.str();
 }
@@ -674,8 +676,8 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
     } else if constexpr (std::is_same_v<S, dynamic::CreateTable>) {
       return create_table_to_sql(_s);
 
-    } else if constexpr (std::is_same_v<S, dynamic::CreateTableAs>) {
-      return create_table_as_to_sql(_s);
+    } else if constexpr (std::is_same_v<S, dynamic::CreateAs>) {
+      return create_as_to_sql(_s);
 
     } else if constexpr (std::is_same_v<S, dynamic::DeleteFrom>) {
       return delete_from_to_sql(_s);

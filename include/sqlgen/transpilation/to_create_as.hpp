@@ -20,18 +20,20 @@ template <class T, class TableTupleType, class AliasType, class FieldsType,
           class GroupByType, class OrderByType, class LimitType>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
-dynamic::CreateTableAs to_create_as(
-    const dynamic::CreateAs::What _what, const bool _if_not_exists,
-    const FieldsType& _fields, const TableOrQueryType& _table_or_query,
-    const JoinsType& _joins, const WhereType& _where, const LimitType& _limit) {
+dynamic::CreateAs to_create_as(const dynamic::CreateAs::What _what,
+                               const bool _if_not_exists,
+                               const FieldsType& _fields,
+                               const TableOrQueryType& _table_or_query,
+                               const JoinsType& _joins, const WhereType& _where,
+                               const LimitType& _limit) {
   return dynamic::CreateAs{
       .what = _what,
       .table_or_view =
           dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
-      .as = to_select_from<TableTupleType, AliasType, FieldsType,
-                           TableOrQueryType, JoinsType, WhereType, GroupByType,
-                           OrderByType, LimitType>(_fields, _table_or_query,
-                                                   _joins, _where, _limit),
+      .query = to_select_from<TableTupleType, AliasType, FieldsType,
+                              TableOrQueryType, JoinsType, WhereType,
+                              GroupByType, OrderByType, LimitType>(
+          _fields, _table_or_query, _joins, _where, _limit),
       .if_not_exists = _if_not_exists};
 }
 

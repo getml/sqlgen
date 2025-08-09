@@ -30,9 +30,22 @@ namespace sqlgen::transpilation {
 template <class T>
 struct ToSQL;
 
-template <class T>
-struct ToSQL<CreateAs<T>> {
-  dynamic::Statement operator()(const auto&) const { return to_create_as<T>(); }
+template <class ValueType, class TableOrQueryType, class AliasType,
+          class FieldsType, class JoinsType, class WhereType, class GroupByType,
+          class OrderByType, class LimitType, class ToType>
+struct ToSQL<
+    CreateAs<ValueType, TableOrQueryType, AliasType, FieldsType, JoinsType,
+             WhereType, GroupByType, OrderByType, LimitType, ToType>> {
+  dynamic::Statement operator()(const auto& _create_as) const {
+    using TableTupleType =
+        transpilation::table_tuple_t<ValueType, AliasType, JoinsType>;
+    return to_create_as<ValueType, TableTupleType, AliasType, FieldsType,
+                        TableOrQueryType, JoinsType, WhereType, GroupByType,
+                        OrderByType, LimitType>(
+        _create_as.what_, _create_as.if_not_exists_, _create_as.as_.fields_,
+        _create_as.as_.from_, _create_as.as_.joins_, _create_as.as_.where_,
+        _create_as.as_.limit_);
+  }
 };
 
 template <rfl::internal::StringLiteral _name, class ValueType, class WhereType,
