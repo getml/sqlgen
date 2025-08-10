@@ -3,7 +3,7 @@
 
 namespace sqlgen::dynamic {
 
-enum class TableOrView { table, view, materialized_view };
+enum class TableOrView { table, view };
 
 }  // namespace sqlgen::dynamic
 

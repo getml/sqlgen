@@ -96,7 +96,7 @@ inline auto create_or_replace_view_as(const SelectFrom<Args...>& _as) {
       transpilation::get_table_or_view<ValueType>() ==
           dynamic::TableOrView::view,
       "Only views can be created using create_or_replace_view_as(...), "
-      "not tables or materialized views. To declare a struct a view, "
+      "not tables. To declare a struct a view, "
       "simply add 'static constexpr bool is_view = true;' to the struct "
       "declaration.");
   return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
