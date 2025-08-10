@@ -9,8 +9,10 @@
 
 #include "../dynamic/CreateTable.hpp"
 #include "../dynamic/Table.hpp"
+#include "../dynamic/TableOrView.hpp"
 #include "../internal/remove_auto_incr_primary_t.hpp"
 #include "get_schema.hpp"
+#include "get_table_or_view.hpp"
 #include "get_tablename.hpp"
 #include "make_columns.hpp"
 
@@ -22,6 +24,10 @@ template <class T>
 dynamic::CreateTable to_create_table(const bool _if_not_exists = true) {
   using NamedTupleType = rfl::named_tuple_t<std::remove_cvref_t<T>>;
   using Fields = typename NamedTupleType::Fields;
+
+  static_assert(get_table_or_view<T>() == dynamic::TableOrView::table,
+                "You cannot create a view using create_table(...).");
+
   return dynamic::CreateTable{
       .table =
           dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
