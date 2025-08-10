@@ -19,6 +19,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 ## Database Operations
 
+- [sqlgen::create_as](create_as.md) - How to create tables and views from SELECT queries
 - [sqlgen::create_index](create_index.md) - How to create an index on a table
 - [sqlgen::create_table](create_table.md) - How to create a new table
 - [sqlgen::delete_from](delete_from.md) - How to delete data from a table
@@ -50,6 +51,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 - [Connection Pool](connection_pool.md) - How to manage database connections efficiently
 - [Transactions](transactions.md) - How to use transactions for atomic operations
+- [Views](views.md) - How to create and manage database views
 
 ## Supported Databases
 
