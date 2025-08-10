@@ -6,6 +6,7 @@
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "is_connection.hpp"
+#include "transpilation/get_table_or_view.hpp"
 #include "transpilation/to_drop.hpp"
 
 namespace sqlgen {
@@ -43,17 +44,8 @@ struct Drop {
 };
 
 template <class ValueType>
-const auto drop = Drop<ValueType>{.what_ = dynamic::Drop::What::table};
-
-template <class ValueType>
-const auto drop_table = drop<ValueType>;
-
-template <class ValueType>
-const auto drop_view = Drop<ValueType>{.what_ = dynamic::Drop::What::view};
-
-template <class ValueType>
-const auto drop_materialized_view =
-    Drop<ValueType>{.what_ = dynamic::Drop::What::materialized_view};
+const auto drop =
+    Drop<ValueType>{.what_ = transpilation::get_table_or_view<ValueType>()};
 
 }  // namespace sqlgen
 

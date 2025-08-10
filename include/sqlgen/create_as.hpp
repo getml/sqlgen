@@ -10,6 +10,7 @@
 #include "is_connection.hpp"
 #include "select_from.hpp"
 #include "transpilation/extract_table_t.hpp"
+#include "transpilation/get_table_or_view.hpp"
 #include "transpilation/table_tuple_t.hpp"
 #include "transpilation/to_create_as.hpp"
 
@@ -81,18 +82,9 @@ struct CreateAs {
 };
 
 template <class ValueType, class... Args>
-inline auto create_table_as(const SelectFrom<Args...>& _as) {
+inline auto create_as(const SelectFrom<Args...>& _as) {
   return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
-      .what_ = dynamic::CreateAs::What::table,
-      .as_ = _as,
-      .or_replace_ = false,
-      .if_not_exists_ = false};
-}
-
-template <class ValueType, class... Args>
-inline auto create_view_as(const SelectFrom<Args...>& _as) {
-  return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
-      .what_ = dynamic::CreateAs::What::view,
+      .what_ = transpilation::get_table_or_view<ValueType>(),
       .as_ = _as,
       .or_replace_ = false,
       .if_not_exists_ = false};
@@ -100,22 +92,19 @@ inline auto create_view_as(const SelectFrom<Args...>& _as) {
 
 template <class ValueType, class... Args>
 inline auto create_or_replace_view_as(const SelectFrom<Args...>& _as) {
+  static_assert(
+      transpilation::get_table_or_view<ValueType>() ==
+          dynamic::TableOrView::view,
+      "Only views can be created using create_or_replace_view_as(...), "
+      "not tables or materialized views. To declare a struct a view, "
+      "simply add 'static constexpr bool is_view = true;' to the struct "
+      "declaration.");
   return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
-      .what_ = dynamic::CreateAs::What::view,
+      .what_ = dynamic::TableOrView::view,
       .as_ = _as,
       .or_replace_ = true,
       .if_not_exists_ = false};
 }
-
-template <class ValueType, class... Args>
-inline auto create_materialized_view_as(const SelectFrom<Args...>& _as) {
-  return CreateAs<std::remove_cvref_t<ValueType>, Args...>{
-      .what_ = dynamic::CreateAs::What::materialized_view,
-      .as_ = _as,
-      .or_replace_ = false,
-      .if_not_exists_ = false};
-}
-
 };  // namespace sqlgen
 
 #endif

@@ -3,11 +3,12 @@
 
 #include "SelectFrom.hpp"
 #include "Table.hpp"
+#include "TableOrView.hpp"
 
 namespace sqlgen::dynamic {
 
 struct CreateAs {
-  enum class What { table, view, materialized_view };
+  using What = TableOrView;
 
   What what;
   Table table_or_view;

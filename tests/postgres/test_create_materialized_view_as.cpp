@@ -12,6 +12,7 @@ namespace test_create_materialized_view_as {
 
 struct Person {
   constexpr static const char* tablename = "PEOPLE";
+
   sqlgen::PrimaryKey<uint32_t> id;
   std::string first_name;
   std::string last_name;
@@ -19,7 +20,9 @@ struct Person {
 };
 
 struct Name {
-  constexpr static const char* tablename = "NAMES";
+  constexpr static const char* viewname = "NAMES";
+  constexpr static const bool is_materialized_view = true;
+
   std::string first_name;
   std::string last_name;
 };
@@ -45,8 +48,7 @@ TEST(postgres, test_create_materialized_view_as) {
 
   const auto names_query = select_from<Person>("first_name"_c, "last_name"_c);
 
-  const auto get_names =
-      create_materialized_view_as<Name>(names_query) | if_not_exists;
+  const auto get_names = create_as<Name>(names_query) | if_not_exists;
 
   const auto conn = sqlgen::postgres::connect(credentials);
 
@@ -57,7 +59,7 @@ TEST(postgres, test_create_materialized_view_as) {
                          .and_then(sqlgen::read<std::vector<Name>>)
                          .value();
 
-  conn.and_then(drop_materialized_view<Name> | if_exists).value();
+  conn.and_then(drop<Name> | if_exists).value();
 
   const std::string expected_query =
       R"(CREATE MATERIALIZED VIEW IF NOT EXISTS "NAMES" AS SELECT "first_name", "last_name" FROM "PEOPLE")";

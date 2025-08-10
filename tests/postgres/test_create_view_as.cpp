@@ -11,6 +11,8 @@
 namespace test_create_view_as {
 
 struct Person {
+  static constexpr const char* tablename = "PEOPLE";
+
   sqlgen::PrimaryKey<uint32_t> id;
   std::string first_name;
   std::string last_name;
@@ -18,6 +20,9 @@ struct Person {
 };
 
 struct Name {
+  static constexpr const char* viewname = "NAMES";
+  static constexpr bool is_view = true;
+
   std::string first_name;
   std::string last_name;
 };
@@ -54,10 +59,10 @@ TEST(postgres, test_create_view_as) {
                          .and_then(sqlgen::read<std::vector<Name>>)
                          .value();
 
-  conn.and_then(drop_view<Name> | if_exists).value();
+  conn.and_then(drop<Name> | if_exists).value();
 
   const std::string expected_query =
-      R"(CREATE OR REPLACE VIEW "Name" AS SELECT "first_name", "last_name" FROM "Person")";
+      R"(CREATE OR REPLACE VIEW "NAMES" AS SELECT "first_name", "last_name" FROM "PEOPLE")";
 
   const std::string expected =
       R"([{"first_name":"Homer","last_name":"Simpson"},{"first_name":"Marge","last_name":"Simpson"},{"first_name":"Bart","last_name":"Simpson"},{"first_name":"Lisa","last_name":"Simpson"},{"first_name":"Maggie","last_name":"Simpson"}])";

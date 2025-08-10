@@ -4,11 +4,13 @@
 #include <optional>
 
 #include "Table.hpp"
+#include "TableOrView.hpp"
 
 namespace sqlgen::dynamic {
 
 struct Drop {
-  enum struct What { table, view, materialized_view };
+  using What = TableOrView;
+
   What what;
   bool if_exists = false;
   bool cascade = false;
