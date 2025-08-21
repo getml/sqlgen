@@ -41,6 +41,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 ## Data Types and Validation
 
+- [sqlgen::Dynamic](dynamic.md) - How to define custom SQL types not natively supported by sqlgen
 - [sqlgen::ForeignKey](foreign_key.md) - How to establish referential integrity between tables
 - [sqlgen::Pattern](pattern.md) - How to add regex pattern validation to avoid SQL injection
 - [sqlgen::Timestamp](timestamp.md) - How timestamps work in sqlgen
