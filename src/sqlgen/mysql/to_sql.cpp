@@ -120,6 +120,9 @@ std::string cast_type_to_sql(const dynamic::Type& _type) noexcept {
     if constexpr (std::is_same_v<T, dynamic::types::Boolean>) {
       return "BOOLEAN";
 
+    } else if constexpr (std::is_same_v<T, dynamic::types::Dynamic>) {
+      return _t.type_name;
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Int8> ||
                          std::is_same_v<T, dynamic::types::Int16> ||
                          std::is_same_v<T, dynamic::types::Int32> ||
@@ -833,6 +836,9 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
     if constexpr (std::is_same_v<T, dynamic::types::Boolean>) {
       return "BOOLEAN";
 
+    } else if constexpr (std::is_same_v<T, dynamic::types::Dynamic>) {
+      return _t.type_name;
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Int8>) {
       return "TINYINT";
 
@@ -865,8 +871,6 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
     } else if constexpr (std::is_same_v<T, dynamic::types::Timestamp> ||
                          std::is_same_v<T, dynamic::types::TimestampWithTZ>) {
       return "DATETIME";
-    } else if constexpr (std::is_same_v<T, dynamic::types::Dynamic>) {
-      return _t.type_name;
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Unknown>) {
       return "TEXT";

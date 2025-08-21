@@ -720,6 +720,7 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
 std::string type_to_sql(const dynamic::Type& _type) noexcept {
   return _type.visit([](const auto _t) -> std::string {
     using T = std::remove_cvref_t<decltype(_t)>;
+
     if constexpr (std::is_same_v<T, dynamic::types::Boolean> ||
                   std::is_same_v<T, dynamic::types::Int8> ||
                   std::is_same_v<T, dynamic::types::Int16> ||
@@ -730,9 +731,11 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
                   std::is_same_v<T, dynamic::types::UInt32> ||
                   std::is_same_v<T, dynamic::types::UInt64>) {
       return "INTEGER";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
                          std::is_same_v<T, dynamic::types::Float64>) {
       return "REAL";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Unknown> ||
                          std::is_same_v<T, dynamic::types::Text> ||
                          std::is_same_v<T, dynamic::types::VarChar> ||
@@ -740,8 +743,10 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
                          std::is_same_v<T, dynamic::types::Timestamp> ||
                          std::is_same_v<T, dynamic::types::TimestampWithTZ>) {
       return "TEXT";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Dynamic>) {
       return _t.type_name;
+
     } else {
       static_assert(rfl::always_false_v<T>, "Not all cases were covered.");
     }

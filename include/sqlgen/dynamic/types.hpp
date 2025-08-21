@@ -29,6 +29,11 @@ struct Boolean {
   Properties properties;
 };
 
+struct Dynamic {
+  std::string type_name;
+  Properties properties;
+};
+
 struct Float32 {
   Properties properties;
 };
@@ -90,11 +95,6 @@ struct TimestampWithTZ {
 
 struct VarChar {
   uint16_t length;
-  Properties properties;
-};
-
-struct Dynamic {
-  std::string type_name;
   Properties properties;
 };
 
