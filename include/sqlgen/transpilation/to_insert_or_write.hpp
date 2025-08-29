@@ -32,13 +32,21 @@ InsertOrWrite to_insert_or_write(bool or_replace) {
 
   const auto get_name = [](const auto& _col) { return _col.name; };
 
-  auto result = InsertOrWrite{.table = dynamic::Table{.name = get_tablename<T>(),
-                                               .schema = get_schema<T>()},
-                       .columns = sqlgen::internal::collect::vector(
-                           columns | transform(get_name))};
+  auto result = InsertOrWrite{
+      .table =
+          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
+      .columns =
+          sqlgen::internal::collect::vector(columns | transform(get_name))};
 
-  if constexpr(std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+  if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    const auto is_non_primary = [](const auto& _c) {
+      return _c.type.visit(
+          [](const auto& _t) { return !_t.properties.primary; });
+    };
+
     result.or_replace = or_replace;
+    result.non_primary_keys = sqlgen::internal::collect::vector(
+        columns | filter(is_non_primary) | transform(get_name));
   }
 
   return result;
@@ -48,7 +56,7 @@ template <class T, class InsertOrWrite>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
 InsertOrWrite to_insert_or_write() {
-  return to_insert_or_write<T,InsertOrWrite>(false);
+  return to_insert_or_write<T, InsertOrWrite>(false);
 }
 
 }  // namespace sqlgen::transpilation
