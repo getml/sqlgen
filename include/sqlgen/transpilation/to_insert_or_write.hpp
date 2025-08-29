@@ -20,7 +20,7 @@ namespace sqlgen::transpilation {
 template <class T, class InsertOrWrite>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
-InsertOrWrite to_insert_or_write() {
+InsertOrWrite to_insert_or_write(bool or_replace) {
   using namespace std::ranges::views;
 
   using NamedTupleType = sqlgen::internal::remove_auto_incr_primary_t<
@@ -35,7 +35,15 @@ InsertOrWrite to_insert_or_write() {
   return InsertOrWrite{.table = dynamic::Table{.name = get_tablename<T>(),
                                                .schema = get_schema<T>()},
                        .columns = sqlgen::internal::collect::vector(
-                           columns | transform(get_name))};
+                           columns | transform(get_name)),
+                       .or_replace = or_replace};
+}
+
+template <class T, class InsertOrWrite>
+  requires std::is_class_v<std::remove_cvref_t<T>> &&
+           std::is_aggregate_v<std::remove_cvref_t<T>>
+InsertOrWrite to_insert_or_write() {
+  return to_insert_or_write<T,InsertOrWrite>(false);
 }
 
 }  // namespace sqlgen::transpilation

@@ -30,7 +30,7 @@ Result<Ref<Connection>> write(const Ref<Connection>& _conn, ItBegin _begin,
 
   const auto start_write = [&](const auto&) -> Result<Nothing> {
     const auto write_stmt =
-        transpilation::to_insert_or_write<T, dynamic::Write>();
+        transpilation::to_insert_or_write<T, dynamic::Write>(false);
     return _conn->start_write(write_stmt);
   };
 

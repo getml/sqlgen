@@ -389,7 +389,14 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   };
 
   std::stringstream stream;
-  stream << "INSERT INTO ";
+  stream << "INSERT ";
+
+  if (_stmt.or_replace) {
+    stream << "OR REPLACE ";
+  }
+
+  stream << "INTO ";
+
   if (_stmt.table.schema) {
     stream << "\"" << *_stmt.table.schema << "\".";
   }

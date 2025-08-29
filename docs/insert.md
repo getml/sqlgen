@@ -68,6 +68,42 @@ sqlgen::sqlite::connect("database.db")
     .value();
 ```
 
+### With Replacement
+
+Replace existing rows (currently only implemented for SQLite):
+
+```cpp
+const auto people1 = std::vector<Person>({
+    Person{.id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
+    Person{.id = 1, .first_name = "Bart", .last_name = "Simpson", .age = 10}
+});
+
+const auto people2 = std::vector<Person>({
+    Person{.id = 1, .first_name = "Bartholomew", .last_name = "Simpson", .age = 10}
+});
+
+using namespace sqlgen;
+
+const auto result = sqlite::connect()
+    .and_then(create_table<Person> | if_not_exists)
+    .and_then(insert(std::ref(people1)))
+    .and_then(insert_or_replace(std::ref(people2)))
+    .value();
+```
+
+This generates the following SQL:
+
+```sql
+CREATE TABLE IF NOT EXISTS "Person" (
+    "id" INTEGER PRIMARY KEY,
+    "first_name" TEXT NOT NULL,
+    "last_name" TEXT NOT NULL,
+    "age" INTEGER NOT NULL
+);
+INSERT INTO "Person" ("id", "first_name", "last_name", "age") VALUES (?, ?, ?, ?);
+INSERT OR REPLACE INTO "Person" ("id", "first_name", "last_name", "age") VALUES (?, ?, ?, ?);
+```
+
 ## Example: Full Transaction Usage
 
 Here's a complete example showing how to use `insert` within a transaction:
@@ -196,4 +232,4 @@ While both `insert` and `write` can be used to add data to a database, they serv
 - Unlike `write`, `insert` does not create tables automatically - you must create tables separately using `create_table`
 - The insert operation is atomic within a transaction
 - When using reference wrappers (`std::ref`), the data is not copied, which can be more efficient for large datasets
-
+- `sqlgen::insert_or_replace` is currently supported only for SQLite

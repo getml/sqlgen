@@ -4,6 +4,7 @@
 #include <functional>
 #include <iterator>
 #include <optional>
+#include <utility>
 #include <rfl.hpp>
 #include <string>
 #include <type_traits>
@@ -18,13 +19,13 @@ namespace sqlgen {
 
 template <class ItBegin, class ItEnd, class Connection>
   requires is_connection<Connection>
-Result<Ref<Connection>> insert(const Ref<Connection>& _conn, ItBegin _begin,
-                               ItEnd _end) {
+Result<Ref<Connection>> insert_impl(const Ref<Connection>& _conn, ItBegin _begin,
+                               ItEnd _end, bool or_replace) {
   using T =
       std::remove_cvref_t<typename std::iterator_traits<ItBegin>::value_type>;
 
   const auto insert_stmt =
-      transpilation::to_insert_or_write<T, dynamic::Insert>();
+      transpilation::to_insert_or_write<T, dynamic::Insert>(or_replace);
 
   std::vector<std::vector<std::optional<std::string>>> data;
 
@@ -51,37 +52,48 @@ Result<Ref<Connection>> insert(const Ref<Connection>& _conn, ItBegin _begin,
 
 template <class ItBegin, class ItEnd, class Connection>
   requires is_connection<Connection>
-Result<Ref<Connection>> insert(const Result<Ref<Connection>>& _res,
-                               ItBegin _begin, ItEnd _end) {
+Result<Ref<Connection>> insert_impl(const Result<Ref<Connection>>& _res,
+                               ItBegin _begin, ItEnd _end, bool or_replace) {
   return _res.and_then(
-      [&](const auto& _conn) { return insert(_conn, _begin, _end); });
+      [&](const auto& _conn) { return insert_impl(_conn, _begin, _end, or_replace); });
 }
 
 template <class ContainerType>
-auto insert(const auto& _conn, const ContainerType& _data) {
+auto insert_impl(const auto& _conn, const ContainerType& _data, bool or_replace) {
   if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
-    return insert(_conn, _data.begin(), _data.end());
+    return insert_impl(_conn, _data.begin(), _data.end(), or_replace);
   } else {
-    return insert(_conn, &_data, &_data + 1);
+    return insert_impl(_conn, &_data, &_data + 1, or_replace);
   }
 }
 
 template <class ContainerType>
-auto insert(const auto& _conn,
-            const std::reference_wrapper<ContainerType>& _data) {
-  return insert(_conn, _data.get());
+auto insert_impl(const auto& _conn,
+            const std::reference_wrapper<ContainerType>& _data, bool or_replace) {
+  return insert_impl(_conn, _data.get(), or_replace);
 }
 
 template <class ContainerType>
 struct Insert {
-  auto operator()(const auto& _conn) const { return insert(_conn, data_); }
+  auto operator()(const auto& _conn) const { return insert_impl(_conn, data_, or_replace); }
 
   ContainerType data_;
+  bool or_replace;
 };
 
 template <class ContainerType>
-Insert<ContainerType> insert(const ContainerType& _data) {
-  return Insert<ContainerType>{.data_ = _data};
+Insert<ContainerType> insert_impl(const ContainerType& _data, bool or_replace) {
+  return Insert<ContainerType>{.data_ = _data, .or_replace = or_replace};
+}
+
+template <class... Args>
+auto insert(Args&&... args) {
+  return insert_impl(std::forward<Args>(args)..., false);
+}
+
+template <class... Args>
+auto insert_or_replace(Args&&... args) {
+  return insert_impl(std::forward<Args>(args)..., true);
 }
 
 };  // namespace sqlgen
