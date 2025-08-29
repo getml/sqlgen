@@ -391,8 +391,10 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   std::stringstream stream;
   stream << "INSERT ";
 
-  if (_stmt.or_replace) {
-    stream << "OR REPLACE ";
+  if constexpr(std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    if (_stmt.or_replace) {
+      stream << "OR REPLACE ";
+    }
   }
 
   stream << "INTO ";

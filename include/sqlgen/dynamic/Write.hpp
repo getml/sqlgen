@@ -11,7 +11,6 @@ namespace sqlgen::dynamic {
 struct Write {
   Table table;
   std::vector<std::string> columns;
-  bool or_replace;
 };
 
 }  // namespace sqlgen::dynamic

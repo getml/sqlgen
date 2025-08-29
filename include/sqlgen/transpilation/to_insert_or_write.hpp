@@ -32,11 +32,16 @@ InsertOrWrite to_insert_or_write(bool or_replace) {
 
   const auto get_name = [](const auto& _col) { return _col.name; };
 
-  return InsertOrWrite{.table = dynamic::Table{.name = get_tablename<T>(),
+  auto result = InsertOrWrite{.table = dynamic::Table{.name = get_tablename<T>(),
                                                .schema = get_schema<T>()},
                        .columns = sqlgen::internal::collect::vector(
-                           columns | transform(get_name)),
-                       .or_replace = or_replace};
+                           columns | transform(get_name))};
+
+  if constexpr(std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    result.or_replace = or_replace;
+  }
+
+  return result;
 }
 
 template <class T, class InsertOrWrite>
