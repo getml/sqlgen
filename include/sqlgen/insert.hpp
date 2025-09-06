@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "internal/batch_size.hpp"
-#include "internal/has_primary_key.hpp"
+#include "internal/has_constraint.hpp"
 #include "internal/to_str_vec.hpp"
 #include "is_connection.hpp"
 #include "transpilation/to_insert_or_write.hpp"
@@ -104,12 +104,12 @@ template <class ContainerType>
 auto insert_or_replace(const auto& _conn, const ContainerType& _data) {
   if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
     static_assert(
-        internal::has_primary_key_v<typename ContainerType::value_type>,
-        "The table must have a primary key for insert_or_replace(...) to "
-        "work.");
+        internal::has_constraint_v<typename ContainerType::value_type>,
+        "The table must have a primary key or unique column for "
+        "insert_or_replace(...) to work.");
   } else {
-    static_assert(internal::has_primary_key_v<ContainerType>,
-                  "The table must have a primary key for "
+    static_assert(internal::has_constraint_v<ContainerType>,
+                  "The table must have a primary key or unique column for "
                   "insert_or_replace(...) to work.");
   }
   return insert_impl(_conn, _data, true);
@@ -119,12 +119,12 @@ template <class ContainerType>
 auto insert_or_replace(const ContainerType& _data) {
   if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
     static_assert(
-        internal::has_primary_key_v<typename ContainerType::value_type>,
-        "The table must have a primary key for insert_or_replace(...) to "
-        "work.");
+        internal::has_constraint_v<typename ContainerType::value_type>,
+        "The table must have a primary key or unique column for "
+        "insert_or_replace(...) to work.");
   } else {
-    static_assert(internal::has_primary_key_v<ContainerType>,
-                  "The table must have a primary key for "
+    static_assert(internal::has_constraint_v<ContainerType>,
+                  "The table must have a primary key or unique column for "
                   "insert_or_replace(...) to work.");
   }
   return insert_impl(_data, true);
@@ -133,4 +133,3 @@ auto insert_or_replace(const ContainerType& _data) {
 };  // namespace sqlgen
 
 #endif
-
