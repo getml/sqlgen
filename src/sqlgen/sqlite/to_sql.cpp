@@ -388,21 +388,17 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
     return "?";
   };
 
+  const auto as_excluded = [](const std::string& _str) -> std::string {
+    return _str + "=excluded." + _str;
+  };
+
   std::stringstream stream;
-  stream << "INSERT ";
-
-  if constexpr(std::is_same_v<InsertOrWrite, dynamic::Insert>) {
-    if (_stmt.or_replace) {
-      stream << "OR REPLACE ";
-    }
-  }
-
-  stream << "INTO ";
+  stream << "INSERT INTO ";
 
   if (_stmt.table.schema) {
-    stream << "\"" << *_stmt.table.schema << "\".";
+    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
   }
-  stream << "\"" << _stmt.table.name << "\"";
+  stream << wrap_in_quotes(_stmt.table.name);
 
   stream << " (";
   stream << internal::strings::join(
@@ -413,8 +409,22 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   stream << internal::strings::join(
       ", ",
       internal::collect::vector(_stmt.columns | transform(to_questionmark)));
-  stream << ");";
+  stream << ")";
 
+  if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    if (_stmt.or_replace) {
+      stream << " ON CONFLICT (";
+      stream << internal::strings::join(
+          ", ", internal::collect::vector(_stmt.constraints));
+      stream << ")";
+
+      stream << " DO UPDATE SET ";
+      stream << internal::strings::join(
+          ", ", internal::collect::vector(_stmt.columns | transform(as_excluded)));
+    }
+  }
+
+  stream << ';';
   return stream.str();
 }
 
