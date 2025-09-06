@@ -44,9 +44,19 @@ InsertOrWrite to_insert_or_write(bool or_replace) {
           [](const auto& _t) { return !_t.properties.primary; });
     };
 
+    const auto is_constraint = [](const auto& _c) {
+      return _c.type.visit([](const auto& _t) {
+        return _t.properties.primary || _t.properties.unique;
+      });
+    };
+
     result.or_replace = or_replace;
     result.non_primary_keys = sqlgen::internal::collect::vector(
         columns | filter(is_non_primary) | transform(get_name));
+    if (or_replace) {
+      result.constraints = sqlgen::internal::collect::vector(
+          columns | filter(is_constraint) | transform(get_name));
+    }
   }
 
   return result;
