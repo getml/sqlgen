@@ -392,12 +392,16 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
     return "$" + std::to_string(_i + 1);
   };
 
+  const auto as_excluded = [](const std::string& _str) -> std::string {
+    return _str + "=excluded." + _str;
+  };
+
   std::stringstream stream;
   stream << "INSERT INTO ";
   if (_stmt.table.schema) {
-    stream << "\"" << *_stmt.table.schema << "\".";
+    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
   }
-  stream << "\"" << _stmt.table.name << "\"";
+  stream << wrap_in_quotes(_stmt.table.name);
 
   stream << " (";
   stream << internal::strings::join(
@@ -410,8 +414,20 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
       ", ", internal::collect::vector(
                 iota(static_cast<size_t>(0), _stmt.columns.size()) |
                 transform(to_placeholder)));
-  stream << ");";
+  stream << ")";
 
+  if (_stmt.or_replace) {
+    stream << " ON CONFLICT (";
+    stream << internal::strings::join(
+        ", ", internal::collect::vector(_stmt.constraints));
+    stream << ")";
+
+    stream << " DO UPDATE SET ";
+    stream << internal::strings::join(
+        ", ", internal::collect::vector(_stmt.columns | transform(as_excluded)));
+  }
+
+  stream << ";";
   return stream.str();
 }
 
