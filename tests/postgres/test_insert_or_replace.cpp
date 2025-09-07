@@ -24,18 +24,27 @@ TEST(postgres, test_insert_or_replace) {
        Person{
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-  const auto people2 = std::vector<Person>(
-      {Person{.id = 1, .first_name = "Bartholomew", .last_name = "Simpson", .age = 10},
-       Person{
-           .id = 3, .first_name = "Margaret", .last_name = "Simpson", .age = 1}});
+  const auto people2 = std::vector<Person>({Person{.id = 1,
+                                                   .first_name = "Bartholomew",
+                                                   .last_name = "Simpson",
+                                                   .age = 10},
+                                            Person{.id = 3,
+                                                   .first_name = "Margaret",
+                                                   .last_name = "Simpson",
+                                                   .age = 1}});
 
   const auto people3 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
-       Person{.id = 1, .first_name = "Bartholomew", .last_name = "Simpson", .age = 10},
+       Person{.id = 1,
+              .first_name = "Bartholomew",
+              .last_name = "Simpson",
+              .age = 10},
        Person{.id = 2, .first_name = "Lisa", .last_name = "Simpson", .age = 8},
-       Person{
-           .id = 3, .first_name = "Margaret", .last_name = "Simpson", .age = 1}});
+       Person{.id = 3,
+              .first_name = "Margaret",
+              .last_name = "Simpson",
+              .age = 1}});
 
   using namespace sqlgen;
   using namespace sqlgen::literals;
@@ -45,20 +54,22 @@ TEST(postgres, test_insert_or_replace) {
                                                          .host = "localhost",
                                                          .dbname = "postgres"};
 
-  const auto people4 = sqlgen::postgres::connect(credentials)
-                           .and_then(drop<Person> | if_exists)
-                           .and_then(begin_transaction)
-                           .and_then(create_table<Person> | if_not_exists)
-                           .and_then(insert(people1))
-                           .and_then(commit)
-                           .and_then(begin_transaction)
-                           .and_then(insert_or_replace(people2))
-                           .and_then(commit)
-                           .and_then(sqlgen::read<std::vector<Person>> | order_by("id"_c))
-                           .value();
+  const auto people4 =
+      sqlgen::postgres::connect(credentials)
+          .and_then(drop<Person> | if_exists)
+          .and_then(begin_transaction)
+          .and_then(create_table<Person> | if_not_exists)
+          .and_then(insert(people1))
+          .and_then(commit)
+          .and_then(begin_transaction)
+          .and_then(insert_or_replace(people2))
+          .and_then(commit)
+          .and_then(sqlgen::read<std::vector<Person>> | order_by("id"_c))
+          .value();
 
   const auto json3 = rfl::json::write(people3);
   const auto json4 = rfl::json::write(people4);
+
   EXPECT_EQ(json3, json4);
 }
 
