@@ -57,6 +57,7 @@ jobs:
           if [[ "${{ matrix.os == 'macos-latest' }}" == "true" ]]; then
             export VCPKG_FORCE_SYSTEM_BINARIES=arm
             export CMAKE_GENERATOR=Ninja
+            export MACOSX_DEPLOYMENT_TARGET="$(sw_vers -productVersion)"
           fi
           $CXX --version
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON 
