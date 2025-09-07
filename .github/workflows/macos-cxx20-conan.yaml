@@ -1,6 +1,6 @@
 name: macos-cxx20-conan
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   macos-clang:
