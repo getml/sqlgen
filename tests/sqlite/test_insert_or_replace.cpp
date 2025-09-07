@@ -6,7 +6,7 @@
 #include <sqlgen/sqlite.hpp>
 #include <vector>
 
-namespace test_insert_and_read {
+namespace test_insert_or_replace {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
@@ -57,4 +57,4 @@ TEST(sqlite, test_insert_or_replace) {
   EXPECT_EQ(json3, json4);
 }
 
-}  // namespace test_insert_and_read
+}  // namespace test_insert_or_replace

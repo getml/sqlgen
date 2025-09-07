@@ -5,7 +5,7 @@
 #include <sqlgen/sqlite.hpp>
 #include <sqlgen/transpilation/to_insert_or_write.hpp>
 
-namespace test_to_insert {
+namespace test_to_insert_or_replace {
 
 struct TestTable {
   std::string field1;
@@ -29,4 +29,4 @@ TEST(sqlite, test_to_insert_or_replace) {
 
   EXPECT_EQ(conn->to_sql(insert_stmt), expected);
 }
-}  // namespace test_to_insert
+}  // namespace test_to_insert_or_replace
