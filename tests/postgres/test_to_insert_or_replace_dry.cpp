@@ -15,17 +15,17 @@ struct TestTable {
   std::optional<std::string> nullable;
 };
 
-TEST(mysql, test_to_insert_or_replace_dry) {
+TEST(postgres, test_to_insert_or_replace_dry) {
   static_assert(sqlgen::internal::has_constraint_v<TestTable>,
                 "The table must have a primary key or unique column for "
                 "insert_or_replace(...) to work.");
 
-  const auto insert_stmt =
-      sqlgen::dynamic::Statement(sqlgen::transpilation::to_insert_or_write<TestTable,
+  const auto insert_stmt = sqlgen::dynamic::Statement(
+      sqlgen::transpilation::to_insert_or_write<TestTable,
                                                 sqlgen::dynamic::Insert>(true));
   const auto expected =
       R"(INSERT INTO "TestTable" ("field1", "field2", "field3", "id", "nullable") VALUES ($1, $2, $3, $4, $5) ON CONFLICT (field3, id) DO UPDATE SET field1=excluded.field1, field2=excluded.field2, field3=excluded.field3, id=excluded.id, nullable=excluded.nullable;)";
 
-  EXPECT_EQ(sqlgen::mysql::to_sql(insert_stmt), expected);
+  EXPECT_EQ(sqlgen::postgres::to_sql(insert_stmt), expected);
 }
 }  // namespace test_to_insert_or_replace_dry
