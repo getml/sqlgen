@@ -521,7 +521,7 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
     return "?";
   };
 
-  const auto as_VALUES = [](const std::string& _str) -> std::string {
+  const auto as_values = [](const std::string& _str) -> std::string {
     return _str + "=VALUES(" + _str + ")";
   };
 
@@ -547,7 +547,7 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
     if (_stmt.or_replace) {
       stream << " ON DUPLICATE KEY UPDATE ";
       stream << internal::strings::join(
-          ", ", internal::collect::vector(_stmt.columns | transform(as_VALUES)));
+          ", ", internal::collect::vector(_stmt.columns | transform(as_values)));
     }
   }
 
