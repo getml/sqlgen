@@ -48,7 +48,7 @@ TEST(sqlite, test_insert_or_replace) {
                            .and_then(begin_transaction)
                            .and_then(insert_or_replace(people2))
                            .and_then(commit)
-                           .and_then(sqlgen::read<std::vector<Person>>)
+                           .and_then(sqlgen::read<std::vector<Person>> | order_by("id"_c))
                            .value();
 
   const auto json3 = rfl::json::write(people3);
