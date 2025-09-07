@@ -2,7 +2,7 @@
 
 #include <sqlgen.hpp>
 #include <sqlgen/dynamic/Insert.hpp>
-#include <sqlgen/mysql.hpp>
+#include <sqlgen/postgres.hpp>
 #include <sqlgen/transpilation/to_insert_or_write.hpp>
 
 namespace test_to_insert_or_replace_dry {
