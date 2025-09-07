@@ -517,6 +517,14 @@ template <class InsertOrWrite>
 std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   using namespace std::ranges::views;
 
+  const auto to_questionmark = [](const std::string&) -> std::string {
+    return "?";
+  };
+
+  const auto as_VALUES = [](const std::string& _str) -> std::string {
+    return _str + "=VALUES(" + _str + ")";
+  };
+
   std::stringstream stream;
 
   stream << "INSERT INTO ";
@@ -533,11 +541,17 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
 
   stream << " VALUES (";
   stream << internal::strings::join(
-      ", ", internal::collect::vector(
-                _stmt.columns |
-                transform([](const auto&) -> std::string { return "?"; })));
-  stream << ");";
+      ", ", internal::collect::vector(_stmt.columns | transform(to_questionmark)));
+  stream << ")";
+  if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    if (_stmt.or_replace) {
+      stream << " ON DUPLICATE KEY UPDATE ";
+      stream << internal::strings::join(
+          ", ", internal::collect::vector(_stmt.columns | transform(as_VALUES)));
+    }
+  }
 
+  stream << ';';
   return stream.str();
 }
 
