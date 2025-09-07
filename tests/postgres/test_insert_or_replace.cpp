@@ -1,3 +1,5 @@
+#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
+
 #include <gtest/gtest.h>
 
 #include <rfl.hpp>
@@ -74,3 +76,5 @@ TEST(postgres, test_insert_or_replace) {
 }
 
 }  // namespace test_insert_or_replace
+
+#endif
