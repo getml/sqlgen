@@ -58,6 +58,10 @@ struct Int64 {
   Properties properties;
 };
 
+struct JSON {
+  Properties properties;
+};
+
 struct UInt8 {
   Properties properties;
 };

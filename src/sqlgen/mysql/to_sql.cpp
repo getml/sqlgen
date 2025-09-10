@@ -140,7 +140,8 @@ std::string cast_type_to_sql(const dynamic::Type& _type) noexcept {
       return "DECIMAL";
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Text> ||
-                         std::is_same_v<T, dynamic::types::VarChar>) {
+                         std::is_same_v<T, dynamic::types::VarChar> ||
+                         std::is_same_v<T, dynamic::types::JSON>) {
       return "CHAR";
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Date>) {
@@ -541,13 +542,15 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
 
   stream << " VALUES (";
   stream << internal::strings::join(
-      ", ", internal::collect::vector(_stmt.columns | transform(to_questionmark)));
+      ", ",
+      internal::collect::vector(_stmt.columns | transform(to_questionmark)));
   stream << ")";
   if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
     if (_stmt.or_replace) {
       stream << " ON DUPLICATE KEY UPDATE ";
       stream << internal::strings::join(
-          ", ", internal::collect::vector(_stmt.columns | transform(as_values)));
+          ", ",
+          internal::collect::vector(_stmt.columns | transform(as_values)));
     }
   }
 
@@ -878,6 +881,9 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
 
     } else if constexpr (std::is_same_v<T, dynamic::types::VarChar>) {
       return "VARCHAR(" + std::to_string(_t.length) + ")";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::JSON>) {
+      return "JSON";
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Date>) {
       return "DATE";

@@ -6,6 +6,7 @@
 #include "sqlgen/ForeignKey.hpp"
 #include "sqlgen/Iterator.hpp"
 #include "sqlgen/IteratorBase.hpp"
+#include "sqlgen/JSON.hpp"
 #include "sqlgen/Literal.hpp"
 #include "sqlgen/Pattern.hpp"
 #include "sqlgen/PrimaryKey.hpp"
