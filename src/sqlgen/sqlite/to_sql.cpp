@@ -761,9 +761,11 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
                          std::is_same_v<T, dynamic::types::VarChar> ||
                          std::is_same_v<T, dynamic::types::Date> ||
                          std::is_same_v<T, dynamic::types::Timestamp> ||
-                         std::is_same_v<T, dynamic::types::TimestampWithTZ> ||
-                         std::is_same_v<T, dynamic::types::JSON>) {
+                         std::is_same_v<T, dynamic::types::TimestampWithTZ>) {
       return "TEXT";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::JSON>) {
+      return "JSONB";
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Dynamic>) {
       return _t.type_name;
