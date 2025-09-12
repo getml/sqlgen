@@ -2,8 +2,7 @@
   "dependencies": [
     {
       "name": "reflectcpp",
-      "version>=": "0.18.0",
-      "features": ["json"]
+      "version>=": "0.18.0"
     }
   ],
   "features": {
