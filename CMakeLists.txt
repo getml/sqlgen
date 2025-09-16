@@ -74,7 +74,7 @@ target_include_directories(
 
 
 if (SQLGEN_DUCKDB)
-    #list(APPEND SQLGEN_SOURCES src/sqlgen_duckdb.cpp)
+    list(APPEND SQLGEN_SOURCES src/sqlgen_duckdb.cpp)
     if (NOT TARGET DuckDB)
         find_package(DuckDB REQUIRED)
     endif()
