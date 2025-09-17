@@ -1,18 +1,20 @@
-#ifndef SQLGEN_DUCKDB_CONNECTION_HPP_
-#define SQLGEN_DUCKDB_CONNECTION_HPP_
+#ifndef SQLGEN_DUCKDB_DUCKDBCONNECTION_HPP_
+#define SQLGEN_DUCKDB_DUCKDBCONNECTION_HPP_
 
 #include <duckdb.h>
 
 #include <optional>
 #include <string>
 
+#include "../Ref.hpp"
 #include "../Result.hpp"
 
 namespace sqlgen::duckdb {
 
 class DuckDBConnection {
  public:
-  Result<DuckDBConnection> make(const std::optional<std::string>& _fname);
+  static Result<Ref<DuckDBConnection>> make(
+      const std::optional<std::string>& _fname);
 
   DuckDBConnection(duckdb_connection _conn, duckdb_database _db)
       : conn_(_conn), db_(_db) {}
@@ -33,6 +35,10 @@ class DuckDBConnection {
   DuckDBConnection& operator=(const DuckDBConnection& _other) = delete;
 
   DuckDBConnection& operator=(DuckDBConnection&& _other);
+
+  duckdb_connection conn() { return conn_; }
+
+  duckdb_database db() { return db_; }
 
  private:
   duckdb_connection conn_;

@@ -2,7 +2,7 @@
 
 namespace sqlgen::duckdb {
 
-Result<DuckDBConnection> DuckDBConnection::make(
+Result<Ref<DuckDBConnection>> DuckDBConnection::make(
     const std::optional<std::string>& _fname) {
   duckdb_database db = NULL;
 
@@ -24,7 +24,7 @@ Result<DuckDBConnection> DuckDBConnection::make(
     return error("Could not connect to database.");
   }
 
-  return DuckDBConnection(conn, db);
+  return Ref<DuckDBConnection>::make(conn, db);
 }
 
 DuckDBConnection& DuckDBConnection::operator=(DuckDBConnection&& _other) {

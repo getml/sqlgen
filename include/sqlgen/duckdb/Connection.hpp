@@ -4,6 +4,7 @@
 #include <duckdb.h>
 
 #include <memory>
+#include <optional>
 #include <rfl.hpp>
 #include <sstream>
 #include <stdexcept>
@@ -15,19 +16,20 @@
 #include "../Transaction.hpp"
 #include "../dynamic/Write.hpp"
 #include "../is_connection.hpp"
-#include "to_sql.hpp"
+#include "DuckDBConnection.hpp"
+// #include "to_sql.hpp"
 
 namespace sqlgen::duckdb {
 
 class Connection {
-  using ConnPtr = Ref<duckdb3>;
-  using StmtPtr = std::shared_ptr<duckdb3_stmt>;
+  using ConnPtr = Ref<DuckDBConnection>;
+  // using StmtPtr = std::shared_ptr<duckdb3_stmt>;
 
  public:
-  Connection(const std::string& _fname)
-      : stmt_(nullptr), conn_(make_conn(_fname)) {}
+  Connection(const ConnPtr& _conn) : /*stmt_(nullptr),*/ conn_(_conn) {}
 
-  static rfl::Result<Ref<Connection>> make(const std::string& _fname) noexcept;
+  static rfl::Result<Ref<Connection>> make(
+      const std::optional<std::string>& _fname) noexcept;
 
   ~Connection() = default;
 
@@ -47,7 +49,7 @@ class Connection {
   Result<Nothing> rollback() noexcept;
 
   std::string to_sql(const dynamic::Statement& _stmt) noexcept {
-    return duckdb::to_sql_impl(_stmt);
+    return "TODO";  // duckdb::to_sql_impl(_stmt);
   }
 
   Result<Nothing> start_write(const dynamic::Write& _stmt);
@@ -58,22 +60,9 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>& _data);
 
  private:
-  /// Generates the underlying connection.
-  static ConnPtr make_conn(const std::string& _fname);
-
-  /// Actually inserts data based on a prepared statement -
-  /// used by both .insert(...) and .write(...).
-  Result<Nothing> actual_insert(
-      const std::vector<std::vector<std::optional<std::string>>>& _data,
-      duckdb3_stmt* _stmt) const noexcept;
-
-  /// Generates a prepared statment, usually for inserts.
-  Result<StmtPtr> prepare_statement(const std::string& _sql) const noexcept;
-
- private:
   /// A prepared statement - needed for the read and write operations. Note that
   /// we have declared it before conn_, meaning it will be destroyed first.
-  StmtPtr stmt_;
+  // StmtPtr stmt_;
 
   /// The underlying duckdb3 connection.
   ConnPtr conn_;
