@@ -290,7 +290,8 @@ namespace transpilation {
 template <class TableOrQueryType, class AliasType, class FieldsType,
           class JoinsType, class... Args>
 struct ExtractTable<
-    SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, Args...>> {
+    SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, Args...>,
+    false> {
   using TableTupleType = table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
   using Type = fields_to_named_tuple_t<TableTupleType, FieldsType>;
 };
