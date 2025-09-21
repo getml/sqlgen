@@ -45,11 +45,11 @@ TEST(sqlite, test_group_by_with_operations) {
           round(avg(cast<double>("age"_c))).as<"avg_age">()) |
       where("age"_c < 18) | group_by("last_name"_c) | to<std::vector<Children>>;
 
-  const auto children = sqlite::connect()
-                            .and_then(drop<Person> | if_exists)
-                            .and_then(write(std::ref(people1)))
-                            .and_then(get_children)
-                            .value();
+  const auto conn = sqlite::connect()
+                        .and_then(drop<Person> | if_exists)
+                        .and_then(write(std::ref(people1)));
+
+  const auto children = get_children(conn).value();
 
   EXPECT_EQ(children.size(), 1);
   EXPECT_EQ(children.at(0).last_name, "Simpson");

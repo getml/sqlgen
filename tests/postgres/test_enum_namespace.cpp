@@ -23,7 +23,7 @@ struct MultiStruct {
   second::IdenticallyNamed enum_two;
 };
 
-TEST(mysql, test_enum_namespace) {
+TEST(postgres, test_enum_namespace) {
   using namespace sqlgen;
   using namespace sqlgen::literals;
 
