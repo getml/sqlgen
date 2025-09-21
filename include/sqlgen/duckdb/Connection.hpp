@@ -23,7 +23,6 @@ namespace sqlgen::duckdb {
 
 class Connection {
   using ConnPtr = Ref<DuckDBConnection>;
-  // using StmtPtr = std::shared_ptr<duckdb3_stmt>;
 
  public:
   Connection(const ConnPtr& _conn) : /*stmt_(nullptr),*/ conn_(_conn) {}
