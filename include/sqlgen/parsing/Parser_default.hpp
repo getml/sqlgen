@@ -1,6 +1,7 @@
 #ifndef SQLGEN_PARSING_PARSER_DEFAULT_HPP_
 #define SQLGEN_PARSING_PARSER_DEFAULT_HPP_
 
+#include <ranges>
 #include <rfl.hpp>
 #include <string>
 #include <type_traits>
@@ -33,8 +34,14 @@ struct Parser {
           return static_cast<Type>(std::stod(*_str));
         } else if constexpr (std::is_integral_v<Type>) {
           return static_cast<Type>(std::stoll(*_str));
-        } else if (std::is_same_v<Type, bool>) {
+        } else if constexpr (std::is_same_v<Type, bool>) {
           return std::stoi(*_str) != 0;
+        } else if constexpr (std::is_enum_v<Type>) {
+          if (auto res = rfl::string_to_enum<Type>(*_str)) {
+            return Type{*res};
+          } else {
+            return error(res.error());
+          }
         } else {
           static_assert(rfl::always_false_v<Type>, "Unsupported type");
         }
@@ -49,6 +56,8 @@ struct Parser {
     if constexpr (transpilation::has_reflection_method<Type>) {
       return Parser<std::remove_cvref_t<typename Type::ReflectionType>>::write(
           _t.reflection());
+    } else if constexpr (std::is_enum_v<Type>) {
+      return rfl::enum_to_string(_t);
     } else {
       return std::to_string(_t);
     }
@@ -108,6 +117,22 @@ struct Parser {
                       "Unsupported floating point value.");
       }
 
+    } else if constexpr (std::is_enum_v<T>) {
+      constexpr auto values = rfl::get_enumerator_array<T>();
+      std::array<std::string_view, std::size(values)> enum_names{};
+      for (std::size_t i = 0; i < std::size(values); ++i) {
+        enum_names[i] = values[i].first;
+      }
+      constexpr auto org_name = rfl::internal::get_type_name_str_view<T>();
+      static_assert(org_name.size() < 64,
+                    "Enum type exceeds type level. If it's defined in a nested "
+                    "namespace, consider moving it up to a higher level.");
+      // Transform '::' to '__' to avoid postgres limitations
+      std::string trf_name(org_name);
+      std::ranges::replace(trf_name, ':', '_');
+      return sqlgen::dynamic::types::Enum{
+          std::move(trf_name),
+          std::vector<std::string>(enum_names.begin(), enum_names.end())};
     } else {
       static_assert(rfl::always_false_v<T>, "Unsupported type.");
     }

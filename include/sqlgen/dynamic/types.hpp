@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace sqlgen::dynamic::types {
 
@@ -75,6 +76,12 @@ struct UInt32 {
 };
 
 struct UInt64 {
+  Properties properties;
+};
+
+struct Enum {
+  std::string name;
+  std::vector<std::string> values;
   Properties properties;
 };
 

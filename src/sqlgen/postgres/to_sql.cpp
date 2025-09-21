@@ -42,6 +42,9 @@ std::string field_to_str(const dynamic::SelectFrom::Field& _field) noexcept;
 std::vector<std::string> get_primary_keys(
     const dynamic::CreateTable& _stmt) noexcept;
 
+std::vector<std::pair<std::string, std::vector<std::string>>> get_enum_types(
+    const dynamic::CreateTable& _stmt) noexcept;
+
 std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept;
 
 std::string join_to_sql(const dynamic::Join& _stmt) noexcept;
@@ -66,8 +69,24 @@ std::string write_to_sql(const dynamic::Write& _stmt) noexcept;
 
 inline std::string get_name(const dynamic::Column& _col) { return _col.name; }
 
+inline std::pair<std::string, std::vector<std::string>> get_enum_mapping(
+    const dynamic::Column& _col) {
+  return _col.type.visit(
+      [&](const auto& _t) -> std::pair<std::string, std::vector<std::string>> {
+        using T = std::remove_cvref_t<decltype(_t)>;
+        if constexpr (std::is_same_v<T, dynamic::types::Enum>) {
+          return {type_to_sql(_t), _t.values};
+        }
+        return {};
+      });
+}
+
 inline std::string wrap_in_quotes(const std::string& _name) noexcept {
   return "\"" + _name + "\"";
+}
+
+inline std::string wrap_in_single_quotes(const std::string& _name) noexcept {
+  return "'" + _name + "'";
 }
 
 // ----------------------------------------------------------------------------
@@ -254,6 +273,21 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
   };
 
   std::stringstream stream;
+
+  for (const auto& [enum_name, enum_values] : get_enum_types(_stmt)) {
+    if (_stmt.if_not_exists) {
+      stream << "DO $$ BEGIN ";
+    }
+    stream << "CREATE TYPE " << enum_name << " AS ENUM ("
+           << internal::strings::join(
+                  ", ", internal::collect::vector(
+                            enum_values | transform(wrap_in_single_quotes)))
+           << "); ";
+    if (_stmt.if_not_exists) {
+      stream << "EXCEPTION WHEN duplicate_object THEN NULL; END $$;";
+    }
+  }
+
   stream << "CREATE TABLE ";
 
   if (_stmt.if_not_exists) {
@@ -383,6 +417,20 @@ std::vector<std::string> get_primary_keys(
   return internal::collect::vector(_stmt.columns | filter(is_primary_key) |
                                    transform(get_name) |
                                    transform(wrap_in_quotes));
+}
+
+std::vector<std::pair<std::string, std::vector<std::string>>> get_enum_types(
+    const dynamic::CreateTable& _stmt) noexcept {
+  using namespace std::ranges::views;
+
+  const auto is_enum = [](const dynamic::Column& _col) -> bool {
+    return _col.type.visit([&](const auto& _t) -> bool {
+      using T = std::remove_cvref_t<decltype(_t)>;
+      return std::is_same_v<T, dynamic::types::Enum>;
+    });
+  };
+  return internal::collect::vector(_stmt.columns | filter(is_enum) |
+                                   transform(get_enum_mapping));
 }
 
 std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
@@ -751,7 +799,8 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
     } else if constexpr (std::is_same_v<T, dynamic::types::Int64> ||
                          std::is_same_v<T, dynamic::types::UInt64>) {
       return "BIGINT";
-
+    } else if constexpr (std::is_same_v<T, dynamic::types::Enum>) {
+      return _t.name;
     } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
                          std::is_same_v<T, dynamic::types::Float64>) {
       return "NUMERIC";

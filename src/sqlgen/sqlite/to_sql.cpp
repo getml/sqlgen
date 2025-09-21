@@ -769,7 +769,8 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Dynamic>) {
       return _t.type_name;
-
+    } else if constexpr (std::is_same_v<T, dynamic::types::Enum>) {
+      return "TEXT";
     } else {
       static_assert(rfl::always_false_v<T>, "Not all cases were covered.");
     }

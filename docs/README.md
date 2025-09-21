@@ -38,6 +38,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [Type Conversion Operations](type_conversion_operations.md) - How to convert between types safely in queries (e.g., cast int to double).
 - [Null Handling Operations](null_handling_operations.md) - How to handle nullable values and propagate nullability correctly (e.g., with coalesce and nullability rules).
 - [Timestamp and Date/Time Functions](timestamp_operations.md) - How to work with timestamps, dates, and times (e.g., extract parts, perform arithmetic, convert formats).
+- [Enums](enum.md) - How to work with enums sqlgen
 
 ## Data Types and Validation
 

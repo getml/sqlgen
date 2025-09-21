@@ -25,6 +25,9 @@ dynamic::Value to_value(const T& _t) {
   } else if constexpr (has_reflection_method<Type>) {
     return to_value(_t.reflection());
 
+  } else if constexpr (std::is_enum_v<Type>) {
+    return dynamic::Value{dynamic::String{.val = rfl::enum_to_string(_t)}};
+
   } else {
     static_assert(rfl::always_false_v<T>, "Unsupported type");
   }
