@@ -42,7 +42,7 @@ TEST(mysql, test_join) {
       select_from<Person, "t1">(
           "id"_t1 | as<"id">, "first_name"_t1 | as<"first_name">,
           "last_name"_t2 | as<"last_name">, "age"_t2 | as<"age">) |
-      left_join<Person, "t2">("id"_t1 == "id"_t2) | order_by("id"_t1) |
+      inner_join<Person, "t2">("id"_t1 == "id"_t2) | order_by("id"_t1) |
       to<std::vector<Person>>;
 
   const auto people = mysql::connect(credentials)
@@ -52,7 +52,7 @@ TEST(mysql, test_join) {
                           .value();
 
   const std::string expected_query =
-      R"(SELECT t1.`id` AS `id`, t1.`first_name` AS `first_name`, t2.`last_name` AS `last_name`, t2.`age` AS `age` FROM `Person` t1 LEFT JOIN `Person` t2 ON t1.`id` = t2.`id` ORDER BY t1.`id`)";
+      R"(SELECT t1.`id` AS `id`, t1.`first_name` AS `first_name`, t2.`last_name` AS `last_name`, t2.`age` AS `age` FROM `Person` t1 INNER JOIN `Person` t2 ON t1.`id` = t2.`id` ORDER BY t1.`id`)";
   const std::string expected =
       R"([{"id":0,"first_name":"Homer","last_name":"Simpson","age":45.0},{"id":1,"first_name":"Bart","last_name":"Simpson","age":10.0},{"id":2,"first_name":"Lisa","last_name":"Simpson","age":8.0},{"id":3,"first_name":"Maggie","last_name":"Simpson","age":0.0}])";
 

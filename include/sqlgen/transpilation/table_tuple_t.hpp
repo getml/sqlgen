@@ -7,6 +7,7 @@
 
 #include "../Literal.hpp"
 #include "../Result.hpp"
+#include "Join.hpp"
 #include "extract_table_t.hpp"
 
 namespace sqlgen::transpilation {
@@ -21,9 +22,17 @@ struct TableTupleType<TableOrQueryType, AliasType, Nothing> {
 
 template <class TableOrQueryType, class AliasType, class... JoinTypes>
 struct TableTupleType<TableOrQueryType, AliasType, rfl::Tuple<JoinTypes...>> {
+  constexpr static bool wrap_main_table_in_optional =
+      (false || ... ||
+       (JoinTypes::how == JoinType::right_join ||
+        JoinTypes::how == JoinType::full_join));
+
   using Type = rfl::Tuple<
-      std::pair<extract_table_t<TableOrQueryType, false>, AliasType>,
-      std::pair<extract_table_t<typename JoinTypes::TableOrQueryType, false>,
+      std::pair<extract_table_t<TableOrQueryType, wrap_main_table_in_optional>,
+                AliasType>,
+      std::pair<extract_table_t<typename JoinTypes::TableOrQueryType,
+                                JoinTypes::how == JoinType::left_join ||
+                                    JoinTypes::how == JoinType::full_join>,
                 typename JoinTypes::Alias>...>;
   static_assert(
       !rfl::define_literal_t<typename JoinTypes::Alias...>::has_duplicates(),

@@ -54,7 +54,7 @@ TEST(sqlite, test_joins_from) {
       select_from<Person, "t1">(
           "child_id"_t2 | as<"id">, "first_name"_t1 | as<"first_name">,
           "last_name"_t1 | as<"last_name">, "age"_t1 | as<"age">) |
-      left_join<Relationship, "t2">("id"_t1 == "parent_id"_t2);
+      inner_join<Relationship, "t2">("id"_t1 == "parent_id"_t2);
 
   const auto get_people =
       select_from<"t1">(get_parents, "last_name"_t1 | as<"last_name">,
@@ -73,7 +73,7 @@ TEST(sqlite, test_joins_from) {
                           .value();
 
   const std::string expected_query =
-      R"(SELECT t1."last_name" AS "last_name", t1."first_name" AS "first_name_parent", t2."first_name" AS "first_name_child", (t1."age") - (t2."age") AS "parent_age_at_birth" FROM (SELECT t2."child_id" AS "id", t1."first_name" AS "first_name", t1."last_name" AS "last_name", t1."age" AS "age" FROM "Person" t1 LEFT JOIN "Relationship" t2 ON t1."id" = t2."parent_id") t1 INNER JOIN "Person" t2 ON t1."id" = t2."id" ORDER BY t2."id", t1."id")";
+      R"(SELECT t1."last_name" AS "last_name", t1."first_name" AS "first_name_parent", t2."first_name" AS "first_name_child", (t1."age") - (t2."age") AS "parent_age_at_birth" FROM (SELECT t2."child_id" AS "id", t1."first_name" AS "first_name", t1."last_name" AS "last_name", t1."age" AS "age" FROM "Person" t1 INNER JOIN "Relationship" t2 ON t1."id" = t2."parent_id") t1 INNER JOIN "Person" t2 ON t1."id" = t2."id" ORDER BY t2."id", t1."id")";
 
   const std::string expected =
       R"([{"last_name":"Simpson","first_name_parent":"Homer","first_name_child":"Bart","parent_age_at_birth":35.0},{"last_name":"Simpson","first_name_parent":"Marge","first_name_child":"Bart","parent_age_at_birth":30.0},{"last_name":"Simpson","first_name_parent":"Homer","first_name_child":"Lisa","parent_age_at_birth":37.0},{"last_name":"Simpson","first_name_parent":"Marge","first_name_child":"Lisa","parent_age_at_birth":32.0},{"last_name":"Simpson","first_name_parent":"Homer","first_name_child":"Maggie","parent_age_at_birth":45.0},{"last_name":"Simpson","first_name_parent":"Marge","first_name_child":"Maggie","parent_age_at_birth":40.0}])";
