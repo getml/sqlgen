@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include "TableWrapper.hpp"
+#include "wrap_in_optional_t.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -13,6 +14,11 @@ struct ExtractTable;
 template <class T>
 struct ExtractTable<T, false> {
   using Type = T;
+};
+
+template <class T>
+struct ExtractTable<T, true> {
+  using Type = wrap_in_optional_t<T>;
 };
 
 template <class T>
