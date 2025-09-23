@@ -89,7 +89,7 @@ auto select_from_impl(const Result<Ref<Connection>>& _res,
     return select_from_impl<TableTupleType, AliasType, FieldsType,
                             TableOrQueryType, JoinsType, WhereType, GroupByType,
                             OrderByType, LimitType, ContainerType>(
-        _conn, _table_or_query, _joins, _where, _limit);
+        _conn, _fields, _table_or_query, _joins, _where, _limit);
   });
 }
 
