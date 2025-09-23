@@ -31,7 +31,7 @@ struct ExtractTable<TableWrapper<T>, true> {
   using Type = typename ExtractTable<std::remove_cvref_t<T>, true>::Type;
 };
 
-template <class T, bool _wrap_in_optional = false>
+template <class T, bool _wrap_in_optional>
 using extract_table_t =
     typename ExtractTable<std::remove_cvref_t<T>, _wrap_in_optional>::Type;
 

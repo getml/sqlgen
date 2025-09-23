@@ -135,11 +135,11 @@ struct SelectFrom {
   }
 
   template <class OtherTableOrQueryType, class ConditionType,
-            rfl::internal::StringLiteral _alias>
+            rfl::internal::StringLiteral _alias, transpilation::JoinType _how>
   friend auto operator|(
       const SelectFrom& _s,
-      const transpilation::Join<OtherTableOrQueryType, ConditionType, _alias>&
-          _join) {
+      const transpilation::Join<OtherTableOrQueryType, ConditionType, _alias,
+                                _how>& _join) {
     static_assert(std::is_same_v<WhereType, Nothing>,
                   "You cannot call where(...) before a join.");
     static_assert(std::is_same_v<GroupByType, Nothing>,
@@ -152,8 +152,9 @@ struct SelectFrom {
                   "You cannot call to<...> before a join.");
 
     if constexpr (std::is_same_v<JoinsType, Nothing>) {
-      using NewJoinsType = rfl::Tuple<
-          transpilation::Join<OtherTableOrQueryType, ConditionType, _alias>>;
+      using NewJoinsType =
+          rfl::Tuple<transpilation::Join<OtherTableOrQueryType, ConditionType,
+                                         _alias, _how>>;
 
       return SelectFrom<TableOrQueryType, AliasType, FieldsType, NewJoinsType,
                         WhereType, GroupByType, OrderByType, LimitType, ToType>{
@@ -162,8 +163,9 @@ struct SelectFrom {
           .joins_ = NewJoinsType(_join)};
 
     } else {
-      using TupleType = rfl::Tuple<
-          transpilation::Join<OtherTableOrQueryType, ConditionType, _alias>>;
+      using TupleType =
+          rfl::Tuple<transpilation::Join<OtherTableOrQueryType, ConditionType,
+                                         _alias, _how>>;
 
       const auto joins = rfl::tuple_cat(_s.joins_, TupleType(_join));
 
