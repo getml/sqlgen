@@ -14,6 +14,7 @@
 #include "conditions.hpp"
 #include "is_timestamp.hpp"
 #include "make_field.hpp"
+#include "remove_nullable_t.hpp"
 #include "to_transpilation_type.hpp"
 #include "underlying_t.hpp"
 
@@ -44,8 +45,8 @@ struct ToCondition<T, conditions::And<CondType1, CondType2>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::Equal<Op1Type, Op2Type>> {
-  using Underlying1 = underlying_t<T, Op1Type>;
-  using Underlying2 = underlying_t<T, Op2Type>;
+  using Underlying1 = remove_nullable_t<underlying_t<T, Op1Type>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, Op2Type>>;
 
   static_assert(std::equality_comparable_with<Underlying1, Underlying2> ||
                     (is_timestamp_v<Underlying1> &&
@@ -61,8 +62,8 @@ struct ToCondition<T, conditions::Equal<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::GreaterEqual<Op1Type, Op2Type>> {
-  using Underlying1 = underlying_t<T, Op1Type>;
-  using Underlying2 = underlying_t<T, Op2Type>;
+  using Underlying1 = remove_nullable_t<underlying_t<T, Op1Type>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, Op2Type>>;
 
   static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
                     (is_timestamp_v<Underlying1> &&
@@ -78,8 +79,8 @@ struct ToCondition<T, conditions::GreaterEqual<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::GreaterThan<Op1Type, Op2Type>> {
-  using Underlying1 = underlying_t<T, Op1Type>;
-  using Underlying2 = underlying_t<T, Op2Type>;
+  using Underlying1 = remove_nullable_t<underlying_t<T, Op1Type>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, Op2Type>>;
 
   static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
                     (is_timestamp_v<Underlying1> &&
@@ -95,8 +96,8 @@ struct ToCondition<T, conditions::GreaterThan<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::LesserEqual<Op1Type, Op2Type>> {
-  using Underlying1 = underlying_t<T, Op1Type>;
-  using Underlying2 = underlying_t<T, Op2Type>;
+  using Underlying1 = remove_nullable_t<underlying_t<T, Op1Type>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, Op2Type>>;
 
   static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
                     (is_timestamp_v<Underlying1> &&
@@ -112,8 +113,8 @@ struct ToCondition<T, conditions::LesserEqual<Op1Type, Op2Type>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::LesserThan<Op1Type, Op2Type>> {
-  using Underlying1 = underlying_t<T, Op1Type>;
-  using Underlying2 = underlying_t<T, Op2Type>;
+  using Underlying1 = remove_nullable_t<underlying_t<T, Op1Type>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, Op2Type>>;
 
   static_assert(std::totally_ordered_with<Underlying1, Underlying2> ||
                     (is_timestamp_v<Underlying1> &&
@@ -129,10 +130,11 @@ struct ToCondition<T, conditions::LesserThan<Op1Type, Op2Type>> {
 
 template <class T, class OpType>
 struct ToCondition<T, conditions::Like<OpType>> {
-  static_assert(
-      std::equality_comparable_with<underlying_t<T, OpType>,
-                                    underlying_t<T, Value<std::string>>>,
-      "Must be equality comparable with a string.");
+  using UnderlyingT = remove_nullable_t<underlying_t<T, OpType>>;
+
+  static_assert(std::equality_comparable_with<
+                    UnderlyingT, underlying_t<T, Value<std::string>>>,
+                "Must be equality comparable with a string.");
 
   dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{
@@ -169,8 +171,8 @@ struct ToCondition<T, conditions::Not<CondType>> {
 
 template <class T, class Op1Type, class Op2Type>
 struct ToCondition<T, conditions::NotEqual<Op1Type, Op2Type>> {
-  using Underlying1 = underlying_t<T, Op1Type>;
-  using Underlying2 = underlying_t<T, Op2Type>;
+  using Underlying1 = remove_nullable_t<underlying_t<T, Op1Type>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, Op2Type>>;
 
   static_assert(std::equality_comparable_with<Underlying1, Underlying2> ||
                     (is_timestamp_v<Underlying1> &&
@@ -186,10 +188,11 @@ struct ToCondition<T, conditions::NotEqual<Op1Type, Op2Type>> {
 
 template <class T, class OpType>
 struct ToCondition<T, conditions::NotLike<OpType>> {
-  static_assert(
-      std::equality_comparable_with<underlying_t<T, OpType>,
-                                    underlying_t<T, Value<std::string>>>,
-      "Must be equality comparable with a string.");
+  using UnderlyingT = remove_nullable_t<underlying_t<T, OpType>>;
+
+  static_assert(std::equality_comparable_with<
+                    UnderlyingT, underlying_t<T, Value<std::string>>>,
+                "Must be equality comparable with a string.");
 
   dynamic::Condition operator()(const auto& _cond) const {
     return dynamic::Condition{
