@@ -209,6 +209,8 @@ std::string condition_to_sql(const dynamic::Condition& _cond) noexcept {
 
 template <class ConditionType>
 std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
+  using namespace std::ranges::views;
+
   using C = std::remove_cvref_t<ConditionType>;
 
   std::stringstream stream;
@@ -228,6 +230,14 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
   } else if constexpr (std::is_same_v<C, dynamic::Condition::GreaterThan>) {
     stream << operation_to_sql(_condition.op1) << " > "
            << operation_to_sql(_condition.op2);
+
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::In>) {
+    stream << operation_to_sql(_condition.op) << " IN ("
+           << internal::strings::join(
+                  ", ",
+                  internal::collect::vector(_condition.patterns |
+                                            transform(column_or_value_to_sql)))
+           << ")";
 
   } else if constexpr (std::is_same_v<C, dynamic::Condition::IsNull>) {
     stream << operation_to_sql(_condition.op) << " IS NULL";
@@ -261,6 +271,14 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
   } else if constexpr (std::is_same_v<C, dynamic::Condition::Or>) {
     stream << "(" << condition_to_sql(*_condition.cond1) << ") OR ("
            << condition_to_sql(*_condition.cond2) << ")";
+
+  } else if constexpr (std::is_same_v<C, dynamic::Condition::NotIn>) {
+    stream << operation_to_sql(_condition.op) << " NOT IN ("
+           << internal::strings::join(
+                  ", ",
+                  internal::collect::vector(_condition.patterns |
+                                            transform(column_or_value_to_sql)))
+           << ")";
 
   } else {
     static_assert(rfl::always_false_v<C>, "Not all cases were covered.");
