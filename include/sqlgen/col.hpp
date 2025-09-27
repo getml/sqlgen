@@ -40,6 +40,13 @@ struct Col {
   /// Returns the column name.
   std::string name() const noexcept { return Name().str(); }
 
+  /// Returns an IN condition.
+  template <class... Ts>
+  auto in(const Ts&... _ts) const noexcept {
+    return transpilation::make_condition(transpilation::conditions::in(
+        transpilation::Col<_name, _alias>{}, _ts...));
+  }
+
   /// Returns an IS NULL condition.
   auto is_null() const noexcept {
     return transpilation::make_condition(transpilation::conditions::is_null(
@@ -62,6 +69,12 @@ struct Col {
   auto not_like(const std::string& _pattern) const noexcept {
     return transpilation::make_condition(transpilation::conditions::not_like(
         transpilation::Col<_name, _alias>{}, _pattern));
+  }
+
+  /// Returns a NOT IN condition.
+  template <class... Ts>
+  auto not_in(const Ts&... _ts) const noexcept {
+    return not_in(_ts...);
   }
 
   /// Returns a SET clause in an UPDATE statement.

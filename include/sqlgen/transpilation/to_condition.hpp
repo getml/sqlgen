@@ -3,17 +3,20 @@
 
 #include <concepts>
 #include <optional>
+#include <ranges>
 #include <type_traits>
 #include <vector>
 
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../dynamic/Condition.hpp"
+#include "../internal/collect/vector.hpp"
 #include "Condition.hpp"
 #include "all_columns_exist.hpp"
 #include "conditions.hpp"
 #include "is_timestamp.hpp"
 #include "make_field.hpp"
+#include "remove_nullable_t.hpp"
 #include "to_transpilation_type.hpp"
 #include "underlying_t.hpp"
 
@@ -141,6 +144,24 @@ struct ToCondition<T, conditions::Like<OpType>> {
   }
 };
 
+template <class T, class OpType, class PatternType>
+struct ToCondition<T, conditions::In<OpType, PatternType>> {
+  using Underlying1 = remove_nullable_t<underlying_t<T, OpType>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, PatternType>>;
+
+  static_assert(std::equality_comparable_with<Underlying1, Underlying2>,
+                "Must be equality comparable.");
+
+  dynamic::Condition operator()(const auto& _cond) const {
+    return dynamic::Condition{
+        .val = dynamic::Condition::In{
+            .op = make_field<T>(_cond.op).val,
+            .patterns = rfl::apply(_cond.patterns, [](const auto&... _p) {
+              return std::vector<dynamic::Value>({to_value(_p)...});
+            })}};
+  }
+};
+
 template <class T, class OpType>
 struct ToCondition<T, conditions::IsNotNull<OpType>> {
   dynamic::Condition operator()(const auto& _cond) const {
@@ -195,6 +216,24 @@ struct ToCondition<T, conditions::NotLike<OpType>> {
     return dynamic::Condition{
         .val = dynamic::Condition::NotLike{.op = make_field<T>(_cond.op).val,
                                            .pattern = to_value(_cond.pattern)}};
+  }
+};
+
+template <class T, class OpType, class PatternType>
+struct ToCondition<T, conditions::NotIn<OpType, PatternType>> {
+  using Underlying1 = remove_nullable_t<underlying_t<T, OpType>>;
+  using Underlying2 = remove_nullable_t<underlying_t<T, PatternType>>;
+
+  static_assert(std::equality_comparable_with<Underlying1, Underlying2>,
+                "Must be equality comparable.");
+
+  dynamic::Condition operator()(const auto& _cond) const {
+    return dynamic::Condition{
+        .val = dynamic::Condition::NotIn{
+            .op = make_field<T>(_cond.op).val,
+            .patterns = rfl::apply(_cond.patterns, [](const auto&... _p) {
+              return std::vector<dynamic::Value>({to_value(_p)...});
+            })}};
   }
 };
 
