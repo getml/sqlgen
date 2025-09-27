@@ -7,7 +7,7 @@
 #include <sqlgen/sqlite.hpp>
 #include <vector>
 
-namespace test_in {
+namespace test_not_in {
 
 struct Person {
   sqlgen::PrimaryKey<uint32_t> id;
@@ -16,7 +16,7 @@ struct Person {
   int age;
 };
 
-TEST(sqlite, test_in) {
+TEST(sqlite, test_not_in) {
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
@@ -34,7 +34,7 @@ TEST(sqlite, test_in) {
       sqlite::connect()
           .and_then(write(std::ref(people1)))
           .and_then(sqlgen::read<std::vector<Person>> |
-                    where("first_name"_c.in("Bart", "Lisa", "Maggie")) |
+                    where("first_name"_c.not_in("Homer", "Hugo")) |
                     order_by("age"_c))
           .value();
 
@@ -44,5 +44,5 @@ TEST(sqlite, test_in) {
   EXPECT_EQ(rfl::json::write(people2), expected1);
 }
 
-}  // namespace test_in
+}  // namespace test_not_in
 

@@ -3,6 +3,8 @@
 
 #include <rfl.hpp>
 
+#include "string_t.hpp"
+
 namespace sqlgen::transpilation::conditions {
 
 template <class CondType1, class CondType2>
@@ -65,7 +67,8 @@ struct In {
 
 template <class OpType, class... Ts>
 auto in(const OpType& _op, const Ts&... _ts) {
-  return In<OpType, Ts...>{.op = _op, .patterns = rfl::Tuple<Ts...>(_ts...)};
+  return In<OpType, string_t<Ts>...>{
+      .op = _op, .patterns = rfl::Tuple<string_t<Ts>...>(_ts...)};
 }
 
 template <class OpType>
@@ -164,7 +167,8 @@ struct NotIn {
 
 template <class OpType, class... Ts>
 auto not_in(const OpType& _op, const Ts&... _ts) {
-  return NotIn<OpType, Ts...>{.op = _op, .patterns = rfl::Tuple<Ts...>(_ts...)};
+  return NotIn<OpType, string_t<Ts>...>{
+      .op = _op, .patterns = rfl::Tuple<string_t<Ts>...>(_ts...)};
 }
 
 template <class OpType>

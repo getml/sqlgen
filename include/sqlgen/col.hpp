@@ -74,7 +74,8 @@ struct Col {
   /// Returns a NOT IN condition.
   template <class... Ts>
   auto not_in(const Ts&... _ts) const noexcept {
-    return not_in(_ts...);
+    return transpilation::make_condition(transpilation::conditions::not_in(
+        transpilation::Col<_name, _alias>{}, _ts...));
   }
 
   /// Returns a SET clause in an UPDATE statement.
