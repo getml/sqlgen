@@ -71,6 +71,19 @@ auto in(const OpType& _op, const Ts&... _ts) {
       .op = _op, .patterns = rfl::Tuple<string_t<Ts>...>(_ts...)};
 }
 
+template <class OpType, class T>
+struct InVec {
+  using ResultType = bool;
+
+  OpType op;
+  std::vector<T> patterns;
+};
+
+template <class OpType, class T>
+auto in(const OpType& _op, const std::vector<T>& _patterns) {
+  return InVec<OpType, T>{.op = _op, .patterns = _patterns};
+}
+
 template <class OpType>
 struct IsNull {
   using ResultType = bool;
@@ -169,6 +182,19 @@ template <class OpType, class... Ts>
 auto not_in(const OpType& _op, const Ts&... _ts) {
   return NotIn<OpType, string_t<Ts>...>{
       .op = _op, .patterns = rfl::Tuple<string_t<Ts>...>(_ts...)};
+}
+
+template <class OpType, class T>
+struct NotInVec {
+  using ResultType = bool;
+
+  OpType op;
+  std::vector<T> patterns;
+};
+
+template <class OpType, class T>
+auto not_in(const OpType& _op, const std::vector<T>& _patterns) {
+  return NotInVec<OpType, T>{.op = _op, .patterns = _patterns};
 }
 
 template <class OpType>

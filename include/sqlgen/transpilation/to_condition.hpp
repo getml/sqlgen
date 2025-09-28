@@ -165,6 +165,26 @@ struct ToCondition<T, conditions::In<OpType, PatternTypes...>> {
   }
 };
 
+template <class T, class OpType, class PatternType>
+struct ToCondition<T, conditions::InVec<OpType, PatternType>> {
+  using UnderlyingT = remove_nullable_t<underlying_t<T, OpType>>;
+
+  static constexpr bool is_equality_comparable =
+      std::equality_comparable_with<UnderlyingT, PatternType>;
+
+  static_assert(is_equality_comparable, "Must be equality comparable.");
+
+  dynamic::Condition operator()(const auto& _cond) const {
+    using namespace std::ranges::views;
+    return dynamic::Condition{
+        .val = dynamic::Condition::In{
+            .op = make_field<T>(_cond.op).val,
+            .patterns = sqlgen::internal::collect::vector(
+                _cond.patterns |
+                transform([](const auto& _v) { return to_value(_v); }))}};
+  }
+};
+
 template <class T, class OpType>
 struct ToCondition<T, conditions::IsNotNull<OpType>> {
   dynamic::Condition operator()(const auto& _cond) const {
@@ -240,6 +260,26 @@ struct ToCondition<T, conditions::NotIn<OpType, PatternTypes...>> {
                                             {to_value(_p)...});
                                       },
                                       _cond.patterns)}};
+  }
+};
+
+template <class T, class OpType, class PatternType>
+struct ToCondition<T, conditions::NotInVec<OpType, PatternType>> {
+  using UnderlyingT = remove_nullable_t<underlying_t<T, OpType>>;
+
+  static constexpr bool is_equality_comparable =
+      std::equality_comparable_with<UnderlyingT, PatternType>;
+
+  static_assert(is_equality_comparable, "Must be equality comparable.");
+
+  dynamic::Condition operator()(const auto& _cond) const {
+    using namespace std::ranges::views;
+    return dynamic::Condition{
+        .val = dynamic::Condition::NotIn{
+            .op = make_field<T>(_cond.op).val,
+            .patterns = sqlgen::internal::collect::vector(
+                _cond.patterns |
+                transform([](const auto& _v) { return to_value(_v); }))}};
   }
 };
 
