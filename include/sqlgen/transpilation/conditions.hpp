@@ -1,6 +1,10 @@
 #ifndef SQLGEN_TRANSPILATION_CONDITIONS_HPP_
 #define SQLGEN_TRANSPILATION_CONDITIONS_HPP_
 
+#include <rfl.hpp>
+
+#include "string_t.hpp"
+
 namespace sqlgen::transpilation::conditions {
 
 template <class CondType1, class CondType2>
@@ -51,6 +55,33 @@ template <class OpType1, class OpType2>
 auto greater_than(const OpType1& _op1, const OpType2& _op2) {
   return GreaterThan<std::remove_cvref_t<OpType1>,
                      std::remove_cvref_t<OpType2>>{.op1 = _op1, .op2 = _op2};
+}
+
+template <class OpType, class... Ts>
+struct In {
+  using ResultType = bool;
+
+  OpType op;
+  rfl::Tuple<Ts...> patterns;
+};
+
+template <class OpType, class... Ts>
+auto in(const OpType& _op, const Ts&... _ts) {
+  return In<OpType, string_t<Ts>...>{
+      .op = _op, .patterns = rfl::Tuple<string_t<Ts>...>(_ts...)};
+}
+
+template <class OpType, class T>
+struct InVec {
+  using ResultType = bool;
+
+  OpType op;
+  std::vector<T> patterns;
+};
+
+template <class OpType, class T>
+auto in(const OpType& _op, const std::vector<T>& _patterns) {
+  return InVec<OpType, T>{.op = _op, .patterns = _patterns};
 }
 
 template <class OpType>
@@ -137,6 +168,33 @@ template <class OpType1, class OpType2>
 auto not_equal(const OpType1& _op1, const OpType2& _op2) {
   return NotEqual<std::remove_cvref_t<OpType1>, std::remove_cvref_t<OpType2>>{
       .op1 = _op1, .op2 = _op2};
+}
+
+template <class OpType, class... Ts>
+struct NotIn {
+  using ResultType = bool;
+
+  OpType op;
+  rfl::Tuple<Ts...> patterns;
+};
+
+template <class OpType, class... Ts>
+auto not_in(const OpType& _op, const Ts&... _ts) {
+  return NotIn<OpType, string_t<Ts>...>{
+      .op = _op, .patterns = rfl::Tuple<string_t<Ts>...>(_ts...)};
+}
+
+template <class OpType, class T>
+struct NotInVec {
+  using ResultType = bool;
+
+  OpType op;
+  std::vector<T> patterns;
+};
+
+template <class OpType, class T>
+auto not_in(const OpType& _op, const std::vector<T>& _patterns) {
+  return NotInVec<OpType, T>{.op = _op, .patterns = _patterns};
 }
 
 template <class OpType>
