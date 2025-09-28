@@ -1,3 +1,4 @@
+#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
 
 #include <gtest/gtest.h>
 
@@ -53,3 +54,4 @@ TEST(mysql, test_in_vec) {
 
 }  // namespace test_in_vec
 
+#endif
