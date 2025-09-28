@@ -113,6 +113,57 @@ FROM "Person"
 WHERE "first_name" NOT LIKE 'H%';
 ```
 
+#### IN and NOT IN Operations
+
+Use IN and NOT IN to check if a column value matches any value in a list:
+
+```cpp
+using namespace sqlgen;
+using namespace sqlgen::literals;
+
+// Find people with specific first names (variadic arguments)
+const auto query1 = read<std::vector<Person>> | 
+                   where("first_name"_c.in("Bart", "Lisa", "Maggie"));
+
+// Find people NOT with specific first names (variadic arguments)
+const auto query2 = read<std::vector<Person>> | 
+                   where("first_name"_c.not_in("Homer", "Hugo"));
+
+// Find people with specific first names (using vector)
+const auto names = std::vector<std::string>({"Bart", "Lisa", "Maggie"});
+const auto query3 = read<std::vector<Person>> | 
+                   where("first_name"_c.in(names));
+
+// Find people NOT with specific first names (using vector)
+const auto excluded_names = std::vector<std::string>({"Homer", "Hugo"});
+const auto query4 = read<std::vector<Person>> | 
+                   where("first_name"_c.not_in(excluded_names));
+```
+
+This generates SQL like:
+
+```sql
+-- For query1
+SELECT "id", "first_name", "last_name", "age" 
+FROM "Person" 
+WHERE "first_name" IN ('Bart', 'Lisa', 'Maggie');
+
+-- For query2
+SELECT "id", "first_name", "last_name", "age" 
+FROM "Person" 
+WHERE "first_name" NOT IN ('Homer', 'Hugo');
+
+-- For query3
+SELECT "id", "first_name", "last_name", "age" 
+FROM "Person" 
+WHERE "first_name" IN ('Bart', 'Lisa', 'Maggie');
+
+-- For query4
+SELECT "id", "first_name", "last_name", "age" 
+FROM "Person" 
+WHERE "first_name" NOT IN ('Homer', 'Hugo');
+```
+
 #### Ordering
 
 Specify column ordering in queries:
