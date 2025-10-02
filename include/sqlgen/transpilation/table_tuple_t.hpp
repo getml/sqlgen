@@ -22,18 +22,40 @@ struct TableTupleType<TableOrQueryType, AliasType, Nothing> {
 
 template <class TableOrQueryType, class AliasType, class... JoinTypes>
 struct TableTupleType<TableOrQueryType, AliasType, rfl::Tuple<JoinTypes...>> {
-  constexpr static bool wrap_main_table_in_optional =
-      (false || ... ||
-       (JoinTypes::how == JoinType::right_join ||
-        JoinTypes::how == JoinType::full_join));
+  template <class T>
+  struct JoinWrapper {};
 
-  using Type = rfl::Tuple<
-      std::pair<extract_table_t<TableOrQueryType, wrap_main_table_in_optional>,
-                AliasType>,
-      std::pair<extract_table_t<typename JoinTypes::TableOrQueryType,
-                                JoinTypes::how == JoinType::left_join ||
-                                    JoinTypes::how == JoinType::full_join>,
-                typename JoinTypes::Alias>...>;
+  template <bool _subsequent_right_or_full_join, class... SubsequentTypes>
+  struct TableTupleTypeHelper {
+    using Type =
+        rfl::Tuple<std::pair<extract_table_t<TableOrQueryType,
+                                             _subsequent_right_or_full_join>,
+                             AliasType>,
+                   SubsequentTypes...>;
+
+    template <class T>
+    friend consteval auto operator+(const JoinWrapper<T>&,
+                                    const TableTupleTypeHelper&) {
+      constexpr bool subsequent_right_or_full_join =
+          _subsequent_right_or_full_join || T::how == JoinType::right_join ||
+          T::how == JoinType::full_join;
+
+      return TableTupleTypeHelper<
+          subsequent_right_or_full_join,
+          std::pair<extract_table_t<typename T::TableOrQueryType,
+                                    _subsequent_right_or_full_join ||
+                                        T::how == JoinType::left_join ||
+                                        T::how == JoinType::full_join>,
+                    typename T::Alias>,
+          SubsequentTypes...>{};
+    }
+  };
+
+  constexpr static auto helper =
+      (JoinWrapper<JoinTypes>{} + ... + TableTupleTypeHelper<false>{});
+
+  using Type = typename decltype(helper)::Type;
+
   static_assert(
       !rfl::define_literal_t<typename JoinTypes::Alias...>::has_duplicates(),
       "Your SELECT FROM query cannot contain duplicate aliases.");
