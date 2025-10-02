@@ -31,6 +31,11 @@ struct Condition {
     Operation op2;
   };
 
+  struct In {
+    Operation op;
+    std::vector<dynamic::Value> patterns;
+  };
+
   struct IsNotNull {
     Operation op;
   };
@@ -68,15 +73,20 @@ struct Condition {
     dynamic::Value pattern;
   };
 
+  struct NotIn {
+    Operation op;
+    std::vector<dynamic::Value> patterns;
+  };
+
   struct Or {
     Ref<Condition> cond1;
     Ref<Condition> cond2;
   };
 
   using ReflectionType =
-      rfl::TaggedUnion<"what", And, Equal, GreaterEqual, GreaterThan, IsNull,
-                       IsNotNull, LesserEqual, LesserThan, Like, Not, NotEqual,
-                       NotLike, Or>;
+      rfl::TaggedUnion<"what", And, Equal, GreaterEqual, GreaterThan, In,
+                       IsNull, IsNotNull, LesserEqual, LesserThan, Like, Not,
+                       NotEqual, NotIn, NotLike, Or>;
 
   const ReflectionType& reflection() const { return val; }
 
