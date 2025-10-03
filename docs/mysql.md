@@ -130,7 +130,7 @@ const auto joined_data = select_from<Person, "t1">(
     "first_name"_t1 | as<"first_name">,
     "last_name"_t2 | as<"last_name">, 
     "age"_t2 | as<"age">) |
-    left_join<Person, "t2">("id"_t1 == "id"_t2) | 
+    inner_join<Person, "t2">("id"_t1 == "id"_t2) |
     order_by("id"_t1) |
     to<std::vector<Person>>;
 ```
