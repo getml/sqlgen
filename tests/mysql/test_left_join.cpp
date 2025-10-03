@@ -6,12 +6,12 @@
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
-#include <sqlgen/postgres.hpp>
+#include <sqlgen/mysql.hpp>
 #include <vector>
 
 namespace test_left_join {
 
-TEST(postgres, test_left_join) {
+TEST(mysql, test_left_join) {
     struct Person {
         sqlgen::PrimaryKey<uint32_t> id;
         std::string first_name;
@@ -37,10 +37,10 @@ TEST(postgres, test_left_join) {
         Pet{.id = 3, .name = "Mr. Teeny", .owner_id = 99},
     });
 
-    const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+    const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
 
     using namespace sqlgen;
     using namespace sqlgen::literals;
@@ -60,7 +60,7 @@ TEST(postgres, test_left_join) {
         order_by("id"_t1) | to<std::vector<PersonWithPet>>;
 
     const auto result =
-        postgres::connect(credentials)
+        mysql::connect(credentials)
             .and_then(drop<Person> | if_exists)
             .and_then(drop<Pet> | if_exists)
             .and_then(write(std::ref(people)))
@@ -69,11 +69,11 @@ TEST(postgres, test_left_join) {
             .value();
 
     const std::string expected_query =
-        R"(SELECT t1."first_name" AS "first_name", t1."last_name" AS "last_name", t2."name" AS "pet_name" FROM "Person" t1 LEFT JOIN "Pet" t2 ON t1."id" = t2."owner_id" ORDER BY t1."id")";
+        R"(SELECT t1.`first_name` AS `first_name`, t1.`last_name` AS `last_name`, t2.`name` AS `pet_name` FROM `Person` t1 LEFT JOIN `Pet` t2 ON t1.`id` = t2.`owner_id` ORDER BY t1.`id`)";
     const std::string expected_json =
         R"([{"first_name":"Homer","last_name":"Simpson","pet_name":"Santa's Little Helper"},{"first_name":"Marge","last_name":"Simpson","pet_name":null},{"first_name":"Bart","last_name":"Simpson","pet_name":null},{"first_name":"Lisa","last_name":"Simpson","pet_name":"Snowball"}])";
 
-    EXPECT_EQ(postgres::to_sql(get_people_with_pets), expected_query);
+    EXPECT_EQ(mysql::to_sql(get_people_with_pets), expected_query);
     EXPECT_EQ(rfl::json::write(result), expected_json);
 }
 

@@ -1,17 +1,15 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
-
 #include <gtest/gtest.h>
 
-#include <optional>
 #include <rfl.hpp>
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
-#include <sqlgen/postgres.hpp>
+#include <sqlgen/sqlite.hpp>
 #include <vector>
+#include <optional>
 
 namespace test_left_join {
 
-TEST(postgres, test_left_join) {
+TEST(sqlite, test_left_join) {
     struct Person {
         sqlgen::PrimaryKey<uint32_t> id;
         std::string first_name;
@@ -37,11 +35,6 @@ TEST(postgres, test_left_join) {
         Pet{.id = 3, .name = "Mr. Teeny", .owner_id = 99},
     });
 
-    const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
-
     using namespace sqlgen;
     using namespace sqlgen::literals;
 
@@ -60,9 +53,7 @@ TEST(postgres, test_left_join) {
         order_by("id"_t1) | to<std::vector<PersonWithPet>>;
 
     const auto result =
-        postgres::connect(credentials)
-            .and_then(drop<Person> | if_exists)
-            .and_then(drop<Pet> | if_exists)
+        sqlite::connect()
             .and_then(write(std::ref(people)))
             .and_then(write(std::ref(pets)))
             .and_then(get_people_with_pets)
@@ -73,10 +64,8 @@ TEST(postgres, test_left_join) {
     const std::string expected_json =
         R"([{"first_name":"Homer","last_name":"Simpson","pet_name":"Santa's Little Helper"},{"first_name":"Marge","last_name":"Simpson","pet_name":null},{"first_name":"Bart","last_name":"Simpson","pet_name":null},{"first_name":"Lisa","last_name":"Simpson","pet_name":"Snowball"}])";
 
-    EXPECT_EQ(postgres::to_sql(get_people_with_pets), expected_query);
+    EXPECT_EQ(sqlite::to_sql(get_people_with_pets), expected_query);
     EXPECT_EQ(rfl::json::write(result), expected_json);
 }
 
 }  // namespace test_left_join
-
-#endif
