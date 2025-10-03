@@ -9,7 +9,7 @@ The following join types are available:
 - `inner_join` — Returns rows when there is a match in both tables
 - `left_join` — Returns all rows from the left table, and matched rows from the right table
 - `right_join` — Returns all rows from the right table, and matched rows from the left table
-- `full_join` — Returns all rows when there is a match in one of the tables
+- `full_join` — Returns all rows when there is a match in one of the tables (not supported by MariaDB)
 
 Each join type can be used with either a table or a subquery, and can be aliased for use in complex queries.
 
