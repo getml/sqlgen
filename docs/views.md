@@ -71,9 +71,15 @@ create_view(conn).value();
 This generates different SQL depending on the database:
 
 - **MySQL/PostgreSQL**: `CREATE OR REPLACE VIEW "EMPLOYEE_SUMMARY" AS SELECT ...`
-- **SQLite**: `CREATE VIEW IF NOT EXISTS "EmployeeView" AS SELECT ...` (automatically translated)
+- **SQLite**: `CREATE VIEW "EmployeeView" AS SELECT ...`
 
-**Important**: SQLite does not support `CREATE OR REPLACE VIEW`. When you use `create_or_replace_view_as` with SQLite, sqlgen automatically translates this to `CREATE VIEW IF NOT EXISTS` syntax.
+**Important**: SQLite does not support `CREATE OR REPLACE VIEW`. When you use `create_or_replace_view_as` with SQLite, sqlgen does not automatically translate this and will result in an error if the view already exists. The recommended way to achieve this is to manually drop the view before creating it:
+
+```cpp
+(drop<EmployeeView> | if_exists)(conn).value();
+const auto create_view = create_as<EmployeeView>(employee_query);
+create_view(conn).value();
+```
 
 ### View Creation with if_not_exists
 
@@ -200,15 +206,7 @@ CREATE OR REPLACE VIEW "EMPLOYEE_SUMMARY" AS SELECT ...;
 
 ### SQLite
 
-SQLite has different view creation behavior:
-
-```sql
--- SQLite does NOT support CREATE OR REPLACE VIEW
--- Instead, it uses CREATE VIEW IF NOT EXISTS
-CREATE VIEW IF NOT EXISTS "EmployeeView" AS SELECT ...;
-```
-
-**Important**: SQLite does not support `CREATE OR REPLACE VIEW`. When you use `create_or_replace_view_as` with SQLite, sqlgen automatically translates this to the appropriate SQLite syntax. For better SQLite compatibility, use `create_as<ViewType>(query) | if_not_exists` instead.
+SQLite has different view creation behavior. It does not support `CREATE OR REPLACE VIEW`. Instead, you should manually drop the view if it exists before creating it. See the example in the "Create or Replace View" section.
 
 ## Best Practices
 
