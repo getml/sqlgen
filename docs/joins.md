@@ -162,6 +162,69 @@ const auto get_people =
     to<std::vector<ParentAndChild>>;
 ```
 
+## Nullability in Joins
+
+When performing outer joins (`left_join`, `right_join`, `full_join`), columns from the joined table may contain `NULL` values if no matching row is found. `sqlgen` handles this by wrapping the type of such columns in `std::optional`. If a field is already nullable (i.e., `std::optional<T>`), it remains `std::optional<T>`.
+
+-   `inner_join`: Does not introduce nullability. The types of the selected columns remain unchanged.
+-   `left_join`: Columns selected from the right table (the one being joined) will become `std::optional<T>` if they are not already nullable.
+-   `right_join`: Columns selected from the left table (the `select_from` table) will become `std::optional<T>` if they are not already nullable.
+-   `full_join`: Columns selected from both tables will become `std::optional<T>` if they are not already nullable.
+
+### Example: Nullability in a `left_join`
+
+Consider a `left_join` between `Person` and `Relationship` tables. If a person has no corresponding relationship, the columns from `Relationship` will be `NULL`.
+
+```cpp
+struct PersonWithOptionalRelationship {
+    uint32_t id;
+    std::string first_name;
+    std::optional<uint32_t> child_id;
+};
+
+const auto get_people_with_optional_relationship =
+    select_from<Person, "t1">(
+        "id"_t1 | as<"id">,
+        "first_name"_t1 | as<"first_name">,
+        "child_id"_t2 | as<"child_id">
+    ) |
+    left_join<Relationship, "t2">("id"_t1 == "parent_id"_t2) |
+    to<std::vector<PersonWithOptionalRelationship>>;
+```
+
+In this example, `child_id` is selected from the right table (`Relationship`) of a `left_join`. Therefore, its type in the result struct `PersonWithOptionalRelationship` must be `std::optional<uint32_t>` to handle cases where no matching relationship is found.
+
+### Nullability in Multi-Table Joins
+
+Nullability propagates through chained joins. If a table becomes nullable due to an outer join, any subsequent joins that use columns from that table will also treat them as nullable.
+
+For example, consider a query that joins `Person` to `Relationship` (left join) and then `Relationship` to a hypothetical `Pet` table (left join).
+
+```cpp
+struct PersonWithPets {
+    uint32_t person_id;
+    std::optional<uint32_t> child_id;
+    std::optional<std::string> pet_name;
+};
+
+// Assume Pet table has { id, name, owner_id }
+const auto get_people_with_pets =
+    select_from<Person, "t1">(
+        "id"_t1 | as<"person_id">,
+        "child_id"_t2 | as<"child_id">,
+        "name"_t3 | as<"pet_name">
+    ) |
+    left_join<Relationship, "t2">("id"_t1 == "parent_id"_t2) |
+    left_join<Pet, "t3">("child_id"_t2 == "owner_id"_t3) | // Joining on a nullable-prone column
+    to<std::vector<PersonWithPets>>;
+```
+
+In this query:
+1.  The first `left_join` makes columns from `Relationship` (`t2`) nullable. So, `child_id` becomes `std::optional<uint32_t>`.
+2.  The second `left_join` joins `Pet` (`t3`). Since `t3` is on the right side of a `left_join`, its columns (like `pet_name`) also become nullable, resulting in `std::optional<std::string>`.
+
+If an `inner_join` were used for the second join (`Pet`), `pet_name` would still be `std::optional<std::string>` if the `Pet` table itself has a nullable `name` column. However, the join logic itself wouldn't introduce nullability for the `Pet` table's columns. The key principle is that the nullability of a column in the final result depends on both its original type and the types of joins applied to its table.
+
 ## Notes
 
 - Joins can be chained and nested arbitrarily
