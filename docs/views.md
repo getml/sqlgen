@@ -106,8 +106,8 @@ struct HighSalaryEmployees {
   int salary;
 };
 
-const auto high_salary_query = select_from<Employee>("first_name"_c, "last_name"_c, "salary"_c)
-                              .where("salary"_c > 50000);
+const auto high_salary_query = select_from<Employee>("first_name"_c, "last_name"_c, "salary"_c) |
+                               where("salary"_c > 50000);
 
 const auto create_high_salary_view = create_or_replace_view_as<HighSalaryEmployees>(high_salary_query);
 ```
@@ -126,9 +126,13 @@ struct EmployeeDepartment {
   std::string location;
 };
 
-const auto joined_query = select_from<Employee>("first_name"_c, "last_name"_c)
-                         .inner_join<Department>("department_id"_c == "id"_c)
-                         .select("department_name"_c, "location"_c);
+const auto joined_query = select_from<Employee, "t1">(
+    "first_name"_t1 | as<"first_name">,
+    "last_name"_t1 | as<"last_name">,
+    "department_name"_t2 | as<"department_name">,
+    "location"_t2 | as<"location">
+) |
+inner_join<Department, "t2">("department_id"_t1 == "id"_t2);
 
 const auto create_joined_view = create_or_replace_view_as<EmployeeDepartment>(joined_query);
 ```
@@ -147,11 +151,12 @@ struct DepartmentStats {
   int total_salary;
 };
 
-const auto stats_query = select_from<Employee>("department"_c)
-                        .select(count("id"_c).as("employee_count"_c),
-                                avg("salary"_c).as("avg_salary"_c),
-                                sum("salary"_c).as("total_salary"_c))
-                        .group_by("department"_c);
+const auto stats_query = select_from<Employee>(
+                            "department"_c,
+                            count("id"_c) | as<"employee_count">,
+                            avg("salary"_c) | as<"avg_salary">,
+                            sum("salary"_c) | as<"total_salary">
+                        ) | group_by("department"_c);
 
 const auto create_stats_view = create_or_replace_view_as<DepartmentStats>(stats_query);
 ```
@@ -167,9 +172,8 @@ Views can be used just like regular tables:
 const auto employees = sqlgen::read<std::vector<EmployeeView>>(conn).value();
 
 // Query the view with conditions
-const auto high_earners = sqlgen::read<std::vector<EmployeeView>>(
-    conn.and_then(select_from<EmployeeView>().where("salary"_c > 75000))
-).value();
+const auto high_earners_query = sqlgen::read<std::vector<EmployeeView>> | where("salary"_c > 75000);
+const auto high_earners = high_earners_query(conn).value();
 ```
 
 ### Dropping Views

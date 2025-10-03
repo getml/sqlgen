@@ -64,7 +64,7 @@ struct CreateAs {
                         WhereType, GroupByType, OrderByType, LimitType, ToType>;
 
   static_assert(
-      requires(transpilation::extract_table_t<As> a) {
+      requires(transpilation::extract_table_t<As, false> a) {
         { rfl::from_named_tuple<ValueType>(a) } -> std::same_as<ValueType>;
       },
       "The query inserted into create_..._as must be convertible to "

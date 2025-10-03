@@ -82,7 +82,7 @@ const auto get_parents = select_from<Person, "t1">(
     "first_name"_t1 | as<"first_name">,
     "last_name"_t1 | as<"last_name">,
     "age"_t1 | as<"age">
-) | left_join<Relationship, "t2">("id"_t1 == "parent_id"_t2);
+) | inner_join<Relationship, "t2">("id"_t1 == "parent_id"_t2);
 
 // Then use it as a source for another query
 const auto get_people = select_from<"t1">(
@@ -100,7 +100,7 @@ SELECT t1."last_name" AS "last_name", t1."first_name" AS "first_name_parent", t2
 FROM (
     SELECT t2."child_id" AS "id", t1."first_name" AS "first_name", t1."last_name" AS "last_name", t1."age" AS "age" 
     FROM "Person" t1 
-    LEFT JOIN "Relationship" t2 ON t1."id" = t2."parent_id"
+    INNER JOIN "Relationship" t2 ON t1."id" = t2."parent_id"
 ) t1 
 INNER JOIN "Person" t2 ON t1."id" = t2."id"
 ```
@@ -152,7 +152,7 @@ const auto query = select_from<Person, "t1">(
     avg("age"_t1 - "age"_t3) | as<"avg_parent_age_at_birth">
 )
 | inner_join<Relationship, "t2">("id"_t1 == "parent_id"_t2)
-| left_join<Person, "t3">("id"_t3 == "child_id"_t2)
+| inner_join<Person, "t3">("id"_t3 == "child_id"_t2)
 | group_by("last_name"_t1, "first_name"_t3)
 | order_by("last_name"_t1, "first_name"_t3)
 | to<std::vector<ParentAndChild>>;
@@ -243,7 +243,7 @@ const auto get_children = select_from<Relationship, "t1">(
     "parent_id"_t1 | as<"id">,
     "first_name"_t2 | as<"first_name">,
     "age"_t2 | as<"age">
-) | left_join<Person, "t2">("id"_t2 == "child_id"_t1);
+) | inner_join<Person, "t2">("id"_t2 == "child_id"_t1);
 
 // Step 2: Use the subquery in a larger query
 const auto get_people = select_from<Person, "t1">(

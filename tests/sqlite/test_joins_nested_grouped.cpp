@@ -52,7 +52,7 @@ TEST(sqlite, test_joins_nested_grouped) {
       select_from<Relationship, "t1">("parent_id"_t1 | as<"id">,
                                       "first_name"_t2 | as<"first_name">,
                                       "age"_t2 | as<"age">) |
-      left_join<Person, "t2">("id"_t2 == "child_id"_t1);
+      inner_join<Person, "t2">("id"_t2 == "child_id"_t1);
 
   const auto get_people =
       select_from<Person, "t1">(
@@ -70,7 +70,7 @@ TEST(sqlite, test_joins_nested_grouped) {
                           .value();
 
   const std::string expected_query =
-      R"(SELECT t1."last_name" AS "last_name", t2."first_name" AS "first_name_child", AVG((t1."age") - (t2."age")) AS "avg_parent_age_at_birth" FROM "Person" t1 INNER JOIN (SELECT t1."parent_id" AS "id", t2."first_name" AS "first_name", t2."age" AS "age" FROM "Relationship" t1 LEFT JOIN "Person" t2 ON t2."id" = t1."child_id") t2 ON t1."id" = t2."id" GROUP BY t1."last_name", t2."first_name" ORDER BY t2."first_name")";
+      R"(SELECT t1."last_name" AS "last_name", t2."first_name" AS "first_name_child", AVG((t1."age") - (t2."age")) AS "avg_parent_age_at_birth" FROM "Person" t1 INNER JOIN (SELECT t1."parent_id" AS "id", t2."first_name" AS "first_name", t2."age" AS "age" FROM "Relationship" t1 INNER JOIN "Person" t2 ON t2."id" = t1."child_id") t2 ON t1."id" = t2."id" GROUP BY t1."last_name", t2."first_name" ORDER BY t2."first_name")";
 
   const std::string expected =
       R"([{"last_name":"Simpson","first_name_child":"Bart","avg_parent_age_at_birth":32.5},{"last_name":"Simpson","first_name_child":"Lisa","avg_parent_age_at_birth":34.5},{"last_name":"Simpson","first_name_child":"Maggie","avg_parent_age_at_birth":42.5}])";

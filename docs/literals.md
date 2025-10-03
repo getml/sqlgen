@@ -55,7 +55,7 @@ const auto get_people =
         ("age"_t1 - "age"_t3) | as<"parent_age_at_birth">
     )
     | inner_join<Relationship, "t2">("id"_t1 == "parent_id"_t2)
-    | left_join<Person, "t3">("id"_t3 == "child_id"_t2)
+    | inner_join<Person, "t3">("id"_t3 == "child_id"_t2)
     | order_by("id"_t1, "id"_t3)
     | to<std::vector<ParentAndChild>>;
 ```
@@ -66,7 +66,7 @@ This produces SQL like:
 SELECT t1."last_name" AS "last_name", t1."first_name" AS "first_name_parent", t3."first_name" AS "first_name_child", (t1."age") - (t3."age") AS "parent_age_at_birth"
 FROM "Person" t1
 INNER JOIN "Relationship" t2 ON t1."id" = t2."parent_id"
-LEFT JOIN "Person" t3 ON t3."id" = t2."child_id"
+INNER JOIN "Person" t3 ON t3."id" = t2."child_id"
 ORDER BY t1."id", t3."id"
 ```
 
