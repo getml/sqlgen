@@ -104,7 +104,7 @@ FROM "Person" t1
 INNER JOIN (
     SELECT t1."parent_id" AS "id", t2."first_name" AS "first_name", t2."age" AS "age"
     FROM "Relationship" t1
-    LEFT JOIN "Person" t2 ON t2."id" = t1."child_id"
+    INNER JOIN "Person" t2 ON t2."id" = t1."child_id"
 ) t2 ON t1."id" = t2."id"
 GROUP BY t1."last_name", t2."first_name"
 ORDER BY t2."first_name"
@@ -247,7 +247,7 @@ const auto get_children =
     select_from<Relationship, "t1">("parent_id"_t1 | as<"id">,
                                     "first_name"_t2 | as<"first_name">,
                                     "age"_t2 | as<"age">) |
-    left_join<Person, "t2">("id"_t2 == "child_id"_t1);
+    inner_join<Person, "t2">("id"_t2 == "child_id"_t1);
 
 const auto get_people =
     select_from<Person, "t1">(
