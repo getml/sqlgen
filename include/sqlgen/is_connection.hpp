@@ -12,6 +12,7 @@
 #include "dynamic/SelectFrom.hpp"
 #include "dynamic/Statement.hpp"
 #include "dynamic/Write.hpp"
+#include "internal/MockTable.hpp"
 
 namespace sqlgen {
 
@@ -36,7 +37,9 @@ concept is_connection =
       { c.insert(_insert, _data) } -> std::same_as<Result<Nothing>>;
 
       /// Reads the results of a SelectFrom statement.
-      { c.read(_select_from) } -> std::same_as<Result<Ref<IteratorBase>>>;
+      {
+        c.template read<std::vector<internal::MockTable>>(_select_from)
+      } -> std::same_as<Result<std::vector<internal::MockTable>>>;
 
       /// Commits a transaction.
       { c.rollback() } -> std::same_as<Result<Nothing>>;

@@ -122,7 +122,8 @@ Result<Connection::StmtPtr> Connection::prepare_statement(
   return stmt_ptr;
 }
 
-Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
+Result<Ref<IteratorBase>> Connection::read_impl(
+    const dynamic::SelectFrom& _query) {
   const auto sql = mysql::to_sql_impl(_query);
   const auto err =
       mysql_real_query(conn_.get(), sql.c_str(), static_cast<int>(sql.size()));

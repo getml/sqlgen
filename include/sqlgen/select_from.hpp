@@ -46,8 +46,7 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
                                       TableOrQueryType, JoinsType, WhereType,
                                       GroupByType, OrderByType, LimitType>(
             _fields, _table_or_query, _joins, _where, _limit);
-    return _conn->read(query).transform(
-        [](auto&& _it) { return ContainerType(_it); });
+    return _conn->template read<ContainerType>(query);
 
   } else {
     const auto to_container = [](auto range) -> Result<ContainerType> {

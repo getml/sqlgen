@@ -14,6 +14,7 @@
 #include "../Result.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
 #include "to_sql.hpp"
 
@@ -42,7 +43,10 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+    return internal::to_container<ContainerType>(read_impl(_query));
+  }
 
   Result<Nothing> rollback() noexcept;
 
@@ -69,6 +73,9 @@ class Connection {
 
   /// Generates a prepared statment, usually for inserts.
   Result<StmtPtr> prepare_statement(const std::string& _sql) const noexcept;
+
+  /// Implements the actual read.
+  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that

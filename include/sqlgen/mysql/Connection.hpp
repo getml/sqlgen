@@ -15,6 +15,7 @@
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Statement.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
 #include "Credentials.hpp"
 #include "exec.hpp"
@@ -50,7 +51,10 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+    return internal::to_container<ContainerType>(read_impl(_query));
+  }
 
   Result<Nothing> rollback() noexcept { return execute("ROLLBACK;"); }
 
@@ -77,6 +81,8 @@ class Connection {
   Result<StmtPtr> prepare_statement(
       const std::variant<dynamic::Insert, dynamic::Write>& _stmt)
       const noexcept;
+
+  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that

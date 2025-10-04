@@ -25,30 +25,10 @@ Result<ContainerType> read_impl(const Ref<Connection>& _conn,
                                 const WhereType& _where,
                                 const LimitType& _limit) {
   using ValueType = transpilation::value_t<ContainerType>;
-  if constexpr (internal::is_range_v<ContainerType>) {
-    const auto query =
-        transpilation::read_to_select_from<ValueType, WhereType, OrderByType,
-                                           LimitType>(_where, _limit);
-    return _conn->read(query).transform(
-        [](auto&& _it) { return ContainerType(_it); });
-
-  } else {
-    const auto to_container = [](auto range) -> Result<ContainerType> {
-      ContainerType container;
-      for (auto& res : range) {
-        if (res) {
-          container.emplace_back(std::move(*res));
-        } else {
-          return error(res.error().what());
-        }
-      }
-      return container;
-    };
-
-    return read_impl<Range<ValueType>, WhereType, OrderByType, LimitType>(
-               _conn, _where, _limit)
-        .and_then(to_container);
-  }
+  const auto query =
+      transpilation::read_to_select_from<ValueType, WhereType, OrderByType,
+                                         LimitType>(_where, _limit);
+  return _conn->template read<ContainerType>(query);
 }
 
 template <class ContainerType, class WhereType, class OrderByType,
