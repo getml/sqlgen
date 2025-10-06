@@ -9,14 +9,13 @@
 
 namespace sqlgen::internal {
 
-template <class ContainerType>
-Result<ContainerType> to_container(const Result<Ref<IteratorBase>>& _res) {
+template <class ContainerType, class IteratorType>
+Result<ContainerType> to_container(const Result<IteratorType>& _res) {
   if constexpr (internal::is_range_v<ContainerType>) {
     return _res.transform([](auto&& _it) { return ContainerType(_it); });
 
   } else {
-    using ValueType = transpilation::value_t<ContainerType>;
-    return to_container<Range<ValueType>>(_res).and_then(
+    return to_container<Range<IteratorType>>(_res).and_then(
         [](auto range) -> Result<ContainerType> {
           ContainerType container;
           for (auto& res : range) {

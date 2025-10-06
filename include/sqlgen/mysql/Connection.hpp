@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "../Iterator.hpp"
 #include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
@@ -17,6 +18,7 @@
 #include "../dynamic/Write.hpp"
 #include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
+#include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
 #include "exec.hpp"
 #include "to_sql.hpp"
@@ -53,7 +55,9 @@ class Connection {
 
   template <class ContainerType>
   Result<ContainerType> read(const dynamic::SelectFrom& _query) {
-    return internal::to_container<ContainerType>(read_impl(_query));
+    using ValueType = transpilation::value_t<ContainerType>;
+    return internal::to_container<ContainerType>(read_impl(_query).transform(
+        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
   }
 
   Result<Nothing> rollback() noexcept { return execute("ROLLBACK;"); }

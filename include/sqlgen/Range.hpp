@@ -11,27 +11,25 @@ namespace sqlgen {
 
 /// This class is meant to provide a way to iterate through the data in the
 /// database efficiently that is compatible with std::ranges.
-template <class T>
+template <class IteratorType>
+  requires std::input_iterator<IteratorType>
 class Range {
  public:
-  using value_type = Result<T>;
-
-  static_assert(std::input_iterator<Iterator<T>>,
-                "This must be an input iterator.");
+  using value_type = typename IteratorType::value_type;
 
   struct End {};
 
-  Range(const Ref<IteratorBase>& _it) : it_(_it) {}
+  Range(const IteratorType& _it) : it_(_it) {}
 
   ~Range() = default;
 
-  auto begin() const { return Iterator<T>(it_); }
+  auto begin() const { return it_; }
 
-  auto end() const { return typename Iterator<T>::End{}; }
+  auto end() const { return typename IteratorType::End{}; }
 
  private:
   /// The underlying database iterator.
-  Ref<IteratorBase> it_;
+  IteratorType it_;
 };
 
 }  // namespace sqlgen

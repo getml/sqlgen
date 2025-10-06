@@ -13,8 +13,8 @@ class is_range;
 template <class T>
 class is_range : public std::false_type {};
 
-template <class T>
-class is_range<Range<T>> : public std::true_type {};
+template <class IteratorType>
+class is_range<Range<IteratorType>> : public std::true_type {};
 
 template <class T>
 constexpr bool is_range_v = is_range<T>();
