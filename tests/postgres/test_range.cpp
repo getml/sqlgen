@@ -19,41 +19,41 @@ struct Person {
 };
 
 TEST(postgres, test_range) {
-  /*  const auto people1 = std::vector<Person>(
-        {Person{
-             .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
-         Person{.id = 1, .first_name = "Bart", .last_name = "Simpson", .age =
-    10}, Person{.id = 2, .first_name = "Lisa", .last_name = "Simpson", .age =
-    8}, Person{ .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age =
-    0}});
+  const auto people1 = std::vector<Person>(
+      {Person{
+           .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
+       Person{.id = 1, .first_name = "Bart", .last_name = "Simpson", .age = 10},
+       Person{.id = 2, .first_name = "Lisa", .last_name = "Simpson", .age = 8},
+       Person{
+           .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-    const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                           .password =
-    "password", .host = "localhost", .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
+                                                         .password = "password",
+                                                         .host = "localhost",
+                                                         .dbname = "postgres"};
 
-    using namespace sqlgen;
-    using namespace sqlgen::literals;
+  using namespace sqlgen;
+  using namespace sqlgen::literals;
 
-    const auto conn =
-        sqlgen::postgres::connect(credentials).and_then(drop<Person> |
-    if_exists);
+  const auto conn =
+      sqlgen::postgres::connect(credentials).and_then(drop<Person> | if_exists);
 
-    const auto people2 =
-        sqlgen::write(conn, people1)
-            .and_then(sqlgen::read<sqlgen::Range<Person>> | order_by("id"_c))
-            .value();
+  const auto people2 =
+      sqlgen::write(conn, people1)
+          .and_then(sqlgen::read<sqlgen::Range<Person>> | order_by("id"_c))
+          .value();
 
-    using namespace std::ranges::views;
+  using namespace std::ranges::views;
 
-    const auto first_names =
-        internal::collect::vector(people2 | transform([](const auto& _r) {
-                                    return _r.value().first_name;
-                                  }));
+  const auto first_names =
+      internal::collect::vector(people2 | transform([](const auto& _r) {
+                                  return _r.value().first_name;
+                                }));
 
-    EXPECT_EQ(first_names.at(0), "Homer");
-    EXPECT_EQ(first_names.at(1), "Bart");
-    EXPECT_EQ(first_names.at(2), "Lisa");
-    EXPECT_EQ(first_names.at(3), "Maggie");*/
+  EXPECT_EQ(first_names.at(0), "Homer");
+  EXPECT_EQ(first_names.at(1), "Bart");
+  EXPECT_EQ(first_names.at(2), "Lisa");
+  EXPECT_EQ(first_names.at(3), "Maggie");
 }
 
 }  // namespace test_range

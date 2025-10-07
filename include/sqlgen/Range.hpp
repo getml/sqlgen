@@ -9,11 +9,22 @@
 
 namespace sqlgen {
 
+template <class T>
+class Range;
+
+/// This exists mainly for user-friendliness: We want people to be able
+/// to pass Range<T> to read without having to worry about connector-specific
+/// iterators.
+template <class T>
+struct Range {
+  using value_type = Result<T>;
+};
+
 /// This class is meant to provide a way to iterate through the data in the
 /// database efficiently that is compatible with std::ranges.
 template <class IteratorType>
   requires std::input_iterator<IteratorType>
-class Range {
+class Range<IteratorType> {
  public:
   using value_type = typename IteratorType::value_type;
 

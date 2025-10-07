@@ -54,7 +54,7 @@ class Connection {
           _data) noexcept;
 
   template <class ContainerType>
-  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+  auto read(const dynamic::SelectFrom& _query) {
     using ValueType = transpilation::value_t<ContainerType>;
     return internal::to_container<ContainerType>(read_impl(_query).transform(
         [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));

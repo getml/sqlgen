@@ -10,9 +10,9 @@
 namespace sqlgen::internal {
 
 template <class ContainerType, class IteratorType>
-Result<ContainerType> to_container(const Result<IteratorType>& _res) {
+auto to_container(const Result<IteratorType>& _res) {
   if constexpr (internal::is_range_v<ContainerType>) {
-    return _res.transform([](auto&& _it) { return ContainerType(_it); });
+    return _res.transform([](auto&& _it) { return Range<IteratorType>(_it); });
 
   } else {
     return to_container<Range<IteratorType>>(_res).and_then(
