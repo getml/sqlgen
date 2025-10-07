@@ -172,7 +172,7 @@ const auto people_vec = query | to<std::vector<Person>>;
 const auto person = query | to<Person>;
 
 // Return as Range (lazy evaluation)
-const auto people_range = query;  // Returns Range<Person> by default
+const auto people_range = query;  // Returns Range<...> by default
 ```
 
 ### Automatic Type Deduction

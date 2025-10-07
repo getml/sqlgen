@@ -109,7 +109,7 @@ for (const sqlgen::Result<Person>& person : people_range) {
 }
 ```
 
-`sqlgen::Range<T>` satisfies the `std::ranges::input_range` concept, making it compatible with C++20 ranges and views. This allows for memory-efficient iteration through database results and enables composition with other range operations:
+`people_range` satisfies the `std::ranges::input_range` concept, making it compatible with C++20 ranges and views. This allows for memory-efficient iteration through database results and enables composition with other range operations:
 
 ```cpp
 using namespace std::ranges::views;
