@@ -97,7 +97,8 @@ typename Connection::ConnPtr Connection::make_conn(const std::string& _fname) {
   return ConnPtr::make(std::shared_ptr<sqlite3>(conn, &sqlite3_close)).value();
 }
 
-Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
+Result<Ref<IteratorBase>> Connection::read_impl(
+    const dynamic::SelectFrom& _query) {
   const auto sql = to_sql_impl(_query);
 
   sqlite3_stmt* p_stmt = nullptr;

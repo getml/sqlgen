@@ -17,9 +17,6 @@ struct Person {
 };
 
 TEST(sqlite, test_range) {
-  static_assert(std::ranges::input_range<sqlgen::Range<Person>>,
-                "Must be an input range.");
-
   using namespace std::ranges::views;
 
   const auto people1 = std::vector<Person>(

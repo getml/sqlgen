@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "../Iterator.hpp"
 #include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
@@ -15,7 +16,9 @@
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Statement.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
+#include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
 #include "exec.hpp"
 #include "to_sql.hpp"
@@ -50,7 +53,12 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  auto read(const dynamic::SelectFrom& _query) {
+    using ValueType = transpilation::value_t<ContainerType>;
+    return internal::to_container<ContainerType>(read_impl(_query).transform(
+        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
+  }
 
   Result<Nothing> rollback() noexcept { return execute("ROLLBACK;"); }
 
@@ -77,6 +85,8 @@ class Connection {
   Result<StmtPtr> prepare_statement(
       const std::variant<dynamic::Insert, dynamic::Write>& _stmt)
       const noexcept;
+
+  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that

@@ -15,7 +15,9 @@
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Statement.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
+#include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
 #include "exec.hpp"
 #include "to_sql.hpp"
@@ -47,7 +49,12 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  auto read(const dynamic::SelectFrom& _query) {
+    using ValueType = transpilation::value_t<ContainerType>;
+    return internal::to_container<ContainerType>(read_impl(_query).transform(
+        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
+  }
 
   Result<Nothing> rollback() noexcept;
 
@@ -66,6 +73,8 @@ class Connection {
 
  private:
   static ConnPtr make_conn(const std::string& _conn_str);
+
+  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
 
   std::string to_buffer(
       const std::vector<std::optional<std::string>>& _line) const noexcept;

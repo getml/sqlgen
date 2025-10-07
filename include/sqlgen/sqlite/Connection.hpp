@@ -14,7 +14,9 @@
 #include "../Result.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
+#include "../transpilation/value_t.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::sqlite {
@@ -42,7 +44,12 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  auto read(const dynamic::SelectFrom& _query) {
+    using ValueType = transpilation::value_t<ContainerType>;
+    return internal::to_container<ContainerType>(read_impl(_query).transform(
+        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
+  }
 
   Result<Nothing> rollback() noexcept;
 
@@ -69,6 +76,9 @@ class Connection {
 
   /// Generates a prepared statment, usually for inserts.
   Result<StmtPtr> prepare_statement(const std::string& _sql) const noexcept;
+
+  /// Implements the actual read.
+  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that

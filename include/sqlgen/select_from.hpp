@@ -14,6 +14,7 @@
 #include "group_by.hpp"
 #include "internal/GetColType.hpp"
 #include "internal/is_range.hpp"
+#include "internal/iterator_t.hpp"
 #include "is_connection.hpp"
 #include "limit.hpp"
 #include "order_by.hpp"
@@ -46,8 +47,7 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
                                       TableOrQueryType, JoinsType, WhereType,
                                       GroupByType, OrderByType, LimitType>(
             _fields, _table_or_query, _joins, _where, _limit);
-    return _conn->read(query).transform(
-        [](auto&& _it) { return ContainerType(_it); });
+    return _conn->template read<ContainerType>(query);
 
   } else {
     const auto to_container = [](auto range) -> Result<ContainerType> {
@@ -64,8 +64,11 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
       return container;
     };
 
-    using RangeType = Range<
-        transpilation::fields_to_named_tuple_t<TableTupleType, FieldsType>>;
+    using IteratorType = internal::iterator_t<
+        transpilation::fields_to_named_tuple_t<TableTupleType, FieldsType>,
+        decltype(_conn)>;
+
+    using RangeType = Range<IteratorType>;
 
     return select_from_impl<TableTupleType, AliasType, FieldsType,
                             TableOrQueryType, JoinsType, WhereType, GroupByType,
@@ -104,11 +107,12 @@ struct SelectFrom {
 
     if constexpr (std::is_same_v<ToType, Nothing> ||
                   std::ranges::input_range<std::remove_cvref_t<ToType>>) {
-      using ContainerType =
-          std::conditional_t<std::is_same_v<ToType, Nothing>,
-                             Range<transpilation::fields_to_named_tuple_t<
-                                 TableTupleType, FieldsType>>,
-                             ToType>;
+      using IteratorType = internal::iterator_t<
+          transpilation::fields_to_named_tuple_t<TableTupleType, FieldsType>,
+          decltype(_conn)>;
+
+      using ContainerType = std::conditional_t<std::is_same_v<ToType, Nothing>,
+                                               Range<IteratorType>, ToType>;
       return select_from_impl<
           TableTupleType, AliasType, FieldsType, TableOrQueryType, JoinsType,
           WhereType, GroupByType, OrderByType, LimitType, ContainerType>(

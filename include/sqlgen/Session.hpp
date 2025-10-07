@@ -62,8 +62,9 @@ class Session {
     return *this;
   }
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query) {
-    return conn_->read(_query);
+  template <class ContainerType>
+  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+    return conn_->template read<ContainerType>(_query);
   }
 
   Result<Nothing> rollback() noexcept { return conn_->rollback(); }
