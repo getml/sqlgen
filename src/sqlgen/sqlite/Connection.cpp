@@ -78,7 +78,7 @@ Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
   return Nothing{};
 }
 
-Result<Nothing> Connection::insert(
+Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
         _data) noexcept {
@@ -158,7 +158,7 @@ Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
       .and_then([&](const auto&) { return begin_transaction(); });
 }
 
-Result<Nothing> Connection::write(
+Result<Nothing> Connection::write_impl(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
   if (!stmt_) {
     return error(

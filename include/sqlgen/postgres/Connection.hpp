@@ -16,6 +16,7 @@
 #include "../dynamic/Statement.hpp"
 #include "../dynamic/Write.hpp"
 #include "../internal/to_container.hpp"
+#include "../internal/write_or_insert.hpp"
 #include "../is_connection.hpp"
 #include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
@@ -44,10 +45,13 @@ class Connection {
     return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
   }
 
-  Result<Nothing> insert(
-      const dynamic::Insert& _stmt,
-      const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept;
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
+                         ItEnd _end) noexcept {
+    return internal::write_or_insert(
+        [&](const auto& _data) { return insert_impl(_stmt, _data); }, _begin,
+        _end);
+  }
 
   template <class ContainerType>
   auto read(const dynamic::SelectFrom& _query) {
@@ -68,16 +72,27 @@ class Connection {
 
   Result<Nothing> end_write();
 
-  Result<Nothing> write(
-      const std::vector<std::vector<std::optional<std::string>>>& _data);
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> write(ItBegin _begin, ItEnd _end) {
+    return internal::write_or_insert(
+        [&](const auto& _data) { return write_impl(_data); }, _begin, _end);
+  }
 
  private:
+  Result<Nothing> insert_impl(
+      const dynamic::Insert& _stmt,
+      const std::vector<std::vector<std::optional<std::string>>>&
+          _data) noexcept;
+
   static ConnPtr make_conn(const std::string& _conn_str);
 
   Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
 
   std::string to_buffer(
       const std::vector<std::optional<std::string>>& _line) const noexcept;
+
+  Result<Nothing> write_impl(
+      const std::vector<std::vector<std::optional<std::string>>>& _data);
 
  private:
   ConnPtr conn_;
