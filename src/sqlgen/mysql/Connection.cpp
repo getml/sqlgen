@@ -70,7 +70,7 @@ Result<Nothing> Connection::actual_insert(
   return Nothing{};
 }
 
-Result<Nothing> Connection::insert(
+Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
         _data) noexcept {
@@ -157,7 +157,7 @@ Result<Nothing> Connection::start_write(const dynamic::Write& _write_stmt) {
       });
 }
 
-Result<Nothing> Connection::write(
+Result<Nothing> Connection::write_impl(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
   if (!stmt_) {
     return error(

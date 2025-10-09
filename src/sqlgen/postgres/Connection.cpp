@@ -28,7 +28,7 @@ Result<Nothing> Connection::end_write() {
   return Nothing{};
 }
 
-Result<Nothing> Connection::insert(
+Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
         _data) noexcept {
@@ -139,7 +139,7 @@ std::string Connection::to_buffer(
          "\n";
 }
 
-Result<Nothing> Connection::write(
+Result<Nothing> Connection::write_impl(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
   for (const auto& line : _data) {
     const auto buffer = to_buffer(line);
