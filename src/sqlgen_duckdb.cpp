@@ -2,4 +2,4 @@
 #include "sqlgen/duckdb/DuckDBConnection.cpp"
 //  #include "sqlgen/duckdb/Iterator.cpp"
 //  #include "sqlgen/duckdb/exec.cpp"
-//  #include "sqlgen/duckdb/to_sql.cpp"
+#include "sqlgen/duckdb/to_sql.cpp"

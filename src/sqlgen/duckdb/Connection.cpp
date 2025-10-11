@@ -17,11 +17,6 @@ Result<Nothing> Connection::begin_transaction() noexcept {
 
 Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
 
-Result<Nothing> Connection::end_write() {
-  // TODO
-  return error("TODO");
-}
-
 Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
   duckdb_result res;
   const auto state = duckdb_query(conn_->conn(), _sql.c_str(), &res);
