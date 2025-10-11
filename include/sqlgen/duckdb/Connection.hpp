@@ -40,9 +40,7 @@ class Connection {
 
   template <class ItBegin, class ItEnd>
   Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
-                         ItEnd _end) noexcept {
-    return error("TODO");
-  }
+                         ItEnd _end) noexcept;
 
   template <class ContainerType>
   Result<ContainerType> read(const dynamic::SelectFrom& _query) {
@@ -62,6 +60,22 @@ class Connection {
   template <class ItBegin, class ItEnd>
   Result<Nothing> write(ItBegin _begin, ItEnd _end) {
     return error("TODO");
+  }
+
+ private:
+  template <class T>
+  Result<Nothing> append_value(const T& _t, duckdb_appender appender) noexcept {
+    using Type = std::remove_cvref_t<T>;
+    if constexpr (std::is_same_v<Type, bool>) {
+    }
+  }
+
+  template <class StructT>
+  Result<Nothing> insert_row(const StructT& _struct,
+                             duckdb_appender appender) noexcept {
+    Result<Nothing> res = Nothing{};
+    rfl::to_view(_t).apply([&](const auto& _field) {});
+    return res;
   }
 
  private:
