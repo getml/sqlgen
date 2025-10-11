@@ -64,15 +64,21 @@ class Connection {
 
  private:
   template <class T>
-  Result<Nothing> append_value(const T& _t, duckdb_appender appender) noexcept {
+  Result<Nothing> append_value(const T& _t,
+                               duckdb_appender _appender) noexcept {
     using Type = std::remove_cvref_t<T>;
     if constexpr (std::is_same_v<Type, bool>) {
+      const auto state = duckdb_append_bool(_appender, _t);
+      if (state == DuckDBError) {
+        return error("Could not append boolean value.");
+      }
     }
+    return Nothing{};
   }
 
   template <class StructT>
   Result<Nothing> insert_row(const StructT& _struct,
-                             duckdb_appender appender) noexcept {
+                             duckdb_appender _appender) noexcept {
     Result<Nothing> res = Nothing{};
     rfl::to_view(_t).apply([&](const auto& _field) {});
     return res;
