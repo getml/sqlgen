@@ -14,7 +14,7 @@ using Type =
                      types::Int32, types::Int64, types::JSON, types::UInt8,
                      types::UInt16, types::UInt32, types::UInt64, types::Text,
                      types::Date, types::Timestamp, types::TimestampWithTZ,
-                     types::VarChar>;
+                     types::VarChar, types::Enum>;
 
 }  // namespace sqlgen::dynamic
 

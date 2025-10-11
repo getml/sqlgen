@@ -28,7 +28,7 @@ Result<Nothing> Connection::end_write() {
   return Nothing{};
 }
 
-Result<Nothing> Connection::insert(
+Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
         _data) noexcept {
@@ -107,7 +107,8 @@ typename Connection::ConnPtr Connection::make_conn(
   return ConnPtr::make(std::shared_ptr<PGconn>(raw_ptr, &PQfinish)).value();
 }
 
-Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
+Result<Ref<IteratorBase>> Connection::read_impl(
+    const dynamic::SelectFrom& _query) {
   const auto sql = postgres::to_sql_impl(_query);
   try {
     return Ref<IteratorBase>(Ref<Iterator>::make(sql, conn_));
@@ -138,7 +139,7 @@ std::string Connection::to_buffer(
          "\n";
 }
 
-Result<Nothing> Connection::write(
+Result<Nothing> Connection::write_impl(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
   for (const auto& line : _data) {
     const auto buffer = to_buffer(line);

@@ -35,26 +35,11 @@ Result<Ref<Connection>> write(const Ref<Connection>& _conn, ItBegin _begin,
   };
 
   const auto write = [&](const auto&) -> Result<Nothing> {
-    std::vector<std::vector<std::optional<std::string>>> data;
-    for (auto it = _begin; it != _end; ++it) {
-      data.emplace_back(internal::to_str_vec(*it));
-      if (data.size() == SQLGEN_BATCH_SIZE) {
-        const auto res = _conn->write(data);
-        if (!res) {
-          _conn->end_write();
-          return res;
-        }
-        data.clear();
-      }
+    const auto res = _conn->write(_begin, _end);
+    if (!res) {
+      _conn->end_write();
     }
-    if (data.size() != 0) {
-      const auto res = _conn->write(data);
-      if (!res) {
-        _conn->end_write();
-        return res;
-      }
-    }
-    return Nothing{};
+    return res;
   };
 
   const auto end_write = [&](const auto&) -> Result<Nothing> {

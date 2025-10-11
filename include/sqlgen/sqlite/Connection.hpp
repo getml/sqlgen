@@ -14,7 +14,10 @@
 #include "../Result.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/to_container.hpp"
+#include "../internal/write_or_insert.hpp"
 #include "../is_connection.hpp"
+#include "../transpilation/value_t.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::sqlite {
@@ -37,12 +40,20 @@ class Connection {
 
   Result<Nothing> execute(const std::string& _sql) noexcept;
 
-  Result<Nothing> insert(
-      const dynamic::Insert& _stmt,
-      const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept;
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
+                         ItEnd _end) noexcept {
+    return internal::write_or_insert(
+        [&](const auto& _data) { return insert_impl(_stmt, _data); }, _begin,
+        _end);
+  }
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  auto read(const dynamic::SelectFrom& _query) {
+    using ValueType = transpilation::value_t<ContainerType>;
+    return internal::to_container<ContainerType>(read_impl(_query).transform(
+        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
+  }
 
   Result<Nothing> rollback() noexcept;
 
@@ -54,8 +65,11 @@ class Connection {
 
   Result<Nothing> end_write();
 
-  Result<Nothing> write(
-      const std::vector<std::vector<std::optional<std::string>>>& _data);
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> write(ItBegin _begin, ItEnd _end) {
+    return internal::write_or_insert(
+        [&](const auto& _data) { return write_impl(_data); }, _begin, _end);
+  }
 
  private:
   /// Generates the underlying connection.
@@ -67,8 +81,21 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>& _data,
       sqlite3_stmt* _stmt) const noexcept;
 
+  /// Implements the actual insert.
+  Result<Nothing> insert_impl(
+      const dynamic::Insert& _stmt,
+      const std::vector<std::vector<std::optional<std::string>>>&
+          _data) noexcept;
+
   /// Generates a prepared statment, usually for inserts.
   Result<StmtPtr> prepare_statement(const std::string& _sql) const noexcept;
+
+  /// Implements the actual read.
+  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
+
+  /// Implements the actual write
+  Result<Nothing> write_impl(
+      const std::vector<std::vector<std::optional<std::string>>>& _data);
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that

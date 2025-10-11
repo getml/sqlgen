@@ -70,7 +70,7 @@ Result<Nothing> Connection::actual_insert(
   return Nothing{};
 }
 
-Result<Nothing> Connection::insert(
+Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
         _data) noexcept {
@@ -122,7 +122,8 @@ Result<Connection::StmtPtr> Connection::prepare_statement(
   return stmt_ptr;
 }
 
-Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
+Result<Ref<IteratorBase>> Connection::read_impl(
+    const dynamic::SelectFrom& _query) {
   const auto sql = mysql::to_sql_impl(_query);
   const auto err =
       mysql_real_query(conn_.get(), sql.c_str(), static_cast<int>(sql.size()));
@@ -156,7 +157,7 @@ Result<Nothing> Connection::start_write(const dynamic::Write& _write_stmt) {
       });
 }
 
-Result<Nothing> Connection::write(
+Result<Nothing> Connection::write_impl(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
   if (!stmt_) {
     return error(

@@ -21,11 +21,12 @@ struct ToJoin;
 
 template <class TableTupleType, class QueryType>
 struct ToJoin {
-  template <class ConditionType, rfl::internal::StringLiteral _alias>
-  dynamic::Join operator()(
-      const transpilation::Join<QueryType, ConditionType, _alias>& _join) {
+  template <class ConditionType, rfl::internal::StringLiteral _alias,
+            JoinType _how>
+  dynamic::Join operator()(const transpilation::Join<QueryType, ConditionType,
+                                                     _alias, _how>& _join) {
     return dynamic::Join{
-        .how = _join.how,
+        .how = _how,
         .table_or_query = to_table_or_query(_join.table_or_query),
         .alias = Literal<_alias>().str(),
         .on = to_condition<TableTupleType>(_join.on)};
@@ -34,15 +35,16 @@ struct ToJoin {
 
 template <class TableTupleType, class TableType>
 struct ToJoin<TableTupleType, TableWrapper<TableType>> {
-  template <class ConditionType, rfl::internal::StringLiteral _alias>
+  template <class ConditionType, rfl::internal::StringLiteral _alias,
+            JoinType _how>
   dynamic::Join operator()(
-      const Join<TableWrapper<TableType>, ConditionType, _alias>& _join) {
+      const Join<TableWrapper<TableType>, ConditionType, _alias, _how>& _join) {
     using T = std::remove_cvref_t<TableType>;
-    using Alias =
-        typename Join<TableWrapper<TableType>, ConditionType, _alias>::Alias;
+    using Alias = typename Join<TableWrapper<TableType>, ConditionType, _alias,
+                                _how>::Alias;
 
     return dynamic::Join{
-        .how = _join.how,
+        .how = _how,
         .table_or_query = dynamic::Table{.name = get_tablename<T>(),
                                          .schema = get_schema<T>()},
         .alias = Alias().str(),
@@ -51,8 +53,8 @@ struct ToJoin<TableTupleType, TableWrapper<TableType>> {
 };
 
 template <class TableTupleType, class T, class ConditionType,
-          rfl::internal::StringLiteral _alias>
-dynamic::Join to_join(const Join<T, ConditionType, _alias>& _join) {
+          rfl::internal::StringLiteral _alias, JoinType _how>
+dynamic::Join to_join(const Join<T, ConditionType, _alias, _how>& _join) {
   return ToJoin<TableTupleType, T>{}(_join);
 }
 

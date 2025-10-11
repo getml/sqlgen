@@ -62,7 +62,7 @@ TEST(mysql, test_joins_two_tables_grouped) {
           "first_name"_t3 | as<"first_name_child">,
           avg("age"_t1 - "age"_t3) | as<"avg_parent_age_at_birth">) |
       inner_join<Relationship, "t2">("id"_t1 == "parent_id"_t2) |
-      left_join<Person, "t3">("id"_t3 == "child_id"_t2) |
+      inner_join<Person, "t3">("id"_t3 == "child_id"_t2) |
       group_by("last_name"_t1, "first_name"_t3) |
       order_by("last_name"_t1, "first_name"_t3) |
       to<std::vector<ParentAndChild>>;
@@ -76,7 +76,7 @@ TEST(mysql, test_joins_two_tables_grouped) {
                           .value();
 
   const std::string expected_query =
-      R"(SELECT t1.`last_name` AS `last_name`, t3.`first_name` AS `first_name_child`, AVG((t1.`age`) - (t3.`age`)) AS `avg_parent_age_at_birth` FROM `Person` t1 INNER JOIN `Relationship` t2 ON t1.`id` = t2.`parent_id` LEFT JOIN `Person` t3 ON t3.`id` = t2.`child_id` GROUP BY t1.`last_name`, t3.`first_name` ORDER BY t1.`last_name`, t3.`first_name`)";
+      R"(SELECT t1.`last_name` AS `last_name`, t3.`first_name` AS `first_name_child`, AVG((t1.`age`) - (t3.`age`)) AS `avg_parent_age_at_birth` FROM `Person` t1 INNER JOIN `Relationship` t2 ON t1.`id` = t2.`parent_id` INNER JOIN `Person` t3 ON t3.`id` = t2.`child_id` GROUP BY t1.`last_name`, t3.`first_name` ORDER BY t1.`last_name`, t3.`first_name`)";
 
   const std::string expected =
       R"([{"last_name":"Simpson","first_name_child":"Bart","avg_parent_age_at_birth":32.5},{"last_name":"Simpson","first_name_child":"Lisa","avg_parent_age_at_birth":34.5},{"last_name":"Simpson","first_name_child":"Maggie","avg_parent_age_at_birth":42.5}])";

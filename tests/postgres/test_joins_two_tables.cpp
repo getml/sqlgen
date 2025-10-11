@@ -64,7 +64,7 @@ TEST(postgres, test_joins_two_tables) {
           "first_name"_t3 | as<"first_name_child">,
           ("age"_t1 - "age"_t3) | as<"parent_age_at_birth">) |
       inner_join<Relationship, "t2">("id"_t1 == "parent_id"_t2) |
-      left_join<Person, "t3">("id"_t3 == "child_id"_t2) |
+      inner_join<Person, "t3">("id"_t3 == "child_id"_t2) |
       order_by("id"_t1, "id"_t3) | to<std::vector<ParentAndChild>>;
 
   const auto people = postgres::connect(credentials)
@@ -76,7 +76,7 @@ TEST(postgres, test_joins_two_tables) {
                           .value();
 
   const std::string expected_query =
-      R"(SELECT t1."last_name" AS "last_name", t1."first_name" AS "first_name_parent", t3."first_name" AS "first_name_child", (t1."age") - (t3."age") AS "parent_age_at_birth" FROM "Person" t1 INNER JOIN "Relationship" t2 ON t1."id" = t2."parent_id" LEFT JOIN "Person" t3 ON t3."id" = t2."child_id" ORDER BY t1."id", t3."id")";
+      R"(SELECT t1."last_name" AS "last_name", t1."first_name" AS "first_name_parent", t3."first_name" AS "first_name_child", (t1."age") - (t3."age") AS "parent_age_at_birth" FROM "Person" t1 INNER JOIN "Relationship" t2 ON t1."id" = t2."parent_id" INNER JOIN "Person" t3 ON t3."id" = t2."child_id" ORDER BY t1."id", t3."id")";
   const std::string expected =
       R"([{"last_name":"Simpson","first_name_parent":"Homer","first_name_child":"Bart","parent_age_at_birth":35.0},{"last_name":"Simpson","first_name_parent":"Homer","first_name_child":"Lisa","parent_age_at_birth":37.0},{"last_name":"Simpson","first_name_parent":"Homer","first_name_child":"Maggie","parent_age_at_birth":45.0},{"last_name":"Simpson","first_name_parent":"Marge","first_name_child":"Bart","parent_age_at_birth":30.0},{"last_name":"Simpson","first_name_parent":"Marge","first_name_child":"Lisa","parent_age_at_birth":32.0},{"last_name":"Simpson","first_name_parent":"Marge","first_name_child":"Maggie","parent_age_at_birth":40.0}])";
 

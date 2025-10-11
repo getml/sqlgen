@@ -12,12 +12,13 @@ namespace sqlgen::transpilation {
 using JoinType = dynamic::JoinType;
 
 template <class _TableOrQueryType, class ConditionType,
-          rfl::internal::StringLiteral _alias>
+          rfl::internal::StringLiteral _alias, JoinType _how>
 struct Join {
   using TableOrQueryType = _TableOrQueryType;
   using Alias = Literal<_alias>;
 
-  JoinType how;
+  static constexpr JoinType how = _how;
+
   TableOrQueryType table_or_query;
   ConditionType on;
 };

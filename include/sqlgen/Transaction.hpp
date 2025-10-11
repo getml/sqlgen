@@ -55,10 +55,10 @@ class Transaction {
     return conn_->execute(_sql);
   }
 
-  Result<Nothing> insert(
-      const dynamic::Insert& _stmt,
-      const std::vector<std::vector<std::optional<std::string>>>& _data) {
-    return conn_->insert(_stmt, _data);
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
+                         ItEnd _end) {
+    return conn_->insert(_stmt, _begin, _end);
   }
 
   Transaction& operator=(const Transaction& _other) = delete;
@@ -73,8 +73,9 @@ class Transaction {
     return *this;
   }
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query) {
-    return conn_->read(_query);
+  template <class ContainerType>
+  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+    return conn_->template read<ContainerType>(_query);
   }
 
   Result<Nothing> rollback() noexcept {
@@ -97,9 +98,9 @@ class Transaction {
 
   Result<Nothing> end_write() { return conn_->end_write(); }
 
-  Result<Nothing> write(
-      const std::vector<std::vector<std::optional<std::string>>>& _data) {
-    return conn_->write(_data);
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> write(ItBegin _begin, ItEnd _end) {
+    return conn_->write(_begin, _end);
   }
 
  private:

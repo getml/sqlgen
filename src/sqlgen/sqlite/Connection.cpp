@@ -78,7 +78,7 @@ Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
   return Nothing{};
 }
 
-Result<Nothing> Connection::insert(
+Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
         _data) noexcept {
@@ -97,7 +97,8 @@ typename Connection::ConnPtr Connection::make_conn(const std::string& _fname) {
   return ConnPtr::make(std::shared_ptr<sqlite3>(conn, &sqlite3_close)).value();
 }
 
-Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
+Result<Ref<IteratorBase>> Connection::read_impl(
+    const dynamic::SelectFrom& _query) {
   const auto sql = to_sql_impl(_query);
 
   sqlite3_stmt* p_stmt = nullptr;
@@ -157,7 +158,7 @@ Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
       .and_then([&](const auto&) { return begin_transaction(); });
 }
 
-Result<Nothing> Connection::write(
+Result<Nothing> Connection::write_impl(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
   if (!stmt_) {
     return error(

@@ -19,9 +19,6 @@ struct Person {
 };
 
 TEST(postgres, test_range_select_from) {
-  static_assert(std::ranges::input_range<sqlgen::Range<Person>>,
-                "Must be an input range.");
-
   const auto people1 = std::vector<Person>(
       {Person{
            .id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},

@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "../Iterator.hpp"
 #include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
@@ -15,7 +16,10 @@
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Statement.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/to_container.hpp"
+#include "../internal/write_or_insert.hpp"
 #include "../is_connection.hpp"
+#include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
 #include "exec.hpp"
 #include "to_sql.hpp"
@@ -45,12 +49,20 @@ class Connection {
     return exec(conn_, _sql);
   }
 
-  Result<Nothing> insert(
-      const dynamic::Insert& _stmt,
-      const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept;
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
+                         ItEnd _end) noexcept {
+    return internal::write_or_insert(
+        [&](const auto& _data) { return insert_impl(_stmt, _data); }, _begin,
+        _end);
+  }
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  auto read(const dynamic::SelectFrom& _query) {
+    using ValueType = transpilation::value_t<ContainerType>;
+    return internal::to_container<ContainerType>(read_impl(_query).transform(
+        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
+  }
 
   Result<Nothing> rollback() noexcept { return execute("ROLLBACK;"); }
 
@@ -60,8 +72,11 @@ class Connection {
 
   Result<Nothing> start_write(const dynamic::Write& _stmt);
 
-  Result<Nothing> write(
-      const std::vector<std::vector<std::optional<std::string>>>& _data);
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> write(ItBegin _begin, ItEnd _end) {
+    return internal::write_or_insert(
+        [&](const auto& _data) { return write_impl(_data); }, _begin, _end);
+  }
 
   Result<Nothing> end_write();
 
@@ -72,11 +87,21 @@ class Connection {
       const std::vector<std::vector<std::optional<std::string>>>& _data,
       MYSQL_STMT* _stmt) const noexcept;
 
+  Result<Nothing> insert_impl(
+      const dynamic::Insert& _stmt,
+      const std::vector<std::vector<std::optional<std::string>>>&
+          _data) noexcept;
+
   static ConnPtr make_conn(const Credentials& _credentials);
 
   Result<StmtPtr> prepare_statement(
       const std::variant<dynamic::Insert, dynamic::Write>& _stmt)
       const noexcept;
+
+  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
+
+  Result<Nothing> write_impl(
+      const std::vector<std::vector<std::optional<std::string>>>& _data);
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that
