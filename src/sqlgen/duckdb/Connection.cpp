@@ -34,31 +34,12 @@ Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
   return Nothing{};
 }
 
-Result<Nothing> Connection::insert(
-    const dynamic::Insert& _stmt,
-    const std::vector<std::vector<std::optional<std::string>>>&
-        _data) noexcept {
-  // TODO
-  return error("TODO");
-}
-
 rfl::Result<Ref<Connection>> Connection::make(
     const std::optional<std::string>& _fname) noexcept {
   return DuckDBConnection::make(_fname).transform(
       [](auto&& _conn) { return Ref<Connection>::make(std::move(_conn)); });
 }
 
-Result<Ref<IteratorBase>> Connection::read(const dynamic::SelectFrom& _query) {
-  // TODO
-  return error("TODO");
-}
-
 Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
-
-Result<Nothing> Connection::write(
-    const std::vector<std::vector<std::optional<std::string>>>& _data) {
-  // TODO
-  return error("TODO");
-}
 
 }  // namespace sqlgen::duckdb

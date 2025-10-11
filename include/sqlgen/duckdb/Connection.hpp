@@ -38,12 +38,16 @@ class Connection {
 
   Result<Nothing> execute(const std::string& _sql) noexcept;
 
-  Result<Nothing> insert(
-      const dynamic::Insert& _stmt,
-      const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept;
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
+                         ItEnd _end) noexcept {
+    return error("TODO");
+  }
 
-  Result<Ref<IteratorBase>> read(const dynamic::SelectFrom& _query);
+  template <class ContainerType>
+  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+    return error("TODO");
+  }
 
   Result<Nothing> rollback() noexcept;
 
@@ -55,8 +59,10 @@ class Connection {
 
   Result<Nothing> end_write();
 
-  Result<Nothing> write(
-      const std::vector<std::vector<std::optional<std::string>>>& _data);
+  template <class ItBegin, class ItEnd>
+  Result<Nothing> write(ItBegin _begin, ItEnd _end) {
+    return error("TODO");
+  }
 
  private:
   /// A prepared statement - needed for the read and write operations. Note that
