@@ -1,19 +1,12 @@
 #ifndef SQLGEN_DUCKDB_CHUNKPTRST_HPP_
 #define SQLGEN_DUCKDB_CHUNKPTRST_HPP_
 
-#include <duckdb.h>
-
 #include <rfl.hpp>
 #include <type_traits>
 
-namespace sqlgen::duckdb {
+#include "ColumnData.hpp"
 
-template <class T>
-struct ColumnData {
-  duckdb_vector vec;
-  T *data;
-  uint64_t *validity;
-};
+namespace sqlgen::duckdb {
 
 template <class T>
 struct ChunkPtrsType;

@@ -12,7 +12,7 @@
 #include "../Result.hpp"
 #include "DuckDBChunkPtrs.hpp"
 #include "DuckDBConnection.hpp"
-#include "chunk_ptrs_t.hpp"
+#include "make_chunk_ptrs.hpp"
 
 namespace sqlgen::duckdb {
 
@@ -20,7 +20,6 @@ template <class T>
 class Iterator {
   using ConnPtr = Ref<DuckDBConnection>;
   using ResultPtr = Ref<duckdb_result>;
-  using ChunkPtrsT = chunk_ptrs_t<T>;
 
   struct End {
     bool operator==(const Iterator<T>& _it) const noexcept {
@@ -65,15 +64,21 @@ class Iterator {
   static Ref<std::vector<Result<T>>> get_next_batch(
       const Ref<IteratorBase>& _it) noexcept {
     duckdb_data_chunk chunk = duckdb_fetch_chunk(*res_);
-    auto batch = Ref<std::vector<Result<T>>>::make();
     if (!chunk) {
-      return batch;
+      return Ref<std::vector<Result<T>>>::make();
     }
     const idx_t row_count = duckdb_data_chunk_get_size(chunk);
-    const auto chunk_ptrs = make_chunk_ptrs<ChunkPtrsT>(chunk);
-    for (idx_t i = 0; i < row_count; ++i) {
-    }
-    return batch;
+    return make_chunk_ptrs<T>(chunk)
+        .transform([&](auto&& _chunk_ptrs) {
+          auto batch = Ref<std::vector<Result<T>>>::make();
+          for (idx_t i = 0; i < row_count; ++i) {
+            batch->emplace_back(from_chunk_ptrs<T>(_chunk_ptrs, i));
+          }
+          return batch;
+        })
+        .or_else(
+            [](auto _err) { return Ref<std::vector<Result<T>>>::make({_err}); })
+        .value();
   }
 
  private:
