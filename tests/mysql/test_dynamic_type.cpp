@@ -38,6 +38,17 @@ struct Parser<boost::uuids::uuid> {
 
 }  // namespace sqlgen::parsing
 
+namespace sqlgen::transpilation {
+
+template <>
+struct ToValue<boost::uuids::uuid> {
+  dynamic::Value operator()(const boost::uuids::uuid& _u) const {
+    return dynamic::Value{dynamic::String{.val = boost::uuids::to_string(_u)}};
+  }
+};
+
+}  // namespace sqlgen::transpilation
+
 /// For the JSON serialization - not needed for
 /// the actual DB operations.
 namespace rfl {
@@ -87,10 +98,10 @@ TEST(mysql, test_dynamic_type) {
 
   const auto people2 = sqlgen::write(conn, people1)
                            .and_then(sqlgen::read<std::vector<Person>> |
-                                     order_by("age"_c.desc()))
+                                     where("id"_c == people1.front().id()))
                            .value();
 
-  const auto json1 = rfl::json::write(people1);
+  const auto json1 = rfl::json::write(std::vector<Person>({people1.front()}));
   const auto json2 = rfl::json::write(people2);
 
   EXPECT_EQ(json1, json2);
