@@ -45,6 +45,33 @@ struct Parser<boost::uuids::uuid> {
 }  // namespace sqlgen::parsing
 ```
 
+The second step is to specialize `sqlgen::transpilation::ToValue` for `boost::uuids::uuid` and implement `operator()`:
+
+```cpp
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <sqlgen/dynamic/types.hpp>
+#include <sqlgen/transpilation/to_value.hpp>
+
+namespace sqlgen::transpilation {
+
+template <>
+struct ToValue<boost::uuids::uuid> {
+  dynamic::Value operator()(const boost::uuids::uuid& _u) const {
+    return dynamic::Value{dynamic::String{.val = boost::uuids::to_string(_u)}};
+  }
+};
+
+}  // namespace sqlgen::transpilation
+```
+
+This second step is necessary to ensure you can use your type in `where(...)` statements
+and other conditions.
+
+The return type must always be `sqlgen::dynamic::Value`. `dynamic::Value` can contain
+`dynamic::String` (as in this example), `dynamic::Float` or `dynamic::Integer`.
+
 ### Using `boost::uuids::uuid` in structs
 
 You can then automatically generate random UUIDs:
