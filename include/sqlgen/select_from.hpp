@@ -217,9 +217,11 @@ struct SelectFrom {
                   "You cannot call to<...> before group_by(...).");
     static_assert(sizeof...(ColTypes) != 0,
                   "You must assign at least one column to group_by.");
+    using TableTupleType =
+        transpilation::table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
                       WhereType,
-                      transpilation::group_by_t<TableOrQueryType,
+                      transpilation::group_by_t<TableTupleType,
                                                 typename ColTypes::ColType...>,
                       OrderByType, LimitType, ToType>{.fields_ = _s.fields_,
                                                       .from_ = _s.from_,
