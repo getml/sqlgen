@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include "sqlgen/internal/collect/vector.hpp"
+#include "sqlgen/internal/random.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
 #include "sqlgen/postgres/Iterator.hpp"
 
@@ -36,12 +37,18 @@ Result<Nothing> Connection::insert_impl(
     return Nothing{};
   }
 
+  const auto name = "sqlgen_insert_into_table_" + internal::random();
+
   const auto sql = to_sql_impl(_stmt);
 
-  const auto res = execute("PREPARE \"sqlgen_insert_into_table\" AS " + sql);
+  const auto res = PQprepare(conn_.get(), name.c_str(), sql.c_str(),
+                             _data.at(0).size(), nullptr);
 
-  if (!res) {
-    return res;
+  const auto status = PQresultStatus(res);
+
+  if (status != PGRES_COMMAND_OK) {
+    return error("Generating prepared statement for '" + sql +
+                 "' failed: " + PQresultErrorMessage(res));
   }
 
   std::vector<const char*> current_row(_data[0].size());
@@ -52,7 +59,7 @@ Result<Nothing> Connection::insert_impl(
     const auto& d = _data[i];
 
     if (d.size() != current_row.size()) {
-      execute("DEALLOCATE sqlgen_insert_into_table;");
+      execute("DEALLOCATE " + name + ";");
       return error("Error in entry " + std::to_string(i) + ": Expected " +
                    std::to_string(current_row.size()) + " entries, got " +
                    std::to_string(d.size()));
@@ -62,13 +69,13 @@ Result<Nothing> Connection::insert_impl(
       current_row[j] = d[j] ? d[j]->c_str() : nullptr;
     }
 
-    const auto res = PQexecPrepared(conn_.get(),                 // conn
-                                    "sqlgen_insert_into_table",  // stmtName
-                                    n_params,                    // nParams
-                                    current_row.data(),          // paramValues
-                                    nullptr,                     // paramLengths
-                                    nullptr,                     // paramFormats
-                                    0                            // resultFormat
+    const auto res = PQexecPrepared(conn_.get(),         // conn
+                                    name.c_str(),        // stmtName
+                                    n_params,            // nParams
+                                    current_row.data(),  // paramValues
+                                    nullptr,             // paramLengths
+                                    nullptr,             // paramFormats
+                                    0                    // resultFormat
     );
 
     const auto status = PQresultStatus(res);
@@ -76,12 +83,12 @@ Result<Nothing> Connection::insert_impl(
     if (status != PGRES_COMMAND_OK) {
       const auto err = error(std::string("Executing INSERT failed: ") +
                              PQresultErrorMessage(res));
-      execute("DEALLOCATE sqlgen_insert_into_table;");
+      execute("DEALLOCATE " + name + ";");
       return err;
     }
   }
 
-  return execute("DEALLOCATE sqlgen_insert_into_table;");
+  return execute("DEALLOCATE " + name + ";");
 }
 
 rfl::Result<Ref<Connection>> Connection::make(
