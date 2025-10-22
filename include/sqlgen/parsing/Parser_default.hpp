@@ -32,16 +32,28 @@ struct Parser {
       try {
         if constexpr (std::is_floating_point_v<Type>) {
           return static_cast<Type>(std::stod(*_str));
+
+        } else if constexpr (std::is_same_v<Type, bool>) {
+          if (*_str == "t" || *_str == "T" || *_str == "true" ||
+              *_str == "TRUE") {
+            return true;
+          }
+          if (*_str == "f" || *_str == "F" || *_str == "false" ||
+              *_str == "FALSE") {
+            return false;
+          }
+          return std::stoi(*_str) != 0;
+
         } else if constexpr (std::is_integral_v<Type>) {
           return static_cast<Type>(std::stoll(*_str));
-        } else if constexpr (std::is_same_v<Type, bool>) {
-          return std::stoi(*_str) != 0;
+
         } else if constexpr (std::is_enum_v<Type>) {
           if (auto res = rfl::string_to_enum<Type>(*_str)) {
             return Type{*res};
           } else {
             return error(res.error());
           }
+
         } else {
           static_assert(rfl::always_false_v<Type>, "Unsupported type");
         }
