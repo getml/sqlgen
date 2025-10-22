@@ -23,8 +23,12 @@ TEST(postgres, test_write_and_read_dry) {
   const auto query2 =
       postgres::to_sql(sqlgen::read<Person> | where("id"_c == 1));
 
-  std::cout << query1 << std::endl;
-  std::cout << query2 << std::endl;
+  EXPECT_EQ(
+      query1,
+      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE "id" = 1)");
+  EXPECT_EQ(
+      query2,
+      R"(SELECT "id", "first_name", "last_name", "age" FROM "Person" WHERE "id" = 1)");
 }
 
 }  // namespace test_write_and_read_dry
