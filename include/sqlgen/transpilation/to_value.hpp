@@ -20,6 +20,9 @@ struct ToValue {
     if constexpr (std::is_floating_point_v<Type>) {
       return dynamic::Value{dynamic::Float{.val = static_cast<double>(_t)}};
 
+    } else if constexpr (std::is_same_v<Type, bool>) {
+      return dynamic::Value{dynamic::Boolean{.val = _t}};
+
     } else if constexpr (std::is_integral_v<Type>) {
       return dynamic::Value{dynamic::Integer{.val = static_cast<int64_t>(_t)}};
 
