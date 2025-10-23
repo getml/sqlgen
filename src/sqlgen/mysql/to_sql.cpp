@@ -219,6 +219,10 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
     stream << "(" << condition_to_sql(*_condition.cond1) << ") AND ("
            << condition_to_sql(*_condition.cond2) << ")";
 
+  } else if constexpr (std::is_same_v<
+                           C, dynamic::Condition::BooleanColumnOrValue>) {
+    stream << column_or_value_to_sql(_condition.col_or_val);
+
   } else if constexpr (std::is_same_v<C, dynamic::Condition::Equal>) {
     stream << operation_to_sql(_condition.op1) << " = "
            << operation_to_sql(_condition.op2);
