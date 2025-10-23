@@ -48,7 +48,8 @@ TEST(postgres, test_boolean_conditions) {
 
   const auto homer =
       sqlgen::write(conn, people1)
-          .and_then(sqlgen::read<Person> | where("has_children"_c == true))
+          .and_then(sqlgen::read<Person> | where("has_children"_c == true) |
+                    order_by("id"_c))
           .value();
 
   const auto json1 = rfl::json::write(people1.at(0));

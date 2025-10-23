@@ -1,4 +1,3 @@
-#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
 
 #include <gtest/gtest.h>
 
@@ -41,7 +40,8 @@ TEST(sqlite, test_boolean_conditions) {
   const auto homer =
       sqlite::connect()
           .and_then(sqlgen::write(people1))
-          .and_then(sqlgen::read<Person> | where("has_children"_c == true))
+          .and_then(sqlgen::read<Person> | where("has_children"_c == true) |
+                    order_by("id"_c))
           .value();
 
   const auto json1 = rfl::json::write(people1.at(0));
@@ -52,4 +52,3 @@ TEST(sqlite, test_boolean_conditions) {
 
 }  // namespace test_boolean_conditions
 
-#endif
