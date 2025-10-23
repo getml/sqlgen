@@ -13,6 +13,10 @@ struct Duration {
   int64_t val;
 };
 
+struct Boolean {
+  bool val;
+};
+
 struct Float {
   double val;
 };
@@ -30,8 +34,8 @@ struct Timestamp {
 };
 
 struct Value {
-  using ReflectionType =
-      rfl::TaggedUnion<"type", Duration, Float, Integer, String, Timestamp>;
+  using ReflectionType = rfl::TaggedUnion<"type", Duration, Boolean, Float,
+                                          Integer, String, Timestamp>;
   const auto& reflection() const { return val; }
   ReflectionType val;
 };
