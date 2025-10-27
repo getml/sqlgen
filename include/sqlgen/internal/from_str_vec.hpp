@@ -22,7 +22,6 @@ void assign_if_field_is_field_i(
     const std::vector<std::optional<std::string>>& _row, const size_t _i,
     ViewType* _view, std::optional<Error>* _err) noexcept {
   using FieldType = rfl::tuple_element_t<i, typename ViewType::Fields>;
-  using OriginalType = typename FieldType::Type;
   using T =
       std::remove_cvref_t<std::remove_pointer_t<typename FieldType::Type>>;
   constexpr auto name = FieldType::name();

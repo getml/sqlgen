@@ -103,11 +103,11 @@ Result<Ref<IteratorBase>> Connection::read_impl(
 
   sqlite3_stmt* p_stmt = nullptr;
 
-  sqlite3_prepare(conn_.get(), /* Database handle */
-                  sql.c_str(), /* SQL statement, UTF-8 encoded */
-                  sql.size(),  /* Maximum length of zSql in bytes. */
-                  &p_stmt,     /* OUT: Statement handle */
-                  nullptr      /* OUT: Pointer to unused portion of zSql */
+  sqlite3_prepare_v2(conn_.get(), /* Database handle */
+                     sql.c_str(), /* SQL statement, UTF-8 encoded */
+                     sql.size(),  /* Maximum length of zSql in bytes. */
+                     &p_stmt,     /* OUT: Statement handle */
+                     nullptr      /* OUT: Pointer to unused portion of zSql */
   );
 
   if (!p_stmt) {
@@ -124,11 +124,11 @@ Result<Connection::StmtPtr> Connection::prepare_statement(
     const std::string& _sql) const noexcept {
   sqlite3_stmt* p_stmt = nullptr;
 
-  sqlite3_prepare(conn_.get(),  /* Database handle */
-                  _sql.c_str(), /* SQL statement, UTF-8 encoded */
-                  _sql.size(),  /* Maximum length of zSql in bytes. */
-                  &p_stmt,      /* OUT: Statement handle */
-                  nullptr       /* OUT: Pointer to unused portion of zSql */
+  sqlite3_prepare_v2(conn_.get(),  /* Database handle */
+                     _sql.c_str(), /* SQL statement, UTF-8 encoded */
+                     _sql.size(),  /* Maximum length of zSql in bytes. */
+                     &p_stmt,      /* OUT: Statement handle */
+                     nullptr       /* OUT: Pointer to unused portion of zSql */
   );
 
   if (!p_stmt) {
