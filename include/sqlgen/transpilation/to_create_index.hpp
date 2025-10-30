@@ -1,6 +1,7 @@
 #ifndef SQLGEN_TRANSPILATION_TO_CREATE_INDEX_HPP_
 #define SQLGEN_TRANSPILATION_TO_CREATE_INDEX_HPP_
 
+#include <optional>
 #include <rfl.hpp>
 #include <string>
 #include <type_traits>
@@ -24,8 +25,9 @@ dynamic::CreateIndex to_create_index(const std::string& _name,
                                      const WhereType& _where) {
   return dynamic::CreateIndex{
       .name = _name,
-      .table =
-          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
+      .table = dynamic::Table{.alias = std::nullopt,
+                              .name = get_tablename<T>(),
+                              .schema = get_schema<T>()},
       .columns = ColumnsType::to_vec(),
       .unique = _unique,
       .if_not_exists = _if_not_exists,

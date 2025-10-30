@@ -3,7 +3,6 @@
 
 #include <optional>
 #include <string>
-#include <vector>
 
 #include "Type.hpp"
 #include "types.hpp"

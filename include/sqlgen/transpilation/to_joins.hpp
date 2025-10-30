@@ -45,7 +45,8 @@ struct ToJoin<TableTupleType, TableWrapper<TableType>> {
 
     return dynamic::Join{
         .how = _how,
-        .table_or_query = dynamic::Table{.name = get_tablename<T>(),
+        .table_or_query = dynamic::Table{.alias = std::nullopt,
+                                         .name = get_tablename<T>(),
                                          .schema = get_schema<T>()},
         .alias = Alias().str(),
         .on = to_condition<TableTupleType>(_join.on)};

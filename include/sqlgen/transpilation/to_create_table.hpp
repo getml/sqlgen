@@ -29,8 +29,9 @@ dynamic::CreateTable to_create_table(const bool _if_not_exists = true) {
                 "You cannot create a view using create_table(...).");
 
   return dynamic::CreateTable{
-      .table =
-          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
+      .table = dynamic::Table{.alias = std::nullopt,
+                              .name = get_tablename<T>(),
+                              .schema = get_schema<T>()},
       .columns = make_columns<Fields>(
           std::make_integer_sequence<int, rfl::tuple_size_v<Fields>>()),
       .if_not_exists = _if_not_exists};

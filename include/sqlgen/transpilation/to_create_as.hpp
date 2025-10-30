@@ -29,8 +29,9 @@ dynamic::CreateAs to_create_as(const dynamic::CreateAs::What _what,
                                const LimitType& _limit) {
   return dynamic::CreateAs{
       .what = _what,
-      .table_or_view =
-          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
+      .table_or_view = dynamic::Table{.alias = std::nullopt,
+                                      .name = get_tablename<T>(),
+                                      .schema = get_schema<T>()},
       .query = to_select_from<TableTupleType, AliasType, FieldsType,
                               TableOrQueryType, JoinsType, WhereType,
                               GroupByType, OrderByType, LimitType>(

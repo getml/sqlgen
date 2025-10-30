@@ -20,7 +20,8 @@ template <class T, class SetsType, class WhereType>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
 dynamic::Update to_update(const SetsType& _sets, const WhereType& _where) {
-  return dynamic::Update{.table = dynamic::Table{.name = get_tablename<T>(),
+  return dynamic::Update{.table = dynamic::Table{.alias = std::nullopt,
+                                                 .name = get_tablename<T>(),
                                                  .schema = get_schema<T>()},
                          .sets = to_sets<T>(_sets),
                          .where = to_condition<std::remove_cvref_t<T>>(_where)};
