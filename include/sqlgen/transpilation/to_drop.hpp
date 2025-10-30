@@ -23,7 +23,8 @@ dynamic::Drop to_drop(const dynamic::Drop::What _what, const bool _if_exists,
   return dynamic::Drop{.what = _what,
                        .if_exists = _if_exists,
                        .cascade = _cascade,
-                       .table = dynamic::Table{.name = get_tablename<T>(),
+                       .table = dynamic::Table{.alias = std::nullopt,
+                                               .name = get_tablename<T>(),
                                                .schema = get_schema<T>()}};
 }
 

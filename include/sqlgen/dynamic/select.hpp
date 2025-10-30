@@ -1,6 +1,7 @@
 #ifndef SQLGEN_DYNAMIC_SELECT_HPP_
 #define SQLGEN_DYNAMIC_SELECT_HPP_
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,7 +17,10 @@ SelectFrom select(const std::string& _table,
   for (const auto& name : _columns) {
     columns.emplace_back(Column{.name = name});
   }
-  return SelectFrom{.table = Table{.name = _table}, .columns = columns};
+  return SelectFrom{
+      .table =
+          Table{.alias = std::nullopt, .name = _table, .schema = std::nullopt},
+      .columns = columns};
 }
 
 SelectFrom select(const std::string& _schema, const std::string& _table,
@@ -25,7 +29,8 @@ SelectFrom select(const std::string& _schema, const std::string& _table,
   for (const auto& name : _columns) {
     columns.emplace_back(Column{.name = name});
   }
-  return SelectFrom{.table = Table{.name = _table, .schema = _schema},
-                    .columns = columns};
+  return SelectFrom{
+      .table = Table{.alias = std::nullopt, .name = _table, .schema = _schema},
+      .columns = columns};
 }
 }  // namespace sqlgen::dynamic

@@ -19,7 +19,8 @@ template <class TableType>
 struct ToTableOrQuery<TableWrapper<TableType>> {
   dynamic::SelectFrom::TableOrQueryType operator()(const auto&) {
     using T = std::remove_cvref_t<TableType>;
-    return dynamic::Table{.name = get_tablename<T>(),
+    return dynamic::Table{.alias = std::nullopt,
+                          .name = get_tablename<T>(),
                           .schema = get_schema<T>()};
   }
 };
