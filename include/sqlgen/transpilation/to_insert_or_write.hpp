@@ -33,8 +33,9 @@ InsertOrWrite to_insert_or_write(bool or_replace) {
   const auto get_name = [](const auto& _col) { return _col.name; };
 
   auto result = InsertOrWrite{
-      .table =
-          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
+      .table = dynamic::Table{.alias = std::nullopt,
+                              .name = get_tablename<T>(),
+                              .schema = get_schema<T>()},
       .columns =
           sqlgen::internal::collect::vector(columns | transform(get_name))};
 
