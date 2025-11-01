@@ -33,6 +33,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 
 ## Other Operations
 
+- [Cache](cache.md) - How to improve performance with caching.
 - [Mathematical Operations](mathematical_operations.md) - How to use mathematical functions in queries (e.g., abs, ceil, floor, exp, trigonometric functions, round).
 - [String Operations](string_operations.md) - How to manipulate and transform strings in queries (e.g., length, lower, upper, trim, replace, concat).
 - [Type Conversion Operations](type_conversion_operations.md) - How to convert between types safely in queries (e.g., cast int to double).
