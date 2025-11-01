@@ -1,3 +1,5 @@
+#ifndef SQLGEN_BUILD_DRY_TESTS_ONLY
+
 #include <gtest/gtest.h>
 
 #include <rfl.hpp>
@@ -50,3 +52,5 @@ TEST(postgres, test_cache) {
 }
 
 }  // namespace test_cache
+
+#endif
