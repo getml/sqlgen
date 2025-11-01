@@ -20,6 +20,7 @@
 #include "sqlgen/aggregations.hpp"
 #include "sqlgen/as.hpp"
 #include "sqlgen/begin_transaction.hpp"
+#include "sqlgen/cache.hpp"
 #include "sqlgen/cascade.hpp"
 #include "sqlgen/col.hpp"
 #include "sqlgen/commit.hpp"
