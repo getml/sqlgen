@@ -5,6 +5,7 @@
 
 #include "Ref.hpp"
 #include "Result.hpp"
+#include "Transaction.hpp"
 #include "is_connection.hpp"
 
 namespace sqlgen {

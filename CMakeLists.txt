@@ -12,11 +12,12 @@ option(SQLGEN_BUILD_TESTS "Build tests" OFF)
 
 option(SQLGEN_BUILD_DRY_TESTS_ONLY "Build 'dry' tests only (those that do not require a database connection)" OFF)
 
+option(SQLGEN_CHECK_HEADERS "Make sure that all headers are self-contained" OFF)
+
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if (NOT DEFINED CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)
 endif()
-
 
 set(SQLGEN_USE_VCPKG_DEFAULT ON)
 
@@ -27,15 +28,15 @@ if (SQLGEN_USE_VCPKG)
         list(APPEND VCPKG_MANIFEST_FEATURES "tests")
     endif()
     
-    if (SQLGEN_MYSQL)
+    if (SQLGEN_MYSQL OR SQLGEN_CHECK_HEADERS)
         list(APPEND VCPKG_MANIFEST_FEATURES "mysql")
     endif()
     
-    if (SQLGEN_POSTGRES)
+    if (SQLGEN_POSTGRES OR SQLGEN_CHECK_HEADERS)
         list(APPEND VCPKG_MANIFEST_FEATURES "postgres")
     endif()
     
-    if (SQLGEN_SQLITE3)
+    if (SQLGEN_SQLITE3 OR SQLGEN_CHECK_HEADERS)
         list(APPEND VCPKG_MANIFEST_FEATURES "sqlite3")
     endif()
 
@@ -66,7 +67,7 @@ target_include_directories(
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-if(SQLGEN_MYSQL)
+if(SQLGEN_MYSQL OR SQLGEN_CHECK_HEADERS)
     list(APPEND SQLGEN_SOURCES src/sqlgen_mysql.cpp)
     if (SQLGEN_USE_VCPKG)
       if (NOT TARGET unofficial-libmariadb)
@@ -81,7 +82,7 @@ if(SQLGEN_MYSQL)
     endif()
 endif()
 
-if (SQLGEN_POSTGRES)
+if (SQLGEN_POSTGRES OR SQLGEN_CHECK_HEADERS)
     list(APPEND SQLGEN_SOURCES src/sqlgen_postgres.cpp)
     if (NOT TARGET PostgreSQL)
         find_package(PostgreSQL REQUIRED)
@@ -89,7 +90,7 @@ if (SQLGEN_POSTGRES)
     target_link_libraries(sqlgen PUBLIC PostgreSQL::PostgreSQL)
 endif()
 
-if (SQLGEN_SQLITE3)
+if (SQLGEN_SQLITE3 OR SQLGEN_CHECK_HEADERS)
     list(APPEND SQLGEN_SOURCES src/sqlgen_sqlite.cpp)
 
     if (SQLGEN_USE_VCPKG)
@@ -118,6 +119,37 @@ if (SQLGEN_BUILD_TESTS)
     set(SQLGEN_GTEST_LIB sqlgen GTest::gtest_main)
     add_subdirectory(tests)
 endif ()
+
+if(SQLGEN_CHECK_HEADERS)
+    file(GLOB_RECURSE PROJECT_HEADERS "include/*.hpp")
+    find_package(reflectcpp CONFIG REQUIRED)
+
+    set(TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/self_contained_tests")
+    file(MAKE_DIRECTORY "${TEST_DIR}")
+
+    foreach(HEADER_FILE ${PROJECT_HEADERS})
+        string(MAKE_C_IDENTIFIER ${HEADER_FILE} HEADER_NAME)
+        set(TEST_SOURCE_FILE "${TEST_DIR}/test_${HEADER_NAME}.cpp")
+
+        file(GENERATE
+            OUTPUT ${TEST_SOURCE_FILE}
+            CONTENT "#include \"${HEADER_FILE}\"\n"
+        )
+
+        add_library(check_header_${HEADER_NAME} "${TEST_SOURCE_FILE}")
+        
+        target_include_directories(check_header_${HEADER_NAME} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}
+            ${ADDITIONAL_INCLUDE_DIRS}
+        )
+        target_link_libraries(check_header_${HEADER_NAME} PUBLIC reflectcpp::reflectcpp)
+        target_link_libraries(check_header_${HEADER_NAME} PUBLIC unofficial::libmariadb)
+        target_link_libraries(check_header_${HEADER_NAME} PUBLIC PostgreSQL::PostgreSQL)
+        target_link_libraries(check_header_${HEADER_NAME} PUBLIC unofficial::sqlite3::sqlite3)
+        
+        add_custom_target(check_${HEADER_NAME} ALL DEPENDS check_header_${HEADER_NAME})
+    endforeach()
+endif()
 
 if (PROJECT_IS_TOP_LEVEL)
     include(GNUInstallDirs)

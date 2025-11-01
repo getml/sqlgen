@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "../dynamic/Insert.hpp"
 #include "../dynamic/Table.hpp"
 #include "../internal/collect/vector.hpp"
 #include "../internal/remove_auto_incr_primary_t.hpp"

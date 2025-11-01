@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <optional>
+#include <rfl.hpp>
 
 #include "has_reflection_method.hpp"
 
