@@ -1,0 +1,43 @@
+#include <gtest/gtest.h>
+
+#include <rfl.hpp>
+#include <rfl/json.hpp>
+#include <sqlgen.hpp>
+#include <sqlgen/mysql.hpp>
+#include <vector>
+
+namespace test_cache {
+
+struct User {
+  std::string name;
+  int age;
+};
+
+TEST(mysql, test_cache) {
+  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
+                                                      .user = "sqlgen",
+                                                      .password = "password",
+                                                      .dbname = "mysql"};
+
+  const auto conn = sqlgen::mysql::connect(credentials);
+
+  sqlgen::drop<User>(conn);
+
+  const auto user = User{.name = "John", .age = 30};
+  sqlgen::write(conn, user);
+
+  const auto query = sqlgen::read<User>;
+
+  const auto cached_query = sqlgen::cache<100>(query);
+  const auto user1 = cached_query(conn).value();
+  const auto user2 = cached_query(conn).value();
+
+  EXPECT_EQ(user1.name, "John");
+  EXPECT_EQ(user1.age, 30);
+  EXPECT_EQ(cached_query.cache(conn).size(), 1);
+  EXPECT_EQ(user2.name, "John");
+  EXPECT_EQ(user2.age, 30);
+  EXPECT_EQ(cached_query.cache(conn).size(), 1);
+}
+
+}  // namespace test_cache
