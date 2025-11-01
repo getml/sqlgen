@@ -2,6 +2,7 @@
 #define SQLGEN_INTERNAL_COLLECT_VECTOR_HPP_
 
 #include <ranges>
+#include <vector>
 
 namespace sqlgen::internal::collect {
 

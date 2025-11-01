@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "../Literal.hpp"
+#include "../Result.hpp"
 #include "../dynamic/JoinType.hpp"
 #include "TableWrapper.hpp"
 
