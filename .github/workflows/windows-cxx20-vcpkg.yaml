@@ -36,12 +36,12 @@ jobs:
       - name: Compile
         if: matrix.db == 'postgres' 
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON 
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON -DBUILD_SHARED_LIBS=ON
           cmake --build build --config Release -j4 
       - name: Compile
         if: matrix.db == 'sqlite' 
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_CHECK_HEADERS=ON
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_CHECK_HEADERS=ON -DBUILD_SHARED_LIBS=ON
           cmake --build build --config Release -j4 
       - name: Compile
         if: matrix.db == 'mysql' 
