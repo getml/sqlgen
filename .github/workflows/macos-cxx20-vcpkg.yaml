@@ -26,7 +26,7 @@ jobs:
             db: mysql 
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
     concurrency:
-      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }}
+      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.db }}
       cancel-in-progress: true
     runs-on: ${{ matrix.os }}
     steps:

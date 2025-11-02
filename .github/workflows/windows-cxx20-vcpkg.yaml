@@ -16,7 +16,7 @@ jobs:
           - db: mysql 
     name: "(windows-${{ matrix.db }})"
     concurrency:
-      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }}
+      group: ci-${{ github.ref }}-windows-${{ matrix.db }}
       cancel-in-progress: true
     runs-on: windows-latest
     steps:
