@@ -2,6 +2,10 @@ name: windows-cxx20-vcpkg
 
 on: [push, pull_request]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env: 
     VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 

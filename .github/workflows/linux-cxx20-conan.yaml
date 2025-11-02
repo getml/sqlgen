@@ -2,6 +2,10 @@ name: linux-cxx20-conan
 
 on: [push, pull_request]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   linux:
     strategy:
