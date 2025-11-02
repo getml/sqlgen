@@ -10,7 +10,6 @@
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../sqlgen_api.hpp"
-#include "Connection.hpp"
 
 namespace sqlgen::sqlite {
 

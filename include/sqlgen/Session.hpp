@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Ref.hpp"
+#include "Result.hpp"
 #include "dynamic/Insert.hpp"
 #include "dynamic/SelectFrom.hpp"
 #include "dynamic/Statement.hpp"
