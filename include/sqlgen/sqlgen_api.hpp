@@ -3,11 +3,7 @@
 
 #ifdef SQLGEN_BUILD_SHARED
 #ifdef _WIN32
-#ifdef sqlgen_EXPORTS
 #define SQLGEN_API __declspec(dllexport)
-#else
-#define SQLGEN_API __declspec(dllimport)
-#endif
 #else
 #define SQLGEN_API __attribute__((visibility("default")))
 #endif
