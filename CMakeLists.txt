@@ -58,6 +58,10 @@ else()
     target_compile_options(sqlgen PRIVATE $<$<CONFIG:Debug>:-Wall -Wextra>)
 endif()
 
+if (SQLGEN_BUILD_SHARED)
+    target_compile_definitions(sqlgen PUBLIC SQLGEN_BUILD_SHARED)
+endif()
+
 set(SQLGEN_SOURCES
     src/sqlgen.cpp
 )
