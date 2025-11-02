@@ -3,7 +3,7 @@
 
 #ifdef SQLGEN_BUILD_SHARED
 #ifdef _WIN32
-#ifdef reflectcpp_EXPORTS
+#ifdef sqlgen_EXPORTS
 #define SQLGEN_API __declspec(dllexport)
 #else
 #define SQLGEN_API __declspec(dllimport)
