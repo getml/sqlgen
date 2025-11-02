@@ -30,8 +30,7 @@ class SQLGEN_API Connection {
   using ConnPtr = Ref<PGconn>;
 
  public:
-  Connection(const Credentials& _credentials)
-      : conn_(make_conn(_credentials.to_str())), credentials_(_credentials) {}
+  Connection(const Credentials& _credentials);
 
   static rfl::Result<Ref<Connection>> make(
       const Credentials& _credentials) noexcept;
@@ -42,9 +41,7 @@ class SQLGEN_API Connection {
 
   Result<Nothing> commit() noexcept;
 
-  Result<Nothing> execute(const std::string& _sql) noexcept {
-    return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
-  }
+  Result<Nothing> execute(const std::string& _sql) noexcept;
 
   template <class ItBegin, class ItEnd>
   Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
@@ -63,13 +60,9 @@ class SQLGEN_API Connection {
 
   Result<Nothing> rollback() noexcept;
 
-  std::string to_sql(const dynamic::Statement& _stmt) noexcept {
-    return postgres::to_sql_impl(_stmt);
-  }
+  std::string to_sql(const dynamic::Statement& _stmt) noexcept;
 
-  Result<Nothing> start_write(const dynamic::Write& _stmt) {
-    return execute(postgres::to_sql_impl(_stmt));
-  }
+  Result<Nothing> start_write(const dynamic::Write& _stmt);
 
   Result<Nothing> end_write();
 

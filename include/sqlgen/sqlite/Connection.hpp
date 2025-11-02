@@ -58,9 +58,7 @@ class SQLGEN_API Connection {
 
   Result<Nothing> rollback() noexcept;
 
-  std::string to_sql(const dynamic::Statement& _stmt) noexcept {
-    return sqlite::to_sql_impl(_stmt);
-  }
+  std::string to_sql(const dynamic::Statement& _stmt) noexcept;
 
   Result<Nothing> start_write(const dynamic::Write& _stmt);
 

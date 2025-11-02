@@ -141,6 +141,10 @@ Result<Connection::StmtPtr> Connection::prepare_statement(
 
 Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
 
+std::string Connection::to_sql(const dynamic::Statement& _stmt) noexcept {
+  return sqlite::to_sql_impl(_stmt);
+}
+
 Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
   if (stmt_) {
     return error(

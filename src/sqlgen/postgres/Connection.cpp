@@ -12,11 +12,18 @@
 
 namespace sqlgen::postgres {
 
+Connection::Connection(const Credentials& _credentials)
+    : conn_(make_conn(_credentials.to_str())), credentials_(_credentials) {}
+
 Result<Nothing> Connection::begin_transaction() noexcept {
   return execute("BEGIN TRANSACTION;");
 }
 
 Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
+
+Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
+  return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
+}
 
 Result<Nothing> Connection::end_write() {
   if (PQputCopyEnd(conn_.get(), NULL) == -1) {
@@ -144,6 +151,14 @@ std::string Connection::to_buffer(
   return internal::strings::join(
              "\t", internal::collect::vector(_line | transform(edit_field))) +
          "\n";
+}
+
+std::string Connection::to_sql(const dynamic::Statement& _stmt) noexcept {
+  return postgres::to_sql_impl(_stmt);
+}
+
+Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
+  return execute(postgres::to_sql_impl(_stmt));
 }
 
 Result<Nothing> Connection::write_impl(
