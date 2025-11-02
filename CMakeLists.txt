@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(SQLGEN_BUILD_SHARED "Build shared library" ${BUILD_SHARED_LIBS})
 
 option(SQLGEN_MYSQL "Enable MySQL support" OFF) 
