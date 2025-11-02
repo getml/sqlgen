@@ -14,6 +14,9 @@
 
 namespace sqlgen::mysql {
 
+Connection::Connection(const Credentials& _credentials)
+    : conn_(make_conn(_credentials)) {}
+
 Result<Nothing> Connection::actual_insert(
     const std::vector<std::vector<std::optional<std::string>>>& _data,
     MYSQL_STMT* _stmt) const noexcept {
@@ -68,6 +71,16 @@ Result<Nothing> Connection::actual_insert(
   }
 
   return Nothing{};
+}
+
+Result<Nothing> Connection::begin_transaction() noexcept {
+  return execute("START TRANSACTION;");
+}
+
+Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
+
+Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
+  return exec(conn_, _sql);
 }
 
 Result<Nothing> Connection::insert_impl(
@@ -139,6 +152,8 @@ Result<Ref<IteratorBase>> Connection::read_impl(
       .transform([&](auto&& _res) { return Ref<Iterator>::make(_res, conn_); });
 }
 
+Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
+
 Result<Nothing> Connection::start_write(const dynamic::Write& _write_stmt) {
   if (stmt_) {
     return error(
@@ -155,6 +170,10 @@ Result<Nothing> Connection::start_write(const dynamic::Write& _write_stmt) {
         rollback();
         return error(_err.what());
       });
+}
+
+std::string Connection::to_sql(const dynamic::Statement& _stmt) noexcept {
+  return to_sql_impl(_stmt);
 }
 
 Result<Nothing> Connection::write_impl(

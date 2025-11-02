@@ -26,7 +26,7 @@ class SQLGEN_API Iterator : public sqlgen::IteratorBase {
   ~Iterator();
 
   /// Whether the end of the available data has been reached.
-  bool end() const final { return end_; }
+  bool end() const final;
 
   /// Returns the next batch of rows.
   /// If _batch_size is greater than the number of rows left, returns all

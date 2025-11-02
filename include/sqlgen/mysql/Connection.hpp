@@ -32,23 +32,18 @@ class SQLGEN_API Connection {
   using StmtPtr = std::shared_ptr<MYSQL_STMT>;
 
  public:
-  Connection(const Credentials& _credentials)
-      : conn_(make_conn(_credentials)) {}
+  Connection(const Credentials& _credentials);
 
   static rfl::Result<Ref<Connection>> make(
       const Credentials& _credentials) noexcept;
 
   ~Connection() = default;
 
-  Result<Nothing> begin_transaction() noexcept {
-    return execute("START TRANSACTION;");
-  }
+  Result<Nothing> begin_transaction() noexcept;
 
-  Result<Nothing> commit() noexcept { return execute("COMMIT;"); }
+  Result<Nothing> commit() noexcept;
 
-  Result<Nothing> execute(const std::string& _sql) noexcept {
-    return exec(conn_, _sql);
-  }
+  Result<Nothing> execute(const std::string& _sql) noexcept;
 
   template <class ItBegin, class ItEnd>
   Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
@@ -65,11 +60,9 @@ class SQLGEN_API Connection {
         [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
   }
 
-  Result<Nothing> rollback() noexcept { return execute("ROLLBACK;"); }
+  Result<Nothing> rollback() noexcept;
 
-  std::string to_sql(const dynamic::Statement& _stmt) noexcept {
-    return to_sql_impl(_stmt);
-  }
+  std::string to_sql(const dynamic::Statement& _stmt) noexcept;
 
   Result<Nothing> start_write(const dynamic::Write& _stmt);
 
