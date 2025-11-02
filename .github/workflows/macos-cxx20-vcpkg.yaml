@@ -3,7 +3,7 @@ name: macos-cxx20-vcpkg
 on: [push, pull_request]
 
 concurrency:
-  group: ci-${{ github.ref }}-${{ github.job }}
+  group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.db }}
   cancel-in-progress: true
 
 env: 
