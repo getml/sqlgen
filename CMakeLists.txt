@@ -118,9 +118,11 @@ set_target_properties(sqlgen PROPERTIES LINKER_LANGUAGE CXX)
 target_sources(sqlgen PRIVATE ${SQLGEN_SOURCES})
 
 if (SQLGEN_BUILD_TESTS)
+    add_library(sqlgen_tests_crt INTERFACE)
+    target_link_libraries(sqlgen_tests_crt INTERFACE sqlgen GTest::gtest_main)
+
     enable_testing()
     find_package(GTest CONFIG REQUIRED)
-    set(SQLGEN_GTEST_LIB sqlgen GTest::gtest_main)
     add_subdirectory(tests)
 endif ()
 
