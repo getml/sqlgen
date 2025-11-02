@@ -6,11 +6,12 @@
 #include <vector>
 
 #include "Result.hpp"
+#include "sqlgen_api.hpp"
 
 namespace sqlgen {
 
 /// Abstract base class for an iterator to be returned by Connection::read(...).
-struct IteratorBase {
+struct SQLGEN_API IteratorBase {
   virtual ~IteratorBase() = default;
 
   /// Whether the end of the available data has been reached.
