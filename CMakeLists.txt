@@ -54,10 +54,26 @@ else()
     add_library(sqlgen STATIC)
 endif()
 
+add_library(sqlgen::sqlgen ALIAS sqlgen)
+
 if (MSVC)
-    target_compile_options(sqlgen PRIVATE $<$<CONFIG:Debug>:-Wall>)
+    target_compile_options(sqlgen PRIVATE 
+        $<$<CONFIG:Debug>:
+            -Wall
+        >
+        $<$<CONFIG:Release>:
+            -DNDEBUG
+        >
+    )
 else()
-    target_compile_options(sqlgen PRIVATE $<$<CONFIG:Debug>:-Wall -Wextra>)
+    target_compile_options(sqlgen PRIVATE
+        $<$<CONFIG:Debug>:
+            -Wall -Wextra -Wpedantic -Wshadow -Wconversion
+        >
+        $<$<CONFIG:Release>:
+            -DNDEBUG
+        >
+    )
 endif()
 
 if (SQLGEN_BUILD_SHARED)
