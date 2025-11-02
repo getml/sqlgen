@@ -14,6 +14,7 @@ jobs:
           - db: postgres
           - db: sqlite
           - db: mysql 
+          - db: headers 
     name: "(windows-${{ matrix.db }})"
     concurrency:
       group: ci-${{ github.ref }}-windows-${{ matrix.db }}
@@ -34,6 +35,11 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
       - uses: lukka/run-vcpkg@v11
       - name: Compile
+        if: matrix.db == 'headers' 
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_CHECK_HEADERS=ON 
+          cmake --build build --config Release -j4 
+      - name: Compile
         if: matrix.db == 'postgres' 
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON -DSQLGEN_BUILD_SHARED=ON
@@ -41,7 +47,7 @@ jobs:
       - name: Compile
         if: matrix.db == 'sqlite' 
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_CHECK_HEADERS=ON -DSQLGEN_BUILD_SHARED=ON
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_BUILD_SHARED=ON
           cmake --build build --config Release -j4 
       - name: Compile
         if: matrix.db == 'mysql' 
@@ -49,5 +55,6 @@ jobs:
           cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON -DSQLGEN_BUILD_SHARED=ON
           cmake --build build --config Release -j4 
       - name: Run tests
+        if: matrix.db != 'headers' 
         run: |
           ctest --test-dir build --output-on-failure
