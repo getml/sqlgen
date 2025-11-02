@@ -2,9 +2,6 @@ name: macos-cxx20-conan
 
 on: [push, pull_request]
 
-concurrency:
-  group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.link }}
-  cancel-in-progress: true
 
 jobs:
   macos-clang:
@@ -21,6 +18,9 @@ jobs:
           - os: "macos-13"
             link: "shared" 
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.link }})"
+    concurrency:
+      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.link }}
+      cancel-in-progress: true
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout

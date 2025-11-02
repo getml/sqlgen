@@ -2,10 +2,6 @@ name: windows-cxx20-vcpkg
 
 on: [push, pull_request]
 
-concurrency:
-  group: ci-${{ github.ref }}-windows-${{ github.job }}-${{ matrix.db }}
-  cancel-in-progress: true
-
 env: 
     VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
@@ -19,6 +15,9 @@ jobs:
           - db: sqlite
           - db: mysql 
     name: "(windows-${{ matrix.db }})"
+    concurrency:
+      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }}
+      cancel-in-progress: true
     runs-on: windows-latest
     steps:
       - name: Checkout
