@@ -19,6 +19,7 @@
 #include "../internal/to_container.hpp"
 #include "../internal/write_or_insert.hpp"
 #include "../is_connection.hpp"
+#include "../sqlgen_api.hpp"
 #include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
 #include "exec.hpp"
@@ -26,7 +27,7 @@
 
 namespace sqlgen::mysql {
 
-class Connection {
+class SQLGEN_API Connection {
   using ConnPtr = Ref<MYSQL>;
   using StmtPtr = std::shared_ptr<MYSQL_STMT>;
 

@@ -11,11 +11,12 @@
 #include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../sqlgen_api.hpp"
 #include "Connection.hpp"
 
 namespace sqlgen::mysql {
 
-class Iterator : public sqlgen::IteratorBase {
+class SQLGEN_API Iterator : public sqlgen::IteratorBase {
   using ConnPtr = Ref<MYSQL>;
   using ResPtr = Ref<MYSQL_RES>;
 
