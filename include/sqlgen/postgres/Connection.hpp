@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "../IteratorBase.hpp"
+#include "../Iterator.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../Transaction.hpp"
@@ -21,6 +21,7 @@
 #include "../sqlgen_api.hpp"
 #include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
+#include "Iterator.hpp"
 #include "exec.hpp"
 #include "to_sql.hpp"
 
@@ -54,8 +55,11 @@ class SQLGEN_API Connection {
   template <class ContainerType>
   auto read(const dynamic::SelectFrom& _query) {
     using ValueType = transpilation::value_t<ContainerType>;
-    return internal::to_container<ContainerType>(read_impl(_query).transform(
-        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
+    return internal::to_container<ContainerType>(
+        read_impl(_query).transform([](auto&& _it) {
+          return sqlgen::Iterator<ValueType, postgres::Iterator>(
+              std::move(_it));
+        }));
   }
 
   Result<Nothing> rollback() noexcept;
@@ -80,7 +84,7 @@ class SQLGEN_API Connection {
 
   static ConnPtr make_conn(const std::string& _conn_str);
 
-  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
+  Result<Ref<Iterator>> read_impl(const dynamic::SelectFrom& _query);
 
   std::string to_buffer(
       const std::vector<std::optional<std::string>>& _line) const noexcept;
@@ -100,5 +104,14 @@ static_assert(is_connection<Transaction<Connection>>,
               "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::postgres
+
+namespace sqlgen::internal {
+
+template <class ValueType>
+struct IteratorType<ValueType, postgres::Connection> {
+  using Type = Iterator<ValueType, postgres::Iterator>;
+};
+
+}  // namespace sqlgen::internal
 
 #endif

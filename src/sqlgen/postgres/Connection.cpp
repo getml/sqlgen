@@ -123,11 +123,10 @@ typename Connection::ConnPtr Connection::make_conn(
   return ConnPtr::make(std::shared_ptr<PGconn>(raw_ptr, &PQfinish)).value();
 }
 
-Result<Ref<IteratorBase>> Connection::read_impl(
-    const dynamic::SelectFrom& _query) {
+Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
   const auto sql = postgres::to_sql_impl(_query);
   try {
-    return Ref<IteratorBase>(Ref<Iterator>::make(sql, conn_));
+    return Ref<Iterator>::make(sql, conn_);
   } catch (std::exception& e) {
     return error(e.what());
   }

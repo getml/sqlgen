@@ -27,13 +27,13 @@ class SQLGEN_API Iterator {
   ~Iterator();
 
   /// Whether the end of the available data has been reached.
-  bool end() const final;
+  bool end() const;
 
   /// Returns the next batch of rows.
   /// If _batch_size is greater than the number of rows left, returns all
   /// of the rows left.
   Result<std::vector<std::vector<std::optional<std::string>>>> next(
-      const size_t _batch_size) final;
+      const size_t _batch_size);
 
   Iterator& operator=(const Iterator& _other) = delete;
 
