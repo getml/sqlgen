@@ -17,6 +17,8 @@ namespace sqlgen::mysql {
 Connection::Connection(const Credentials& _credentials)
     : conn_(make_conn(_credentials)) {}
 
+Connection::~Connection() = default;
+
 Result<Nothing> Connection::actual_insert(
     const std::vector<std::vector<std::optional<std::string>>>& _data,
     MYSQL_STMT* _stmt) const noexcept {

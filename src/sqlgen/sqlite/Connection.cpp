@@ -11,6 +11,11 @@
 
 namespace sqlgen::sqlite {
 
+Connection::Connection(const std::string& _fname)
+    : stmt_(nullptr), conn_(make_conn(_fname)) {}
+
+Connection::~Connection() = default;
+
 Result<Nothing> Connection::actual_insert(
     const std::vector<std::vector<std::optional<std::string>>>& _data,
     sqlite3_stmt* _stmt) const noexcept {

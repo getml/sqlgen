@@ -37,7 +37,7 @@ class SQLGEN_API Connection {
   static rfl::Result<Ref<Connection>> make(
       const Credentials& _credentials) noexcept;
 
-  ~Connection() = default;
+  ~Connection();
 
   Result<Nothing> begin_transaction() noexcept;
 

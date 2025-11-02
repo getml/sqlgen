@@ -28,12 +28,11 @@ class SQLGEN_API Connection {
   using StmtPtr = std::shared_ptr<sqlite3_stmt>;
 
  public:
-  Connection(const std::string& _fname)
-      : stmt_(nullptr), conn_(make_conn(_fname)) {}
+  Connection(const std::string& _fname);
 
   static rfl::Result<Ref<Connection>> make(const std::string& _fname) noexcept;
 
-  ~Connection() = default;
+  ~Connection();
 
   Result<Nothing> begin_transaction() noexcept;
 

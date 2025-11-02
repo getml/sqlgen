@@ -15,6 +15,8 @@ namespace sqlgen::postgres {
 Connection::Connection(const Credentials& _credentials)
     : conn_(make_conn(_credentials.to_str())), credentials_(_credentials) {}
 
+Connection::~Connection() = default;
+
 Result<Nothing> Connection::begin_transaction() noexcept {
   return execute("BEGIN TRANSACTION;");
 }
