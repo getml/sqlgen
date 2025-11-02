@@ -6,7 +6,6 @@
 #include <optional>
 #include <vector>
 
-#include "IteratorBase.hpp"
 #include "Ref.hpp"
 #include "dynamic/Insert.hpp"
 #include "dynamic/SelectFrom.hpp"
