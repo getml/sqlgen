@@ -3,7 +3,7 @@ name: linux-cxx20-conan
 on: [push, pull_request]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.job }}
   cancel-in-progress: true
 
 jobs:
