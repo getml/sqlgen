@@ -7,6 +7,8 @@ Iterator::Iterator(const ResPtr& _res, const ConnPtr& _conn)
 
 Iterator::~Iterator() = default;
 
+bool Iterator::end() const { return end_; }
+
 Result<std::vector<std::vector<std::optional<std::string>>>> Iterator::next(
     const size_t _batch_size) {
   std::vector<std::vector<std::optional<std::string>>> vec;

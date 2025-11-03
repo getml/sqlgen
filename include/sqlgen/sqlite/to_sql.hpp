@@ -4,12 +4,13 @@
 #include <string>
 
 #include "../dynamic/Statement.hpp"
+#include "../sqlgen_api.hpp"
 #include "../transpilation/to_sql.hpp"
 
 namespace sqlgen::sqlite {
 
 /// Transpiles a dynamic general SQL statement to the sqlite dialect.
-std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept;
+std::string SQLGEN_API to_sql_impl(const dynamic::Statement& _stmt) noexcept;
 
 /// Transpiles any  SQL statement to the sqlite dialect.
 template <class T>

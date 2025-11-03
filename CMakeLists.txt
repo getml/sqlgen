@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.23)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 option(SQLGEN_BUILD_SHARED "Build shared library" ${BUILD_SHARED_LIBS})
 
 option(SQLGEN_MYSQL "Enable MySQL support" OFF) 
@@ -43,7 +45,7 @@ if (SQLGEN_USE_VCPKG)
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 endif ()
 
-project(sqlgen VERSION 0.3.0 LANGUAGES CXX)
+project(sqlgen VERSION 0.4.0 LANGUAGES CXX)
 
 if (SQLGEN_BUILD_SHARED)
     add_library(sqlgen SHARED)
@@ -52,10 +54,30 @@ else()
     add_library(sqlgen STATIC)
 endif()
 
+add_library(sqlgen::sqlgen ALIAS sqlgen)
+
 if (MSVC)
-    target_compile_options(sqlgen PRIVATE $<$<CONFIG:Debug>:-Wall>)
+    target_compile_options(sqlgen PRIVATE 
+        $<$<CONFIG:Debug>:
+            -Wall
+        >
+        $<$<CONFIG:Release>:
+            -DNDEBUG
+        >
+    )
 else()
-    target_compile_options(sqlgen PRIVATE $<$<CONFIG:Debug>:-Wall -Wextra>)
+    target_compile_options(sqlgen PRIVATE
+        $<$<CONFIG:Debug>:
+            -Wall -Wextra -Wpedantic -Wshadow -Wconversion
+        >
+        $<$<CONFIG:Release>:
+            -DNDEBUG
+        >
+    )
+endif()
+
+if (SQLGEN_BUILD_SHARED)
+    target_compile_definitions(sqlgen PUBLIC SQLGEN_BUILD_SHARED)
 endif()
 
 set(SQLGEN_SOURCES
@@ -114,9 +136,11 @@ set_target_properties(sqlgen PROPERTIES LINKER_LANGUAGE CXX)
 target_sources(sqlgen PRIVATE ${SQLGEN_SOURCES})
 
 if (SQLGEN_BUILD_TESTS)
+    add_library(sqlgen_tests_crt INTERFACE)
+    target_link_libraries(sqlgen_tests_crt INTERFACE sqlgen GTest::gtest_main)
+
     enable_testing()
     find_package(GTest CONFIG REQUIRED)
-    set(SQLGEN_GTEST_LIB sqlgen GTest::gtest_main)
     add_subdirectory(tests)
 endif ()
 

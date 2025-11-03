@@ -2,6 +2,7 @@ name: linux-cxx20-conan
 
 on: [push, pull_request]
 
+
 jobs:
   linux:
     strategy:
@@ -35,6 +36,9 @@ jobs:
             compiler-version: 12
             link: "shared" 
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.link }})"
+    concurrency:
+      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.link }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -7,10 +7,12 @@
 
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../sqlgen_api.hpp"
 
 namespace sqlgen::mysql {
 
-Result<Nothing> exec(const Ref<MYSQL>& _conn, const std::string& _sql) noexcept;
+Result<Nothing> SQLGEN_API exec(const Ref<MYSQL>& _conn,
+                                const std::string& _sql) noexcept;
 
 }  // namespace sqlgen::mysql
 

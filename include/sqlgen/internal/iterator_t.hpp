@@ -3,19 +3,28 @@
 
 #include <type_traits>
 
-#include "../Iterator.hpp"
+#include "../Ref.hpp"
+#include "../Result.hpp"
 
 namespace sqlgen::internal {
 
 template <class ValueType, class ConnType>
 struct IteratorType;
 
-/// Most database connectors can just use the standard iterator type, but
-/// sometimes we need exception, in which case this template can be overridden.
 template <class ValueType, class ConnType>
-struct IteratorType {
-  using Type = Iterator<ValueType>;
+struct IteratorType<ValueType, Ref<ConnType>> {
+  using Type =
+      typename IteratorType<ValueType, std::remove_cvref_t<ConnType>>::Type;
 };
+
+template <class ValueType, class ConnType>
+struct IteratorType<ValueType, Result<ConnType>> {
+  using Type =
+      typename IteratorType<ValueType, std::remove_cvref_t<ConnType>>::Type;
+};
+
+// The specific iterator is implemented by each database in (database
+// name)/Connection.hpp
 
 template <class T, class ConnType>
 using iterator_t = typename IteratorType<std::remove_cvref_t<T>,

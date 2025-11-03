@@ -2,6 +2,7 @@ name: macos-cxx20-vcpkg
 
 on: [push, pull_request]
 
+
 env: 
     VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
@@ -24,6 +25,9 @@ jobs:
           - os: "macos-13"
             db: mysql 
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
+    concurrency:
+      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.db }}
+      cancel-in-progress: true
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout

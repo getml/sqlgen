@@ -2,6 +2,7 @@ name: linux-cxx20-vcpkg
 
 on: [push, pull_request]
 
+
 env: 
     VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
 
@@ -60,6 +61,9 @@ jobs:
             compiler-version: 14
             db: mysql
     name: "${{ github.job }} (${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }})"
+    concurrency:
+      group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.compiler }}-${{ matrix.compiler-version }}-${{ matrix.db }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

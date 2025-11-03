@@ -12,11 +12,20 @@
 
 namespace sqlgen::postgres {
 
+Connection::Connection(const Credentials& _credentials)
+    : conn_(make_conn(_credentials.to_str())), credentials_(_credentials) {}
+
+Connection::~Connection() = default;
+
 Result<Nothing> Connection::begin_transaction() noexcept {
   return execute("BEGIN TRANSACTION;");
 }
 
 Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
+
+Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
+  return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
+}
 
 Result<Nothing> Connection::end_write() {
   if (PQputCopyEnd(conn_.get(), NULL) == -1) {
@@ -114,11 +123,10 @@ typename Connection::ConnPtr Connection::make_conn(
   return ConnPtr::make(std::shared_ptr<PGconn>(raw_ptr, &PQfinish)).value();
 }
 
-Result<Ref<IteratorBase>> Connection::read_impl(
-    const dynamic::SelectFrom& _query) {
+Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
   const auto sql = postgres::to_sql_impl(_query);
   try {
-    return Ref<IteratorBase>(Ref<Iterator>::make(sql, conn_));
+    return Ref<Iterator>::make(sql, conn_);
   } catch (std::exception& e) {
     return error(e.what());
   }
@@ -144,6 +152,14 @@ std::string Connection::to_buffer(
   return internal::strings::join(
              "\t", internal::collect::vector(_line | transform(edit_field))) +
          "\n";
+}
+
+std::string Connection::to_sql(const dynamic::Statement& _stmt) noexcept {
+  return postgres::to_sql_impl(_stmt);
+}
+
+Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
+  return execute(postgres::to_sql_impl(_stmt));
 }
 
 Result<Nothing> Connection::write_impl(
