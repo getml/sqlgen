@@ -2,7 +2,6 @@
 
 #include <rfl.hpp>
 #include <rfl/json.hpp>
-#include <sqlgen.hpp>
 #include <sqlgen/duckdb.hpp>
 #include <vector>
 

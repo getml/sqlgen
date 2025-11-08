@@ -11,16 +11,17 @@
 #include <stdexcept>
 #include <string>
 
-#include "../IteratorBase.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/iterator_t.hpp"
 #include "../is_connection.hpp"
 #include "../transpilation/get_tablename.hpp"
 #include "../transpilation/has_reflection_method.hpp"
 #include "../transpilation/is_nullable.hpp"
 #include "DuckDBConnection.hpp"
+#include "Iterator.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::duckdb {
@@ -199,5 +200,14 @@ static_assert(is_connection<Transaction<Connection>>,
               "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::duckdb
+
+namespace sqlgen::internal {
+
+template <class ValueType>
+struct IteratorType<ValueType, duckdb::Connection> {
+  using Type = duckdb::Iterator<ValueType>;
+};
+
+}  // namespace sqlgen::internal
 
 #endif

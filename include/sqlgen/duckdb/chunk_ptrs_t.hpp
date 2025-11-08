@@ -17,7 +17,7 @@ struct ChunkPtrsType<rfl::NamedTuple<FieldTs...>> {
 };
 
 template <class T>
-struct ChunkPtrsType<T> {
+struct ChunkPtrsType {
   using Type = typename ChunkPtrsType<rfl::named_tuple_t<T>>::Type;
 };
 

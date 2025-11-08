@@ -10,7 +10,6 @@
 
 #include "../Ref.hpp"
 #include "../Result.hpp"
-#include "DuckDBChunkPtrs.hpp"
 #include "DuckDBConnection.hpp"
 #include "make_chunk_ptrs.hpp"
 
@@ -52,7 +51,7 @@ class Iterator {
   Iterator<T>& operator++() noexcept {
     ++ix_;
     if (ix_ >= current_batch_->size()) {
-      current_batch_ = get_next_batch();
+      current_batch_ = get_next_batch(res_, conn_);
       ix_ = 0;
     }
     return *this;
@@ -62,8 +61,8 @@ class Iterator {
 
  private:
   static Ref<std::vector<Result<T>>> get_next_batch(
-      const Ref<IteratorBase>& _it) noexcept {
-    duckdb_data_chunk chunk = duckdb_fetch_chunk(*res_);
+      const ResultPtr& _res, const ConnPtr& _conn) noexcept {
+    duckdb_data_chunk chunk = duckdb_fetch_chunk(*_res);
     if (!chunk) {
       return Ref<std::vector<Result<T>>>::make();
     }
