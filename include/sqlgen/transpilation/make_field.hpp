@@ -24,7 +24,6 @@
 #include "is_timestamp.hpp"
 #include "remove_as_t.hpp"
 #include "remove_nullable_t.hpp"
-#include "sqlgen/parsing/RawType.hpp"
 #include "to_alias.hpp"
 #include "to_duration.hpp"
 #include "to_value.hpp"
@@ -233,8 +232,7 @@ struct MakeField<TableTupleType, Operation<Operator::cast, Operand1Type,
                     _o.operand1)
                     .val),
             .target_type =
-                parsing::Parser<std::remove_cvref_t<TargetType>,
-                                parsing::RawType::string>::to_type()}}};
+                parsing::Parser<std::remove_cvref_t<TargetType>>::to_type()}}};
   }
 };
 

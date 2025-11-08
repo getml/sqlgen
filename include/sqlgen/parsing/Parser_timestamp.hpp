@@ -10,23 +10,22 @@
 #include "../dynamic/types.hpp"
 #include "Parser_base.hpp"
 #include "Parser_default.hpp"
-#include "RawType.hpp"
 
 namespace sqlgen::parsing {
 
-template <rfl::internal::StringLiteral _format, RawType _raw_type>
-struct Parser<Timestamp<_format>, _raw_type> {
+template <rfl::internal::StringLiteral _format>
+struct Parser<Timestamp<_format>> {
   using TSType = Timestamp<_format>;
 
   static Result<TSType> read(const std::optional<std::string>& _str) noexcept {
-    return Parser<std::string, _raw_type>::read(_str).and_then(
+    return Parser<std::string>::read(_str).and_then(
         [](auto&& _s) -> Result<TSType> {
           return TSType::from_string(std::move(_s));
         });
   }
 
   static std::optional<std::string> write(const TSType& _t) noexcept {
-    return Parser<std::string, _raw_type>::write(_t.str());
+    return Parser<std::string>::write(_t.str());
   }
 
   static dynamic::Type to_type() noexcept {

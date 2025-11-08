@@ -13,7 +13,6 @@
 
 #include "../Result.hpp"
 #include "../parsing/Parser.hpp"
-#include "../parsing/RawType.hpp"
 #include "call_destructors_where_necessary.hpp"
 
 namespace sqlgen::internal {
@@ -27,7 +26,7 @@ void assign_if_field_is_field_i(
       std::remove_cvref_t<std::remove_pointer_t<typename FieldType::Type>>;
   constexpr auto name = FieldType::name();
   if (_i == i) {
-    auto res = parsing::Parser<T, parsing::RawType::string>::read(_row[i]);
+    auto res = parsing::Parser<T>::read(_row[i]);
     if (!res) {
       std::stringstream stream;
       stream << "Failed to parse field '" << std::string(name)

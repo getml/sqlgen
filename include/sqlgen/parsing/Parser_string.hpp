@@ -8,12 +8,11 @@
 #include "../dynamic/Type.hpp"
 #include "../dynamic/types.hpp"
 #include "Parser_base.hpp"
-#include "RawType.hpp"
 
 namespace sqlgen::parsing {
 
-template <RawType _raw_type>
-struct Parser<std::string, _raw_type> {
+template <>
+struct Parser<std::string> {
   static Result<std::string> read(
       const std::optional<std::string>& _str) noexcept {
     if (!_str) {
