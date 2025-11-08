@@ -11,17 +11,18 @@
 #include "../dynamic/types.hpp"
 #include "../transpilation/has_reflection_method.hpp"
 #include "Parser_base.hpp"
+#include "RawType.hpp"
 
 namespace sqlgen::parsing {
 
-template <class T>
+template <class T, RawType _raw_type>
 struct Parser {
   using Type = std::remove_cvref_t<T>;
 
   static Result<T> read(const std::optional<std::string>& _str) noexcept {
     if constexpr (transpilation::has_reflection_method<Type>) {
-      return Parser<std::remove_cvref_t<typename Type::ReflectionType>>::read(
-                 _str)
+      return Parser<std::remove_cvref_t<typename Type::ReflectionType>,
+                    _raw_type>::read(_str)
           .transform([](auto&& _t) { return Type(std::move(_t)); });
 
     } else {
@@ -66,8 +67,8 @@ struct Parser {
 
   static std::optional<std::string> write(const T& _t) noexcept {
     if constexpr (transpilation::has_reflection_method<Type>) {
-      return Parser<std::remove_cvref_t<typename Type::ReflectionType>>::write(
-          _t.reflection());
+      return Parser<std::remove_cvref_t<typename Type::ReflectionType>,
+                    _raw_type>::write(_t.reflection());
     } else if constexpr (std::is_enum_v<Type>) {
       return rfl::enum_to_string(_t);
     } else {
@@ -77,8 +78,8 @@ struct Parser {
 
   static dynamic::Type to_type() noexcept {
     if constexpr (transpilation::has_reflection_method<Type>) {
-      return Parser<
-          std::remove_cvref_t<typename Type::ReflectionType>>::to_type();
+      return Parser<std::remove_cvref_t<typename Type::ReflectionType>,
+                    _raw_type>::to_type();
 
     } else if constexpr (std::is_same_v<T, bool>) {
       return dynamic::types::Boolean{};

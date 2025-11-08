@@ -8,17 +8,18 @@
 #include "../Result.hpp"
 #include "../dynamic/Type.hpp"
 #include "Parser_base.hpp"
+#include "RawType.hpp"
 
 namespace sqlgen::parsing {
 
-template <class T>
-struct Parser<std::unique_ptr<T>> {
+template <class T, RawType _raw_type>
+struct Parser<std::unique_ptr<T>, _raw_type> {
   static Result<std::unique_ptr<T>> read(
       const std::optional<std::string>& _str) noexcept {
     if (!_str) {
       return std::unique_ptr<T>();
     }
-    return Parser<std::remove_cvref_t<T>>::read(_str).transform(
+    return Parser<std::remove_cvref_t<T>, _raw_type>::read(_str).transform(
         [](auto&& _t) -> std::unique_ptr<T> {
           return std::make_unique<T>(std::move(_t));
         });
@@ -29,11 +30,11 @@ struct Parser<std::unique_ptr<T>> {
     if (!_ptr) {
       return std::nullopt;
     }
-    return Parser<std::remove_cvref_t<T>>::write(*_ptr);
+    return Parser<std::remove_cvref_t<T>, _raw_type>::write(*_ptr);
   }
 
   static dynamic::Type to_type() noexcept {
-    return Parser<std::remove_cvref_t<T>>::to_type().visit(
+    return Parser<std::remove_cvref_t<T>, _raw_type>::to_type().visit(
         [](auto _t) -> dynamic::Type {
           _t.properties.nullable = true;
           return _t;

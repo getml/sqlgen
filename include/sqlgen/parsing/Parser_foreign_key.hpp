@@ -9,26 +9,28 @@
 #include "../dynamic/Type.hpp"
 #include "../transpilation/get_tablename.hpp"
 #include "Parser_base.hpp"
+#include "RawType.hpp"
 
 namespace sqlgen::parsing {
 
 template <class T, class _ForeignTableType,
-          rfl::internal::StringLiteral _col_name>
-struct Parser<ForeignKey<T, _ForeignTableType, _col_name>> {
+          rfl::internal::StringLiteral _col_name, RawType _raw_type>
+struct Parser<ForeignKey<T, _ForeignTableType, _col_name>, _raw_type> {
   static Result<ForeignKey<T, _ForeignTableType, _col_name>> read(
       const std::optional<std::string>& _str) noexcept {
-    return Parser<std::remove_cvref_t<T>>::read(_str).transform([](auto&& _t) {
-      return ForeignKey<T, _ForeignTableType, _col_name>(std::move(_t));
-    });
+    return Parser<std::remove_cvref_t<T>, _raw_type>::read(_str).transform(
+        [](auto&& _t) {
+          return ForeignKey<T, _ForeignTableType, _col_name>(std::move(_t));
+        });
   }
 
   static std::optional<std::string> write(
       const ForeignKey<T, _ForeignTableType, _col_name>& _f) noexcept {
-    return Parser<std::remove_cvref_t<T>>::write(_f.value());
+    return Parser<std::remove_cvref_t<T>, _raw_type>::write(_f.value());
   }
 
   static dynamic::Type to_type() noexcept {
-    return Parser<std::remove_cvref_t<T>>::to_type().visit(
+    return Parser<std::remove_cvref_t<T>, _raw_type>::to_type().visit(
         [](auto _t) -> dynamic::Type {
           _t.properties.foreign_key_reference =
               dynamic::types::ForeignKeyReference{

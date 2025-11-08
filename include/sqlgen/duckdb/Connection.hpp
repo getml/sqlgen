@@ -158,11 +158,6 @@ class Connection {
                  : Result<Nothing>(error("Could not append double value."));
 
     } else if constexpr (std::is_same_v<Type, std::string>) {
-      return duckdb_append_varchar(_appender, _t.c_str()) != DuckDBError
-                 ? Result<Nothing>(Nothing{})
-                 : Result<Nothing>(error("Could not append string value."));
-
-    } else if constexpr (std::is_same_v<Type, std::string>) {
       return duckdb_append_varchar_length(_appender, _t.c_str(), _t.length()) !=
                      DuckDBError
                  ? Result<Nothing>(Nothing{})

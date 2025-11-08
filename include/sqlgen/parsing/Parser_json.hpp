@@ -9,11 +9,12 @@
 #include "../Result.hpp"
 #include "../dynamic/Type.hpp"
 #include "Parser_base.hpp"
+#include "RawType.hpp"
 
 namespace sqlgen::parsing {
 
-template <class T>
-struct Parser<JSON<T>> {
+template <class T, RawType _raw_type>
+struct Parser<JSON<T>, _raw_type> {
   static Result<JSON<T>> read(const std::optional<std::string>& _str) noexcept {
     if (!_str) {
       return error("NULL value encounted: JSON value cannot be NULL.");

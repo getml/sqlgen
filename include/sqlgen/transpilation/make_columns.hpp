@@ -9,6 +9,7 @@
 #include "../dynamic/Type.hpp"
 #include "../dynamic/types.hpp"
 #include "../parsing/Parser.hpp"
+#include "../parsing/RawType.hpp"
 #include "has_reflection_method.hpp"
 #include "is_nullable.hpp"
 #include "is_primary_key.hpp"
@@ -23,7 +24,7 @@ std::string to_colname() {
 template <class Type>
 dynamic::Type to_type() {
   using T = std::remove_cvref_t<Type>;
-  return parsing::Parser<T>::to_type();
+  return parsing::Parser<T, parsing::RawType::string>::to_type();
 }
 
 template <class FieldType>
