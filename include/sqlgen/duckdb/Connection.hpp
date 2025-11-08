@@ -11,11 +11,13 @@
 #include <stdexcept>
 #include <string>
 
+#include "../Range.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Write.hpp"
 #include "../internal/iterator_t.hpp"
+#include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
 #include "../transpilation/get_tablename.hpp"
 #include "../transpilation/has_reflection_method.hpp"
@@ -51,7 +53,11 @@ class Connection {
 
   template <class ContainerType>
   Result<ContainerType> read(const dynamic::SelectFrom& _query) {
-    return error("TODO");
+    using ValueType = transpilation::value_t<ContainerType>;
+    auto res = Ref<duckdb_result>();
+    duckdb_query(conn_->conn(), to_sql(_query).c_str(), res.get());
+    return internal::to_container<ContainerType, Iterator<ValueType>>(
+        Iterator<ValueType>(res, conn_));
   }
 
   Result<Nothing> rollback() noexcept;

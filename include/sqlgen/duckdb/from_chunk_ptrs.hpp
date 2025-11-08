@@ -8,7 +8,6 @@
 #include <utility>
 
 #include "../Result.hpp"
-#include "../Tuple.hpp"
 #include "ColumnData.hpp"
 #include "chunk_ptrs_t.hpp"
 
@@ -18,8 +17,9 @@ template <class T, class ChunkPtrsT>
 struct FromChunkPtrs;
 
 template <class T, class... Ts>
-struct FromChunkPtrs<T, Tuple<ColumnData<Ts>...>> {
-  Result<T> operator(const Tuple<ColumnData<Ts>...>& _chunk_ptrs, idx_t _i) {
+struct FromChunkPtrs<T, rfl::Tuple<ColumnData<Ts>...>> {
+  Result<T> operator()(const rfl::Tuple<ColumnData<Ts>...>& _chunk_ptrs,
+                       idx_t _i) {
     return [&]<int... _is>(std::integer_sequence<int, _is...>) {
       // TODO: Integrate this into the parser logic.
       return T{*(rfl::get<_is>(_chunk_ptrs).data + _i)...};

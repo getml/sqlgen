@@ -11,6 +11,7 @@
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "DuckDBConnection.hpp"
+#include "from_chunk_ptrs.hpp"
 #include "make_chunk_ptrs.hpp"
 
 namespace sqlgen::duckdb {
@@ -20,6 +21,7 @@ class Iterator {
   using ConnPtr = Ref<DuckDBConnection>;
   using ResultPtr = Ref<duckdb_result>;
 
+ public:
   struct End {
     bool operator==(const Iterator<T>& _it) const noexcept {
       return _it == *this;
@@ -34,9 +36,13 @@ class Iterator {
   using difference_type = std::ptrdiff_t;
   using value_type = Result<T>;
 
-  Iterator(const ResultPtr& _res, const ConnPtr& _conn);
+  Iterator(const ResultPtr& _res, const ConnPtr& _conn)
+      : res_(_res),
+        conn_(_conn),
+        current_batch_(get_next_batch(_res, _conn)),
+        ix_(0) {}
 
-  ~Iterator();
+  ~Iterator() = default;
 
   Result<T>& operator*() const noexcept { return (*current_batch_)[ix_]; }
 
@@ -75,8 +81,10 @@ class Iterator {
           }
           return batch;
         })
-        .or_else(
-            [](auto _err) { return Ref<std::vector<Result<T>>>::make({_err}); })
+        .or_else([](auto _err) {
+          return Ref<std::vector<Result<T>>>::make(
+              std::vector<Result<T>>({Result<T>(_err)}));
+        })
         .value();
   }
 
