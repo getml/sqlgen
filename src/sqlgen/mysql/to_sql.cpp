@@ -219,6 +219,10 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
     stream << "(" << condition_to_sql(*_condition.cond1) << ") AND ("
            << condition_to_sql(*_condition.cond2) << ")";
 
+  } else if constexpr (std::is_same_v<
+                           C, dynamic::Condition::BooleanColumnOrValue>) {
+    stream << column_or_value_to_sql(_condition.col_or_val);
+
   } else if constexpr (std::is_same_v<C, dynamic::Condition::Equal>) {
     stream << operation_to_sql(_condition.op1) << " = "
            << operation_to_sql(_condition.op2);
@@ -829,6 +833,9 @@ std::string table_or_query_to_sql(
   return _table_or_query.visit([](const auto& _t) -> std::string {
     using Type = std::remove_cvref_t<decltype(_t)>;
     if constexpr (std::is_same_v<Type, dynamic::Table>) {
+      if (_t.schema) {
+        return wrap_in_quotes(*_t.schema) + "." + wrap_in_quotes(_t.name);
+      }
       return wrap_in_quotes(_t.name);
     } else {
       return "(" + select_from_to_sql(*_t) + ")";

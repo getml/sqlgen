@@ -31,6 +31,7 @@
 *.out
 *.app
 
+.cache/
 build/
 vcpkg_installed/
 CMakeUserPresets.json

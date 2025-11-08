@@ -6,16 +6,26 @@
 #include <stdexcept>
 
 #include "sqlgen/internal/collect/vector.hpp"
+#include "sqlgen/internal/random.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
 #include "sqlgen/postgres/Iterator.hpp"
 
 namespace sqlgen::postgres {
+
+Connection::Connection(const Credentials& _credentials)
+    : conn_(make_conn(_credentials.to_str())), credentials_(_credentials) {}
+
+Connection::~Connection() = default;
 
 Result<Nothing> Connection::begin_transaction() noexcept {
   return execute("BEGIN TRANSACTION;");
 }
 
 Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
+
+Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
+  return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
+}
 
 Result<Nothing> Connection::end_write() {
   if (PQputCopyEnd(conn_.get(), NULL) == -1) {
@@ -36,12 +46,18 @@ Result<Nothing> Connection::insert_impl(
     return Nothing{};
   }
 
+  const auto name = "sqlgen_insert_into_table_" + internal::random();
+
   const auto sql = to_sql_impl(_stmt);
 
-  const auto res = execute("PREPARE \"sqlgen_insert_into_table\" AS " + sql);
+  const auto res = PQprepare(conn_.get(), name.c_str(), sql.c_str(),
+                             _data.at(0).size(), nullptr);
 
-  if (!res) {
-    return res;
+  const auto status = PQresultStatus(res);
+
+  if (status != PGRES_COMMAND_OK) {
+    return error("Generating prepared statement for '" + sql +
+                 "' failed: " + PQresultErrorMessage(res));
   }
 
   std::vector<const char*> current_row(_data[0].size());
@@ -52,7 +68,7 @@ Result<Nothing> Connection::insert_impl(
     const auto& d = _data[i];
 
     if (d.size() != current_row.size()) {
-      execute("DEALLOCATE sqlgen_insert_into_table;");
+      execute("DEALLOCATE " + name + ";");
       return error("Error in entry " + std::to_string(i) + ": Expected " +
                    std::to_string(current_row.size()) + " entries, got " +
                    std::to_string(d.size()));
@@ -62,13 +78,13 @@ Result<Nothing> Connection::insert_impl(
       current_row[j] = d[j] ? d[j]->c_str() : nullptr;
     }
 
-    const auto res = PQexecPrepared(conn_.get(),                 // conn
-                                    "sqlgen_insert_into_table",  // stmtName
-                                    n_params,                    // nParams
-                                    current_row.data(),          // paramValues
-                                    nullptr,                     // paramLengths
-                                    nullptr,                     // paramFormats
-                                    0                            // resultFormat
+    const auto res = PQexecPrepared(conn_.get(),         // conn
+                                    name.c_str(),        // stmtName
+                                    n_params,            // nParams
+                                    current_row.data(),  // paramValues
+                                    nullptr,             // paramLengths
+                                    nullptr,             // paramFormats
+                                    0                    // resultFormat
     );
 
     const auto status = PQresultStatus(res);
@@ -76,12 +92,12 @@ Result<Nothing> Connection::insert_impl(
     if (status != PGRES_COMMAND_OK) {
       const auto err = error(std::string("Executing INSERT failed: ") +
                              PQresultErrorMessage(res));
-      execute("DEALLOCATE sqlgen_insert_into_table;");
+      execute("DEALLOCATE " + name + ";");
       return err;
     }
   }
 
-  return execute("DEALLOCATE sqlgen_insert_into_table;");
+  return execute("DEALLOCATE " + name + ";");
 }
 
 rfl::Result<Ref<Connection>> Connection::make(
@@ -107,11 +123,10 @@ typename Connection::ConnPtr Connection::make_conn(
   return ConnPtr::make(std::shared_ptr<PGconn>(raw_ptr, &PQfinish)).value();
 }
 
-Result<Ref<IteratorBase>> Connection::read_impl(
-    const dynamic::SelectFrom& _query) {
+Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
   const auto sql = postgres::to_sql_impl(_query);
   try {
-    return Ref<IteratorBase>(Ref<Iterator>::make(sql, conn_));
+    return Ref<Iterator>::make(sql, conn_);
   } catch (std::exception& e) {
     return error(e.what());
   }
@@ -137,6 +152,14 @@ std::string Connection::to_buffer(
   return internal::strings::join(
              "\t", internal::collect::vector(_line | transform(edit_field))) +
          "\n";
+}
+
+std::string Connection::to_sql(const dynamic::Statement& _stmt) noexcept {
+  return postgres::to_sql_impl(_stmt);
+}
+
+Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
+  return execute(postgres::to_sql_impl(_stmt));
 }
 
 Result<Nothing> Connection::write_impl(

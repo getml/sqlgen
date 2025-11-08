@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "../IteratorBase.hpp"
+#include "../Iterator.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../Transaction.hpp"
@@ -17,22 +17,23 @@
 #include "../internal/to_container.hpp"
 #include "../internal/write_or_insert.hpp"
 #include "../is_connection.hpp"
+#include "../sqlgen_api.hpp"
 #include "../transpilation/value_t.hpp"
+#include "Iterator.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::sqlite {
 
-class Connection {
+class SQLGEN_API Connection {
   using ConnPtr = Ref<sqlite3>;
   using StmtPtr = std::shared_ptr<sqlite3_stmt>;
 
  public:
-  Connection(const std::string& _fname)
-      : stmt_(nullptr), conn_(make_conn(_fname)) {}
+  Connection(const std::string& _fname);
 
   static rfl::Result<Ref<Connection>> make(const std::string& _fname) noexcept;
 
-  ~Connection() = default;
+  ~Connection();
 
   Result<Nothing> begin_transaction() noexcept;
 
@@ -51,15 +52,15 @@ class Connection {
   template <class ContainerType>
   auto read(const dynamic::SelectFrom& _query) {
     using ValueType = transpilation::value_t<ContainerType>;
-    return internal::to_container<ContainerType>(read_impl(_query).transform(
-        [](auto&& _it) { return Iterator<ValueType>(std::move(_it)); }));
+    return internal::to_container<ContainerType>(
+        read_impl(_query).transform([](auto&& _it) {
+          return sqlgen::Iterator<ValueType, sqlite::Iterator>(std::move(_it));
+        }));
   }
 
   Result<Nothing> rollback() noexcept;
 
-  std::string to_sql(const dynamic::Statement& _stmt) noexcept {
-    return sqlite::to_sql_impl(_stmt);
-  }
+  std::string to_sql(const dynamic::Statement& _stmt) noexcept;
 
   Result<Nothing> start_write(const dynamic::Write& _stmt);
 
@@ -91,7 +92,7 @@ class Connection {
   Result<StmtPtr> prepare_statement(const std::string& _sql) const noexcept;
 
   /// Implements the actual read.
-  Result<Ref<IteratorBase>> read_impl(const dynamic::SelectFrom& _query);
+  Result<Ref<Iterator>> read_impl(const dynamic::SelectFrom& _query);
 
   /// Implements the actual write
   Result<Nothing> write_impl(
@@ -112,5 +113,14 @@ static_assert(is_connection<Transaction<Connection>>,
               "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::sqlite
+
+namespace sqlgen::internal {
+
+template <class ValueType>
+struct IteratorType<ValueType, sqlite::Connection> {
+  using Type = Iterator<ValueType, sqlite::Iterator>;
+};
+
+}  // namespace sqlgen::internal
 
 #endif

@@ -24,8 +24,9 @@ dynamic::DeleteFrom to_delete_from(const WhereType& _where) {
                 "You cannot call delete_from on a view.");
 
   return dynamic::DeleteFrom{
-      .table =
-          dynamic::Table{.name = get_tablename<T>(), .schema = get_schema<T>()},
+      .table = dynamic::Table{.alias = std::nullopt,
+                              .name = get_tablename<T>(),
+                              .schema = get_schema<T>()},
       .where = to_condition<std::remove_cvref_t<T>>(_where)};
 }
 

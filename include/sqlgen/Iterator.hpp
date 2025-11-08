@@ -5,7 +5,6 @@
 #include <memory>
 #include <ranges>
 
-#include "IteratorBase.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "internal/batch_size.hpp"
@@ -15,23 +14,19 @@
 namespace sqlgen {
 
 /// An input_iterator that returns the underlying type.
-template <class T>
+template <class T, class UnderlyingIteratorT>
 class Iterator {
  public:
   using difference_type = std::ptrdiff_t;
   using value_type = Result<T>;
 
   struct End {
-    bool operator==(const Iterator<T>& _it) const noexcept {
-      return _it == *this;
-    }
+    bool operator==(const Iterator& _it) const noexcept { return _it == *this; }
 
-    bool operator!=(const Iterator<T>& _it) const noexcept {
-      return _it != *this;
-    }
+    bool operator!=(const Iterator& _it) const noexcept { return _it != *this; }
   };
 
-  Iterator(const Ref<IteratorBase>& _it)
+  Iterator(const Ref<UnderlyingIteratorT>& _it)
       : current_batch_(get_next_batch(_it)), it_(_it), ix_(0) {}
 
   ~Iterator() = default;
@@ -46,7 +41,7 @@ class Iterator {
 
   bool operator!=(const End& _end) const noexcept { return !(*this == _end); }
 
-  Iterator<T>& operator++() noexcept {
+  Iterator& operator++() noexcept {
     ++ix_;
     if (ix_ >= current_batch_->size() && !it_->end()) {
       current_batch_ = get_next_batch(it_);
@@ -59,7 +54,7 @@ class Iterator {
 
  private:
   static Ref<std::vector<Result<T>>> get_next_batch(
-      const Ref<IteratorBase>& _it) noexcept {
+      const Ref<UnderlyingIteratorT>& _it) noexcept {
     using namespace std::ranges::views;
     return _it->next(SQLGEN_BATCH_SIZE)
         .transform([](auto str_vec) {
@@ -74,7 +69,7 @@ class Iterator {
   Ref<std::vector<Result<T>>> current_batch_;
 
   /// The underlying database iterator.
-  Ref<IteratorBase> it_;
+  Ref<UnderlyingIteratorT> it_;
 
   /// The current index in the current batch.
   size_t ix_;

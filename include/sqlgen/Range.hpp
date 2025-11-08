@@ -4,7 +4,6 @@
 #include <memory>
 #include <ranges>
 
-#include "Iterator.hpp"
 #include "Result.hpp"
 
 namespace sqlgen {

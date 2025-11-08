@@ -8,6 +8,7 @@
 #include "Result.hpp"
 #include "is_connection.hpp"
 #include "transpilation/to_update.hpp"
+#include "where.hpp"
 
 namespace sqlgen {
 

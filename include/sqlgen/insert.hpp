@@ -15,6 +15,7 @@
 #include "internal/to_str_vec.hpp"
 #include "is_connection.hpp"
 #include "transpilation/to_insert_or_write.hpp"
+#include "transpilation/value_t.hpp"
 
 namespace sqlgen {
 
@@ -84,31 +85,19 @@ auto insert(const Args&... args) {
 
 template <class ContainerType>
 auto insert_or_replace(const auto& _conn, const ContainerType& _data) {
-  if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
-    static_assert(
-        internal::has_constraint_v<typename ContainerType::value_type>,
-        "The table must have a primary key or unique column for "
-        "insert_or_replace(...) to work.");
-  } else {
-    static_assert(internal::has_constraint_v<ContainerType>,
-                  "The table must have a primary key or unique column for "
-                  "insert_or_replace(...) to work.");
-  }
+  static_assert(
+      internal::has_constraint_v<transpilation::value_t<ContainerType>>,
+      "The table must have a primary key or unique column for "
+      "insert_or_replace(...) to work.");
   return insert_impl(_conn, _data, true);
 }
 
 template <class ContainerType>
 auto insert_or_replace(const ContainerType& _data) {
-  if constexpr (std::ranges::input_range<std::remove_cvref_t<ContainerType>>) {
-    static_assert(
-        internal::has_constraint_v<typename ContainerType::value_type>,
-        "The table must have a primary key or unique column for "
-        "insert_or_replace(...) to work.");
-  } else {
-    static_assert(internal::has_constraint_v<ContainerType>,
-                  "The table must have a primary key or unique column for "
-                  "insert_or_replace(...) to work.");
-  }
+  static_assert(
+      internal::has_constraint_v<transpilation::value_t<ContainerType>>,
+      "The table must have a primary key or unique column for "
+      "insert_or_replace(...) to work.");
   return insert_impl(_data, true);
 }
 

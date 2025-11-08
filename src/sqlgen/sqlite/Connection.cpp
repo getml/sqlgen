@@ -6,10 +6,14 @@
 
 #include "sqlgen/internal/collect/vector.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
-#include "sqlgen/sqlite/Iterator.hpp"
 #include "sqlgen/sqlite/to_sql.hpp"
 
 namespace sqlgen::sqlite {
+
+Connection::Connection(const std::string& _fname)
+    : stmt_(nullptr), conn_(make_conn(_fname)) {}
+
+Connection::~Connection() = default;
 
 Result<Nothing> Connection::actual_insert(
     const std::vector<std::vector<std::optional<std::string>>>& _data,
@@ -97,17 +101,16 @@ typename Connection::ConnPtr Connection::make_conn(const std::string& _fname) {
   return ConnPtr::make(std::shared_ptr<sqlite3>(conn, &sqlite3_close)).value();
 }
 
-Result<Ref<IteratorBase>> Connection::read_impl(
-    const dynamic::SelectFrom& _query) {
+Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
   const auto sql = to_sql_impl(_query);
 
   sqlite3_stmt* p_stmt = nullptr;
 
-  sqlite3_prepare(conn_.get(), /* Database handle */
-                  sql.c_str(), /* SQL statement, UTF-8 encoded */
-                  sql.size(),  /* Maximum length of zSql in bytes. */
-                  &p_stmt,     /* OUT: Statement handle */
-                  nullptr      /* OUT: Pointer to unused portion of zSql */
+  sqlite3_prepare_v2(conn_.get(), /* Database handle */
+                     sql.c_str(), /* SQL statement, UTF-8 encoded */
+                     sql.size(),  /* Maximum length of zSql in bytes. */
+                     &p_stmt,     /* OUT: Statement handle */
+                     nullptr      /* OUT: Pointer to unused portion of zSql */
   );
 
   if (!p_stmt) {
@@ -115,20 +118,18 @@ Result<Ref<IteratorBase>> Connection::read_impl(
   }
 
   return Ref<sqlite3_stmt>::make(StmtPtr(p_stmt, &sqlite3_finalize))
-      .transform([&](auto _stmt) -> Ref<IteratorBase> {
-        return Ref<Iterator>::make(_stmt, conn_);
-      });
+      .transform([&](auto _stmt) { return Ref<Iterator>::make(_stmt, conn_); });
 }
 
 Result<Connection::StmtPtr> Connection::prepare_statement(
     const std::string& _sql) const noexcept {
   sqlite3_stmt* p_stmt = nullptr;
 
-  sqlite3_prepare(conn_.get(),  /* Database handle */
-                  _sql.c_str(), /* SQL statement, UTF-8 encoded */
-                  _sql.size(),  /* Maximum length of zSql in bytes. */
-                  &p_stmt,      /* OUT: Statement handle */
-                  nullptr       /* OUT: Pointer to unused portion of zSql */
+  sqlite3_prepare_v2(conn_.get(),  /* Database handle */
+                     _sql.c_str(), /* SQL statement, UTF-8 encoded */
+                     _sql.size(),  /* Maximum length of zSql in bytes. */
+                     &p_stmt,      /* OUT: Statement handle */
+                     nullptr       /* OUT: Pointer to unused portion of zSql */
   );
 
   if (!p_stmt) {
@@ -140,6 +141,10 @@ Result<Connection::StmtPtr> Connection::prepare_statement(
 }
 
 Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
+
+std::string Connection::to_sql(const dynamic::Statement& _stmt) noexcept {
+  return sqlite::to_sql_impl(_stmt);
+}
 
 Result<Nothing> Connection::start_write(const dynamic::Write& _stmt) {
   if (stmt_) {

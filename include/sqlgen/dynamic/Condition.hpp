@@ -4,7 +4,6 @@
 #include <rfl.hpp>
 
 #include "../Ref.hpp"
-#include "Column.hpp"
 #include "ColumnOrValue.hpp"
 #include "Operation.hpp"
 
@@ -14,6 +13,10 @@ struct Condition {
   struct And {
     Ref<Condition> cond1;
     Ref<Condition> cond2;
+  };
+
+  struct BooleanColumnOrValue {
+    ColumnOrValue col_or_val;
   };
 
   struct Equal {
@@ -84,9 +87,9 @@ struct Condition {
   };
 
   using ReflectionType =
-      rfl::TaggedUnion<"what", And, Equal, GreaterEqual, GreaterThan, In,
-                       IsNull, IsNotNull, LesserEqual, LesserThan, Like, Not,
-                       NotEqual, NotIn, NotLike, Or>;
+      rfl::TaggedUnion<"what", And, BooleanColumnOrValue, Equal, GreaterEqual,
+                       GreaterThan, In, IsNull, IsNotNull, LesserEqual,
+                       LesserThan, Like, Not, NotEqual, NotIn, NotLike, Or>;
 
   const ReflectionType& reflection() const { return val; }
 

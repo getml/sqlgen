@@ -47,7 +47,7 @@ class SQLGenConan(ConanFile):
             self.options.rm_safe("fPIC")
 
     def requirements(self):
-        self.requires("reflect-cpp/0.19.0", transitive_headers=True)
+        self.requires("reflect-cpp/0.22.0", transitive_headers=True)
         if self.options.with_mysql:
             self.requires("mariadb-connector-c/3.4.3", transitive_headers=True)
         if self.options.with_postgres:

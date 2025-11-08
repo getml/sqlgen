@@ -9,6 +9,7 @@
 #include "../dynamic/Type.hpp"
 #include "../dynamic/types.hpp"
 #include "Parser_base.hpp"
+#include "Parser_default.hpp"
 
 namespace sqlgen::parsing {
 

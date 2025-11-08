@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "../Literal.hpp"
+#include "../Result.hpp"
 #include "../dynamic/JoinType.hpp"
 #include "TableWrapper.hpp"
 
@@ -46,13 +47,13 @@ struct GetTableType<Literal<_alias>,
                 "Alias could not be identified.");
 };
 
-template <rfl::internal::StringLiteral _alias, class T>
-struct GetTableType<Literal<_alias>, TableWrapper<T>> {
+template <class T>
+struct GetTableType<Literal<"">, TableWrapper<T>> {
   using TableType = T;
 };
 
-template <rfl::internal::StringLiteral _alias, class T>
-struct GetTableType<Literal<_alias>, T> {
+template <class T>
+struct GetTableType<Literal<"">, T> {
   using TableType = T;
 };
 
