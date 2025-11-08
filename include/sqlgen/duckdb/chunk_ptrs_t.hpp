@@ -4,6 +4,7 @@
 #include <rfl.hpp>
 #include <type_traits>
 
+#include "./parsing/Parser.hpp"
 #include "ColumnData.hpp"
 
 namespace sqlgen::duckdb {
@@ -13,7 +14,8 @@ struct ChunkPtrsType;
 
 template <class... FieldTs>
 struct ChunkPtrsType<rfl::NamedTuple<FieldTs...>> {
-  using Type = rfl::Tuple<ColumnData<typename FieldTs::Type>...>;
+  using Type = rfl::Tuple<ColumnData<typename duckdb::parsing::Parser<
+      typename FieldTs::Type>::ResultingType>...>;
 };
 
 template <class T>
