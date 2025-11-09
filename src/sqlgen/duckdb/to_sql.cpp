@@ -811,24 +811,38 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
     } else if constexpr (std::is_same_v<T, dynamic::types::Dynamic>) {
       return _t.type_name;
 
-    } else if constexpr (std::is_same_v<T, dynamic::types::Int8> ||
-                         std::is_same_v<T, dynamic::types::Int16> ||
-                         std::is_same_v<T, dynamic::types::UInt8> ||
-                         std::is_same_v<T, dynamic::types::UInt16>) {
+    } else if constexpr (std::is_same_v<T, dynamic::types::Int8>) {
+      return "TINYINT";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt8>) {
+      return "UTINYINT";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Int16>) {
       return "SMALLINT";
 
-    } else if constexpr (std::is_same_v<T, dynamic::types::Int32> ||
-                         std::is_same_v<T, dynamic::types::UInt32>) {
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt16>) {
+      return "USMALLINT";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Int32>) {
       return "INTEGER";
 
-    } else if constexpr (std::is_same_v<T, dynamic::types::Int64> ||
-                         std::is_same_v<T, dynamic::types::UInt64>) {
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt32>) {
+      return "UINTEGER";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Int64>) {
       return "BIGINT";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::UInt64>) {
+      return "UBIGINT";
+
     } else if constexpr (std::is_same_v<T, dynamic::types::Enum>) {
       return _t.name;
-    } else if constexpr (std::is_same_v<T, dynamic::types::Float32> ||
-                         std::is_same_v<T, dynamic::types::Float64>) {
-      return "NUMERIC";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Float32>) {
+      return "FLOAT";
+
+    } else if constexpr (std::is_same_v<T, dynamic::types::Float64>) {
+      return "DOUBLE";
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Text>) {
       return "TEXT";

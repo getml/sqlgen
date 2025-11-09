@@ -73,7 +73,7 @@ class Iterator {
       return Ref<std::vector<Result<T>>>::make();
     }
     const idx_t row_count = duckdb_data_chunk_get_size(chunk);
-    return make_chunk_ptrs<T>(chunk)
+    return make_chunk_ptrs<T>(_res, chunk)
         .transform([&](auto&& _chunk_ptrs) {
           auto batch = Ref<std::vector<Result<T>>>::make();
           for (idx_t i = 0; i < row_count; ++i) {

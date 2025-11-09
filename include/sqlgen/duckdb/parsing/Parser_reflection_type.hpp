@@ -16,8 +16,8 @@ template <class T>
   requires transpilation::has_reflection_method<std::remove_cvref_t<T>>
 struct Parser<T> {
   using Type = std::remove_cvref_t<T>;
-  using ResultingType =
-      typename Parser<typename Type::ReflectionType>::ResultingType;
+  using ResultingType = typename Parser<
+      std::remove_cvref_t<typename Type::ReflectionType>>::ResultingType;
 
   static Result<T> read(const ResultingType* _r) noexcept {
     return Parser<std::remove_cvref_t<typename Type::ReflectionType>>::read(_r)
