@@ -3,7 +3,6 @@
 
 #include <duckdb.h>
 
-#include <optional>
 #include <rfl.hpp>
 #include <string>
 #include <vector>
@@ -11,6 +10,7 @@
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "DuckDBConnection.hpp"
+#include "DuckDBResult.hpp"
 #include "from_chunk_ptrs.hpp"
 #include "make_chunk_ptrs.hpp"
 
@@ -19,7 +19,7 @@ namespace sqlgen::duckdb {
 template <class T>
 class Iterator {
   using ConnPtr = Ref<DuckDBConnection>;
-  using ResultPtr = Ref<duckdb_result>;
+  using ResultPtr = Ref<DuckDBResult>;
 
  public:
   struct End {
@@ -36,10 +36,10 @@ class Iterator {
   using difference_type = std::ptrdiff_t;
   using value_type = Result<T>;
 
-  Iterator(const ResultPtr& _res, const ConnPtr& _conn)
-      : res_(_res),
+  Iterator(const std::string& _query, const ConnPtr& _conn)
+      : res_(DuckDBResult::make(_query, _conn)),
         conn_(_conn),
-        current_batch_(get_next_batch(_res, _conn)),
+        current_batch_(get_next_batch(res_, _conn)),
         ix_(0) {}
 
   ~Iterator() = default;
@@ -67,19 +67,22 @@ class Iterator {
 
  private:
   static Ref<std::vector<Result<T>>> get_next_batch(
-      const ResultPtr& _res, const ConnPtr& _conn) noexcept {
-    duckdb_data_chunk chunk = duckdb_fetch_chunk(*_res);
-    if (!chunk) {
-      return Ref<std::vector<Result<T>>>::make();
-    }
-    const idx_t row_count = duckdb_data_chunk_get_size(chunk);
-    return make_chunk_ptrs<T>(_res, chunk)
-        .transform([&](auto&& _chunk_ptrs) {
-          auto batch = Ref<std::vector<Result<T>>>::make();
-          for (idx_t i = 0; i < row_count; ++i) {
-            batch->emplace_back(from_chunk_ptrs<T>(_chunk_ptrs, i));
+      const Result<ResultPtr>& _result_ptr, const ConnPtr& _conn) noexcept {
+    return _result_ptr
+        .and_then([&](const auto& _res) -> Result<Ref<std::vector<Result<T>>>> {
+          duckdb_data_chunk chunk = duckdb_fetch_chunk(_res->res());
+          if (!chunk) {
+            return Ref<std::vector<Result<T>>>::make();
           }
-          return batch;
+          const idx_t row_count = duckdb_data_chunk_get_size(chunk);
+          return make_chunk_ptrs<T>(_res, chunk)
+              .transform([&](auto&& _chunk_ptrs) {
+                auto batch = Ref<std::vector<Result<T>>>::make();
+                for (idx_t i = 0; i < row_count; ++i) {
+                  batch->emplace_back(from_chunk_ptrs<T>(_chunk_ptrs, i));
+                }
+                return batch;
+              });
         })
         .or_else([](auto _err) {
           return Ref<std::vector<Result<T>>>::make(
@@ -90,7 +93,7 @@ class Iterator {
 
  private:
   /// The underlying DuckDB result.
-  ResultPtr res_;
+  Result<ResultPtr> res_;
 
   /// The underlying connection.
   ConnPtr conn_;

@@ -22,7 +22,9 @@
 #include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
 #include "./parsing/Parser_default.hpp"
+#include "DuckDBAppender.hpp"
 #include "DuckDBConnection.hpp"
+#include "DuckDBResult.hpp"
 #include "Iterator.hpp"
 #include "sqlgen/dynamic/Operation.hpp"
 #include "sqlgen/dynamic/SelectFrom.hpp"
@@ -39,11 +41,7 @@ class Connection {
   static rfl::Result<Ref<Connection>> make(
       const std::optional<std::string> &_fname) noexcept;
 
-  ~Connection() {
-    if (appender_) {
-      duckdb_appender_destroy(appender_.get());
-    }
-  }
+  ~Connection() = default;
 
   Result<Nothing> begin_transaction() noexcept;
 
@@ -63,31 +61,20 @@ class Connection {
         transform([](const auto &_str) { return _str.c_str(); }));
 
     return get_duckdb_logical_types(_insert_stmt.table, _insert_stmt.columns)
-        .and_then([&](auto _types) -> Result<Nothing> {
-          duckdb_appender appender{};
-          if (duckdb_appender_create_query(
-                  conn_->conn(), sql.c_str(),
-                  static_cast<idx_t>(_insert_stmt.columns.size()),
-                  _types.data(), "sqlgen_appended_data", columns.data(),
-                  &appender) == DuckDBError) {
-            return error("Could not create appender.");
-          }
-          const auto res = write_to_appender(_begin, _end, appender);
-          duckdb_appender_destroy(&appender);
-          return res;
+        .and_then([&](const auto &_types) {
+          return DuckDBAppender::make(sql, conn_, columns, _types);
+        })
+        .and_then([&](const auto &_appender) {
+          return write_to_appender(_begin, _end, _appender->appender());
         });
   }
 
   template <class ContainerType>
   Result<ContainerType> read(const dynamic::SelectFrom &_query) {
     using ValueType = transpilation::value_t<ContainerType>;
-    auto res = Ref<duckdb_result>();
-    duckdb_query(conn_->conn(), to_sql(_query).c_str(), res.get());
     const auto result =
         internal::to_container<ContainerType, Iterator<ValueType>>(
-            Iterator<ValueType>(res, conn_));
-    // TODO: Destroy result inside of iterator.
-    duckdb_destroy_result(res.get());
+            Iterator<ValueType>(to_sql(_query), conn_));
     return result;
   }
 
@@ -112,15 +99,11 @@ class Connection {
     const auto sql = to_sql(_write_stmt);
 
     return get_duckdb_logical_types(_write_stmt.table, _write_stmt.columns)
-        .and_then([&](auto _types) -> Result<Nothing> {
-          appender_ = std::make_unique<duckdb_appender>();
-          if (duckdb_appender_create_query(
-                  conn_->conn(), sql.c_str(),
-                  static_cast<idx_t>(_write_stmt.columns.size()), _types.data(),
-                  "sqlgen_appended_data", columns.data(),
-                  appender_.get()) == DuckDBError) {
-            return error("Could not create appender.");
-          }
+        .and_then([&](auto _types) {
+          return DuckDBAppender::make(sql, conn_, columns, _types);
+        })
+        .transform([&](auto &&_appender) {
+          appender_ = _appender.ptr();
           return Nothing{};
         });
   }
@@ -129,7 +112,6 @@ class Connection {
     if (!appender_) {
       return error("No write operation in progress - nothing to end.");
     }
-    duckdb_appender_destroy(appender_.get());
     appender_ = nullptr;
     return Nothing{};
   }
@@ -139,7 +121,7 @@ class Connection {
     if (!appender_) {
       return error("No write operation in progress - nothing to write.");
     }
-    return write_to_appender(_begin, _end, *appender_);
+    return write_to_appender(_begin, _end, appender_->appender());
   }
 
  private:
@@ -158,24 +140,13 @@ class Connection {
     const auto select_from = dynamic::SelectFrom{
         .table_or_query = _table, .fields = fields, .limit = dynamic::Limit{0}};
 
-    duckdb_result res{};
-
-    const auto state =
-        duckdb_query(conn_->conn(), to_sql(select_from).c_str(), &res);
-
-    if (state == DuckDBError) {
-      const auto err = error(duckdb_result_error(&res));
-      duckdb_destroy_result(&res);
-      return err;
-    }
-
-    const auto types = internal::collect::vector(
-        iota(static_cast<idx_t>(0), static_cast<idx_t>(fields.size())) |
-        transform(std::bind_front(duckdb_column_logical_type, &res)));
-
-    duckdb_destroy_result(&res);
-
-    return types;
+    return DuckDBResult::make(to_sql(select_from), conn_)
+        .transform([&](const auto &_res) {
+          return internal::collect::vector(
+              iota(static_cast<idx_t>(0), static_cast<idx_t>(fields.size())) |
+              transform(
+                  std::bind_front(duckdb_column_logical_type, &_res->res())));
+        });
   }
 
   template <class ItBegin, class ItEnd>
@@ -210,7 +181,7 @@ class Connection {
 
  private:
   /// The appender to be used for the write statements
-  std::unique_ptr<duckdb_appender> appender_;
+  std::shared_ptr<DuckDBAppender> appender_;
 
   /// The underlying duckdb3 connection.
   ConnPtr conn_;
