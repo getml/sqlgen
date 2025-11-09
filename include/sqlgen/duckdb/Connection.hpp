@@ -59,15 +59,22 @@ class Connection {
   template <class ItBegin, class ItEnd>
   Result<Nothing> insert(const dynamic::Insert &_insert_stmt, ItBegin _begin,
                          ItEnd _end) noexcept {
+    using namespace std::ranges::views;
+
     const auto sql = to_sql(_insert_stmt);
 
+    auto columns = internal::collect::vector(
+        _insert_stmt.columns |
+        transform([](const auto &_str) { return _str.c_str(); }));
+
     return get_duckdb_logical_types(_insert_stmt.table, _insert_stmt.columns)
-        .and_then([&](const auto &_types) -> Result<Nothing> {
+        .and_then([&](auto _types) -> Result<Nothing> {
           duckdb_appender appender{};
           if (duckdb_appender_create_query(
                   conn_->conn(), sql.c_str(),
                   static_cast<idx_t>(_insert_stmt.columns.size()),
-                  _types.data(), nullptr, nullptr, &appender) == DuckDBError) {
+                  _types.data(), "sqlgen_appended_data", columns.data(),
+                  &appender) == DuckDBError) {
             return error("Could not create appender.");
           }
           const auto res = write_to_appender(_begin, _end, appender);
@@ -81,8 +88,12 @@ class Connection {
     using ValueType = transpilation::value_t<ContainerType>;
     auto res = Ref<duckdb_result>();
     duckdb_query(conn_->conn(), to_sql(_query).c_str(), res.get());
-    return internal::to_container<ContainerType, Iterator<ValueType>>(
-        Iterator<ValueType>(res, conn_));
+    const auto result =
+        internal::to_container<ContainerType, Iterator<ValueType>>(
+            Iterator<ValueType>(res, conn_));
+    // TODO: Destroy result inside of iterator.
+    duckdb_destroy_result(res.get());
+    return result;
   }
 
   Result<Nothing> rollback() noexcept;
@@ -96,16 +107,27 @@ class Connection {
       return error(
           "Write operation already in progress - you cannot start another.");
     }
-    appender_ = std::make_unique<duckdb_appender>();
-    if (duckdb_appender_create(
-            conn_->conn(),
-            _write_stmt.table.schema ? _write_stmt.table.schema->c_str()
-                                     : nullptr,
-            _write_stmt.table.name.c_str(), appender_.get()) == DuckDBError) {
-      appender_ = nullptr;
-      return error("Could not create appender.");
-    }
-    return Nothing{};
+
+    using namespace std::ranges::views;
+
+    auto columns = internal::collect::vector(
+        _write_stmt.columns |
+        transform([](const auto &_str) { return _str.c_str(); }));
+
+    const auto sql = to_sql(_write_stmt);
+
+    return get_duckdb_logical_types(_write_stmt.table, _write_stmt.columns)
+        .and_then([&](auto _types) -> Result<Nothing> {
+          appender_ = std::make_unique<duckdb_appender>();
+          if (duckdb_appender_create_query(
+                  conn_->conn(), sql.c_str(),
+                  static_cast<idx_t>(_write_stmt.columns.size()), _types.data(),
+                  "sqlgen_appended_data", columns.data(),
+                  appender_.get()) == DuckDBError) {
+            return error("Could not create appender.");
+          }
+          return Nothing{};
+        });
   }
 
   Result<Nothing> end_write() {
@@ -141,13 +163,24 @@ class Connection {
     const auto select_from = dynamic::SelectFrom{
         .table_or_query = _table, .fields = fields, .limit = dynamic::Limit{0}};
 
-    auto res = Ref<duckdb_result>();
+    duckdb_result res{};
 
-    duckdb_query(conn_->conn(), to_sql(select_from).c_str(), res.get());
+    const auto state =
+        duckdb_query(conn_->conn(), to_sql(select_from).c_str(), &res);
 
-    return internal::collect::vector(
-        iota(static_cast<idx_t>(fields.size())) |
-        transform(std::bind_front(duckdb_column_logical_type, res.get())));
+    if (state == DuckDBError) {
+      const auto err = error(duckdb_result_error(&res));
+      duckdb_destroy_result(&res);
+      return err;
+    }
+
+    const auto types = internal::collect::vector(
+        iota(static_cast<idx_t>(0), static_cast<idx_t>(fields.size())) |
+        transform(std::bind_front(duckdb_column_logical_type, &res)));
+
+    duckdb_destroy_result(&res);
+
+    return types;
   }
 
   template <class ItBegin, class ItEnd>

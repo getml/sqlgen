@@ -461,47 +461,32 @@ std::vector<std::pair<std::string, std::vector<std::string>>> get_enum_types(
 std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
   using namespace std::ranges::views;
 
-  const auto to_placeholder = [](const size_t _i) -> std::string {
-    return "$" + std::to_string(_i + 1);
-  };
-
-  const auto as_excluded = [](const std::string& _str) -> std::string {
-    return _str + "=excluded." + _str;
-  };
-
   std::stringstream stream;
-  stream << "INSERT INTO ";
+
+  stream << "INSERT ";
+
+  if (_stmt.or_replace) {
+    stream << "OR REPLACE ";
+  }
+
+  stream << "INTO ";
+
   if (_stmt.table.schema) {
     stream << wrap_in_quotes(*_stmt.table.schema) << ".";
   }
+
   stream << wrap_in_quotes(_stmt.table.name);
 
-  stream << " (";
-  stream << internal::strings::join(
-      ", ",
-      internal::collect::vector(_stmt.columns | transform(wrap_in_quotes)));
-  stream << ")";
-
-  stream << " VALUES (";
+  stream << " BY NAME ( SELECT ";
   stream << internal::strings::join(
       ", ", internal::collect::vector(
-                iota(static_cast<size_t>(0), _stmt.columns.size()) |
-                transform(to_placeholder)));
-  stream << ")";
-
-  if (_stmt.or_replace) {
-    stream << " ON CONFLICT (";
-    stream << internal::strings::join(
-        ", ", internal::collect::vector(_stmt.constraints));
-    stream << ")";
-
-    stream << " DO UPDATE SET ";
-    stream << internal::strings::join(
-        ", ",
-        internal::collect::vector(_stmt.columns | transform(as_excluded)));
-  }
+                _stmt.columns | transform([&](const auto _name) {
+                  return wrap_in_quotes(_name) + " AS " + wrap_in_quotes(_name);
+                })));
+  stream << " FROM sqlgen_appended_data)";
 
   stream << ";";
+
   return stream.str();
 }
 
@@ -903,13 +888,25 @@ std::string update_to_sql(const dynamic::Update& _stmt) noexcept {
 
 std::string write_to_sql(const dynamic::Write& _stmt) noexcept {
   using namespace std::ranges::views;
-  const auto schema = wrap_in_quotes(_stmt.table.schema.value_or("public"));
-  const auto table = wrap_in_quotes(_stmt.table.name);
-  const auto colnames = internal::strings::join(
-      ", ",
-      internal::collect::vector(_stmt.columns | transform(wrap_in_quotes)));
-  return "COPY " + schema + "." + table + "(" + colnames +
-         ") FROM STDIN WITH DELIMITER '\t' NULL '\e' CSV QUOTE '\a';";
+
+  std::stringstream stream;
+  stream << "INSERT INTO ";
+  if (_stmt.table.schema) {
+    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
+  }
+  stream << wrap_in_quotes(_stmt.table.name);
+
+  stream << " BY NAME ( SELECT ";
+  stream << internal::strings::join(
+      ", ", internal::collect::vector(
+                _stmt.columns | transform([&](const auto _name) {
+                  return wrap_in_quotes(_name) + " AS " + wrap_in_quotes(_name);
+                })));
+  stream << " FROM sqlgen_appended_data)";
+
+  stream << ";";
+
+  return stream.str();
 }
 
 }  // namespace sqlgen::duckdb
