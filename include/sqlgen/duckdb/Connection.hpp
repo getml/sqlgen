@@ -39,12 +39,16 @@ class Connection {
   using ConnPtr = Ref<DuckDBConnection>;
 
  public:
-  Connection(const ConnPtr &_conn) : conn_(_conn) {}
+  Connection(const ConnPtr &_conn) : appender_(nullptr), conn_(_conn) {}
 
   static rfl::Result<Ref<Connection>> make(
       const std::optional<std::string> &_fname) noexcept;
 
-  ~Connection() = default;
+  ~Connection() {
+    if (appender_) {
+      duckdb_appender_destroy(appender_.get());
+    }
+  }
 
   Result<Nothing> begin_transaction() noexcept;
 
@@ -87,25 +91,38 @@ class Connection {
     return duckdb::to_sql_impl(_stmt);
   }
 
-  Result<Nothing> start_write(const dynamic::Write &) { return Nothing{}; }
+  Result<Nothing> start_write(const dynamic::Write &_write_stmt) {
+    if (appender_) {
+      return error(
+          "Write operation already in progress - you cannot start another.");
+    }
+    appender_ = std::make_unique<duckdb_appender>();
+    if (duckdb_appender_create(
+            conn_->conn(),
+            _write_stmt.table.schema ? _write_stmt.table.schema->c_str()
+                                     : nullptr,
+            _write_stmt.table.name.c_str(), appender_.get()) == DuckDBError) {
+      appender_ = nullptr;
+      return error("Could not create appender.");
+    }
+    return Nothing{};
+  }
 
-  Result<Nothing> end_write() { return Nothing{}; }
+  Result<Nothing> end_write() {
+    if (!appender_) {
+      return error("No write operation in progress - nothing to end.");
+    }
+    duckdb_appender_destroy(appender_.get());
+    appender_ = nullptr;
+    return Nothing{};
+  }
 
   template <class ItBegin, class ItEnd>
   Result<Nothing> write(ItBegin _begin, ItEnd _end) {
-    using T =
-        std::remove_cvref_t<typename std::iterator_traits<ItBegin>::value_type>;
-    const auto schema = transpilation::get_schema<T>();
-    const auto table = transpilation::get_tablename<T>();
-    duckdb_appender appender{};
-    if (duckdb_appender_create(conn_->conn(),
-                               schema ? schema->c_str() : nullptr,
-                               table.c_str(), &appender) == DuckDBError) {
-      return error("Could not create appender.");
+    if (!appender_) {
+      return error("No write operation in progress - nothing to write.");
     }
-    const auto res = write_to_appender(_begin, _end, appender);
-    duckdb_appender_destroy(&appender);
-    return res;
+    return write_to_appender(_begin, _end, *appender_);
   }
 
  private:
@@ -162,6 +179,9 @@ class Connection {
   }
 
  private:
+  /// The appender to be used for the write statements
+  std::unique_ptr<duckdb_appender> appender_;
+
   /// The underlying duckdb3 connection.
   ConnPtr conn_;
 };
