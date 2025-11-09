@@ -673,8 +673,8 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
 
 std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
   return [&]() -> std::string {
-    return std::string(_p.auto_incr ? " GENERATED ALWAYS AS IDENTITY" : "") +
-           std::string(_p.nullable ? "" : " NOT NULL") +
+    return std::string(_p.nullable ? "" : " NOT NULL") +
+           std::string(_p.auto_incr ? " GENERATED ALWAYS" : "") +
            std::string(_p.unique ? " UNIQUE" : "");
   }() + [&]() -> std::string {
     if (!_p.foreign_key_reference) {

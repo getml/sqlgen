@@ -18,19 +18,14 @@
 #include "../Transaction.hpp"
 #include "../dynamic/Write.hpp"
 #include "../internal/iterator_t.hpp"
+#include "../internal/remove_auto_incr_primary_t.hpp"
 #include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
-#include "../transpilation/get_tablename.hpp"
-#include "../transpilation/has_reflection_method.hpp"
-#include "../transpilation/is_nullable.hpp"
 #include "./parsing/Parser_default.hpp"
 #include "DuckDBConnection.hpp"
 #include "Iterator.hpp"
-#include "parsing/Parser.hpp"
 #include "sqlgen/dynamic/Operation.hpp"
 #include "sqlgen/dynamic/SelectFrom.hpp"
-#include "sqlgen/transpilation/get_schema.hpp"
-#include "sqlgen/transpilation/to_table_or_query.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::duckdb {
@@ -199,8 +194,10 @@ class Connection {
   template <class StructT>
   Result<Nothing> write_row(const StructT &_struct,
                             duckdb_appender _appender) noexcept {
+    using ViewType =
+        internal::remove_auto_incr_primary_t<rfl::view_t<const StructT>>;
     Result<Nothing> res = Nothing{};
-    rfl::to_view(_struct).apply([&](const auto &_field) {
+    ViewType(rfl::to_view(_struct)).apply([&](const auto &_field) {
       using ValueType = std::remove_cvref_t<std::remove_pointer_t<
           typename std::remove_cvref_t<decltype(_field)>::Type>>;
       if (res) {
