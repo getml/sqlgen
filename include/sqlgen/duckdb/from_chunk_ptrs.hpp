@@ -26,7 +26,9 @@ struct FromChunkPtrs<T, rfl::NamedTuple<FieldTs...>,
     return [&]<int... _is>(std::integer_sequence<int, _is...>) -> Result<T> {
       try {
         return T{duckdb::parsing::Parser<typename FieldTs::Type>::read(
-                     rfl::get<_is>(_chunk_ptrs).data + _i)
+                     rfl::get<_is>(_chunk_ptrs).is_not_null(_i)
+                         ? rfl::get<_is>(_chunk_ptrs).data + _i
+                         : nullptr)
                      .value()...};
       } catch (const std::exception& e) {
         return error(e.what());
