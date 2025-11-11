@@ -70,12 +70,10 @@ class Connection {
   }
 
   template <class ContainerType>
-  Result<ContainerType> read(const dynamic::SelectFrom &_query) {
+  auto read(const dynamic::SelectFrom &_query) {
     using ValueType = transpilation::value_t<ContainerType>;
-    const auto result =
-        internal::to_container<ContainerType, Iterator<ValueType>>(
-            Iterator<ValueType>(to_sql(_query), conn_));
-    return result;
+    return internal::to_container<ContainerType, Iterator<ValueType>>(
+        Iterator<ValueType>(to_sql(_query), conn_));
   }
 
   Result<Nothing> rollback() noexcept;
