@@ -37,7 +37,7 @@ struct Parser<T> {
                  ? Result<Nothing>(Nothing{})
                  : Result<Nothing>(error("Could not append null value."));
     }
-    return Parser<std::remove_cvref_t<T>>::write(*_ptr);
+    return Parser<std::remove_cvref_t<T>>::write(*_ptr, _appender);
   }
 };
 
