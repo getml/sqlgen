@@ -1,11 +1,13 @@
 #include "sqlgen/duckdb/to_sql.hpp"
 
+#include <functional>
 #include <ranges>
 #include <rfl.hpp>
 #include <sstream>
 #include <stdexcept>
 #include <type_traits>
 
+#include "sqlgen/dynamic/Column.hpp"
 #include "sqlgen/dynamic/Join.hpp"
 #include "sqlgen/dynamic/Operation.hpp"
 #include "sqlgen/internal/collect/vector.hpp"
@@ -23,9 +25,15 @@ std::string condition_to_sql(const dynamic::Condition& _cond) noexcept;
 template <class ConditionType>
 std::string condition_to_sql_impl(const ConditionType& _condition) noexcept;
 
-std::string column_to_sql_definition(const dynamic::Column& _col) noexcept;
+std::string column_to_sql_definition(const dynamic::Table& _table,
+                                     const dynamic::Column& _col) noexcept;
+
+std::string create_enums(const dynamic::CreateTable& _stmt) noexcept;
 
 std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept;
+
+std::string create_sequences_for_auto_incr(
+    const dynamic::CreateTable& _stmt) noexcept;
 
 std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept;
 
@@ -51,8 +59,11 @@ std::string join_to_sql(const dynamic::Join& _stmt) noexcept;
 
 std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept;
 
-std::string properties_to_sql(
-    const dynamic::types::Properties& _properties) noexcept;
+std::string make_sequence_name(const dynamic::Table& _table,
+                               const dynamic::Column& _col) noexcept;
+
+std::string properties_to_sql(const dynamic::Table& _table,
+                              const dynamic::Column& _col) noexcept;
 
 std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept;
 
@@ -245,10 +256,10 @@ std::string condition_to_sql_impl(const ConditionType& _condition) noexcept {
   return stream.str();
 }
 
-std::string column_to_sql_definition(const dynamic::Column& _col) noexcept {
+std::string column_to_sql_definition(const dynamic::Table& _table,
+                                     const dynamic::Column& _col) noexcept {
   return wrap_in_quotes(_col.name) + " " + type_to_sql(_col.type) +
-         properties_to_sql(
-             _col.type.visit([](const auto& _t) { return _t.properties; }));
+         properties_to_sql(_table, _col);
 }
 
 std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept {
@@ -290,12 +301,40 @@ std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept {
   return stream.str();
 }
 
-std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
+std::string make_sequence_name(const dynamic::Table& _table,
+                               const dynamic::Column& _col) noexcept {
+  return "sqlgen_seq_" + (_table.alias ? *_table.alias + "_" : std::string()) +
+         _table.name + "_" + _col.name;
+}
+
+std::string create_sequences_for_auto_incr(
+    const dynamic::CreateTable& _stmt) noexcept {
   using namespace std::ranges::views;
 
-  const auto col_to_sql = [&](const auto& _col) {
-    return column_to_sql_definition(_col);
+  const auto is_auto_incr = [](const auto& _col) {
+    return _col.type.visit(
+        [](const auto& _t) { return _t.properties.auto_incr; });
   };
+
+  const auto create_one_sequence =
+      [&](const dynamic::Column& _col) -> std::string {
+    std::stringstream stream;
+    stream << "CREATE SEQUENCE ";
+    if (_stmt.if_not_exists) {
+      stream << "IF NOT EXISTS ";
+    }
+    stream << wrap_in_quotes(make_sequence_name(_stmt.table, _col)) << ";";
+    return stream.str();
+  };
+
+  return internal::strings::join(" ", internal::collect::vector(
+                                          _stmt.columns | filter(is_auto_incr) |
+                                          transform(create_one_sequence))) +
+         " ";
+}
+
+std::string create_enums(const dynamic::CreateTable& _stmt) noexcept {
+  using namespace std::ranges::views;
 
   std::stringstream stream;
 
@@ -313,6 +352,18 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
     }
   }
 
+  return stream.str();
+}
+
+std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
+  using namespace std::ranges::views;
+
+  std::stringstream stream;
+
+  stream << create_enums(_stmt);
+
+  stream << create_sequences_for_auto_incr(_stmt);
+
   stream << "CREATE TABLE ";
 
   if (_stmt.if_not_exists) {
@@ -326,7 +377,9 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
 
   stream << "(";
   stream << internal::strings::join(
-      ", ", internal::collect::vector(_stmt.columns | transform(col_to_sql)));
+      ", ", internal::collect::vector(
+                _stmt.columns | transform(std::bind_front(
+                                    column_to_sql_definition, _stmt.table))));
 
   const auto primary_keys = get_primary_keys(_stmt);
 
@@ -671,16 +724,23 @@ std::string operation_to_sql(const dynamic::Operation& _stmt) noexcept {
   });
 }
 
-std::string properties_to_sql(const dynamic::types::Properties& _p) noexcept {
+std::string properties_to_sql(const dynamic::Table& _table,
+                              const dynamic::Column& _col) noexcept {
+  const auto properties =
+      _col.type.visit([](const auto& _t) { return _t.properties; });
+
   return [&]() -> std::string {
-    return std::string(_p.nullable ? "" : " NOT NULL") +
-           std::string(_p.auto_incr ? " GENERATED ALWAYS" : "") +
-           std::string(_p.unique ? " UNIQUE" : "");
+    return std::string(properties.nullable ? "" : " NOT NULL") +
+           std::string(properties.auto_incr
+                           ? " DEFAULT nextval('" +
+                                 make_sequence_name(_table, _col) + "')"
+                           : "") +
+           std::string(properties.unique ? " UNIQUE" : "");
   }() + [&]() -> std::string {
-    if (!_p.foreign_key_reference) {
+    if (!properties.foreign_key_reference) {
       return "";
     }
-    const auto& ref = *_p.foreign_key_reference;
+    const auto& ref = *properties.foreign_key_reference;
     return " REFERENCES " + wrap_in_quotes(ref.table) + "(" +
            wrap_in_quotes(ref.column) + ")";
   }();
