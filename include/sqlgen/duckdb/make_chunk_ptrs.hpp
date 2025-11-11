@@ -8,8 +8,9 @@
 #include <type_traits>
 #include <utility>
 
-#include "./parsing/Parser.hpp"
+#include "../Ref.hpp"
 #include "ColumnData.hpp"
+#include "DuckDBResult.hpp"
 #include "chunk_ptrs_t.hpp"
 #include "get_duckdb_type.hpp"
 
@@ -21,7 +22,7 @@ struct MakeChunkPtrs;
 template <class... Ts>
 struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts>...>> {
   Result<rfl::Tuple<ColumnData<Ts>...>> operator()(
-      const Ref<duckdb_result>& _res, duckdb_data_chunk _chunk) {
+      const Ref<DuckDBResult>& _res, duckdb_data_chunk _chunk) {
     try {
       return [&]<int... _is>(std::integer_sequence<int, _is...>) {
         return rfl::Tuple<ColumnData<Ts>...>(
@@ -33,13 +34,13 @@ struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts>...>> {
   }
 
   template <class T, int _i>
-  static auto make_column_data(const Ref<duckdb_result>& _res,
+  static auto make_column_data(const Ref<DuckDBResult>& _res,
                                duckdb_data_chunk _chunk) {
-    if (duckdb_column_type(_res.get(), _i) != get_duckdb_type<T>()) {
+    if (duckdb_column_type(&_res->res(), _i) != get_duckdb_type<T>()) {
       throw std::runtime_error(
           "Wrong type in field " + std::to_string(_i) + ". Expected " +
           rfl::enum_to_string(get_duckdb_type<T>()) + ", got " +
-          rfl::enum_to_string(duckdb_column_type(_res.get(), _i)) + ".");
+          rfl::enum_to_string(duckdb_column_type(&_res->res(), _i)) + ".");
     }
     auto vec = duckdb_data_chunk_get_vector(_chunk, _i);
     return ColumnData<T>{.vec = vec,
@@ -50,7 +51,7 @@ struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts>...>> {
 
 template <class T>
 struct MakeChunkPtrs {
-  auto operator()(const Ref<duckdb_result>& _res, duckdb_data_chunk _chunk) {
+  auto operator()(const Ref<DuckDBResult>& _res, duckdb_data_chunk _chunk) {
     return MakeChunkPtrs<chunk_ptrs_t<T>>{}(_res, _chunk);
   }
 };
