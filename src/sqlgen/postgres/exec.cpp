@@ -9,7 +9,7 @@ namespace sqlgen::postgres {
 
 Result<Ref<PGresult>> exec(const Ref<PGconn>& _conn,
                            const std::string& _sql) noexcept {
-  const auto res = PQexec(_conn.get(), _sql.c_str());
+  auto res = PQexec(_conn.get(), _sql.c_str());
 
   const auto status = PQresultStatus(res);
 
@@ -18,6 +18,9 @@ Result<Ref<PGresult>> exec(const Ref<PGconn>& _conn,
     const auto err =
         error("Executing '" + _sql + "' failed: " + PQresultErrorMessage(res));
     PQclear(res);
+    while ((res = PQgetResult(_conn.get())) != nullptr)
+        PQclear(res);
+
     return err;
   }
 
