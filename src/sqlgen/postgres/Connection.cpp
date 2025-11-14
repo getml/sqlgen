@@ -33,8 +33,11 @@ Result<Nothing> Connection::end_write() {
   }
   const auto res = PQgetResult(conn_.get());
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    return error(PQerrorMessage(conn_.get()));
+    const auto err = error(PQerrorMessage(conn_.get()));
+    PQclear(res);
+    return err;
   }
+  PQclear(res);
   return Nothing{};
 }
 
@@ -68,6 +71,7 @@ Result<Nothing> Connection::insert_impl(
     const auto& d = _data[i];
 
     if (d.size() != current_row.size()) {
+      execute("ROLLBACK;");
       execute("DEALLOCATE " + name + ";");
       return error("Error in entry " + std::to_string(i) + ": Expected " +
                    std::to_string(current_row.size()) + " entries, got " +
@@ -88,13 +92,15 @@ Result<Nothing> Connection::insert_impl(
     );
 
     const auto status = PQresultStatus(res);
-
     if (status != PGRES_COMMAND_OK) {
+      PQclear(res);
       const auto err = error(std::string("Executing INSERT failed: ") +
                              PQresultErrorMessage(res));
+      execute("ROLLBACK;");
       execute("DEALLOCATE " + name + ";");
       return err;
     }
+    PQclear(res);
   }
 
   return execute("DEALLOCATE " + name + ";");
@@ -170,6 +176,9 @@ Result<Nothing> Connection::write_impl(
                                        static_cast<int>(buffer.size()));
     if (success != 1) {
       PQputCopyEnd(conn_.get(), NULL);
+      while (auto res = PQgetResult(conn_.get()))
+        PQclear(res);
+
       return error("Error occurred while writing data to postgres.");
     }
   }
