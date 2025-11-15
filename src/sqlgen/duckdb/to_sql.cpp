@@ -327,10 +327,9 @@ std::string create_sequences_for_auto_incr(
     return stream.str();
   };
 
-  return internal::strings::join(" ", internal::collect::vector(
-                                          _stmt.columns | filter(is_auto_incr) |
-                                          transform(create_one_sequence))) +
-         " ";
+  return internal::strings::join(
+      " ", internal::collect::vector(_stmt.columns | filter(is_auto_incr) |
+                                     transform(create_one_sequence)));
 }
 
 std::string create_enums(const dynamic::CreateTable& _stmt) noexcept {

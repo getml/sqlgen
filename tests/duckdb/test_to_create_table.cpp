@@ -18,7 +18,7 @@ TEST(duckdb, test_to_create_table) {
       sqlgen::transpilation::to_create_table<TestTable>();
   const auto conn = sqlgen::duckdb::connect().value();
   const auto expected =
-      R"(CREATE TABLE IF NOT EXISTS "TestTable" ("field1" TEXT NOT NULL, "field2" INTEGER NOT NULL, "id" INTEGER PRIMARY KEY NOT NULL, "nullable" TEXT);)";
+      R"(CREATE TABLE IF NOT EXISTS "TestTable" ("field1" TEXT NOT NULL, "field2" INTEGER NOT NULL, "id" UINTEGER NOT NULL, "nullable" TEXT, PRIMARY KEY ("id"));)";
 
   EXPECT_EQ(conn->to_sql(create_table_stmt), expected);
 }

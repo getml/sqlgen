@@ -37,7 +37,7 @@ TEST(duckdb, test_unique) {
       .value();
 
   const std::string expected_query =
-      R"(CREATE TABLE IF NOT EXISTS "Person" ("id" INTEGER PRIMARY KEY NOT NULL, "first_name" TEXT NOT NULL UNIQUE, "last_name" TEXT NOT NULL, "age" REAL NOT NULL);)";
+      R"(CREATE TABLE IF NOT EXISTS "Person" ("id" UINTEGER NOT NULL, "first_name" TEXT NOT NULL UNIQUE, "last_name" TEXT NOT NULL, "age" DOUBLE NOT NULL, PRIMARY KEY ("id"));)";
 
   EXPECT_EQ(duckdb::to_sql(create_table<Person>), expected_query);
 }

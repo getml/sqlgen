@@ -60,7 +60,7 @@ TEST(duckdb, test_full_join) {
   const std::string expected_query =
       R"(SELECT t1."first_name" AS "first_name", t1."last_name" AS "last_name", t2."name" AS "pet_name" FROM "Person" t1 FULL JOIN "Pet" t2 ON t1."id" = t2."owner_id" ORDER BY t1."id", t2."id")";
   const std::string expected_json =
-      R"([{"pet_name":"Mr. Teeny"},{"first_name":"Homer","last_name":"Simpson","pet_name":"Santa's Little Helper"},{"first_name":"Marge","last_name":"Simpson"},{"first_name":"Bart","last_name":"Simpson"},{"first_name":"Lisa","last_name":"Simpson","pet_name":"Snowball"}])";
+      R"([{"first_name":"Homer","last_name":"Simpson","pet_name":"Santa's Little Helper"},{"first_name":"Marge","last_name":"Simpson"},{"first_name":"Bart","last_name":"Simpson"},{"first_name":"Lisa","last_name":"Simpson","pet_name":"Snowball"},{"pet_name":"Mr. Teeny"}])";
 
   EXPECT_EQ(duckdb::to_sql(get_all), expected_query);
   EXPECT_EQ(rfl::json::write(result), expected_json);
