@@ -281,10 +281,7 @@ std::string create_index_to_sql(const dynamic::CreateIndex& _stmt) noexcept {
 
   stream << "ON ";
 
-  if (_stmt.table.schema) {
-    stream << "\"" << *_stmt.table.schema << "\".";
-  }
-  stream << "\"" << _stmt.table.name << "\"";
+  stream << table_or_query_to_sql(_stmt.table);
 
   stream << "(";
   stream << internal::strings::join(
@@ -369,10 +366,7 @@ std::string create_table_to_sql(const dynamic::CreateTable& _stmt) noexcept {
     stream << "IF NOT EXISTS ";
   }
 
-  if (_stmt.table.schema) {
-    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
-  }
-  stream << wrap_in_quotes(_stmt.table.name) << " ";
+  stream << table_or_query_to_sql(_stmt.table);
 
   stream << "(";
   stream << internal::strings::join(
@@ -802,6 +796,9 @@ std::string table_or_query_to_sql(
   return _table_or_query.visit([](const auto& _t) -> std::string {
     using Type = std::remove_cvref_t<decltype(_t)>;
     if constexpr (std::is_same_v<Type, dynamic::Table>) {
+      if (_t.schema) {
+        return wrap_in_quotes(*_t.schema) + "." + wrap_in_quotes(_t.name);
+      }
       return wrap_in_quotes(_t.name);
     } else {
       return "(" + select_from_to_sql(*_t) + ")";
@@ -926,10 +923,7 @@ std::string update_to_sql(const dynamic::Update& _stmt) noexcept {
 
   stream << "UPDATE ";
 
-  if (_stmt.table.schema) {
-    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
-  }
-  stream << wrap_in_quotes(_stmt.table.name);
+  stream << table_or_query_to_sql(_stmt.table);
 
   stream << " SET ";
 
@@ -950,10 +944,7 @@ std::string write_to_sql(const dynamic::Write& _stmt) noexcept {
 
   std::stringstream stream;
   stream << "INSERT INTO ";
-  if (_stmt.table.schema) {
-    stream << wrap_in_quotes(*_stmt.table.schema) << ".";
-  }
-  stream << wrap_in_quotes(_stmt.table.name);
+  stream << table_or_query_to_sql(_stmt.table);
 
   stream << " BY NAME ( SELECT ";
   stream << internal::strings::join(
