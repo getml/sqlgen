@@ -24,8 +24,9 @@ TEST(duckdb, test_to_insert_or_replace) {
       sqlgen::transpilation::to_insert_or_write<TestTable,
                                                 sqlgen::dynamic::Insert>(true);
   const auto conn = sqlgen::duckdb::connect().value();
+
   const auto expected =
-      R"(INSERT INTO "TestTable" ("field1", "field2", "field3", "id", "nullable") VALUES (?, ?, ?, ?, ?) ON CONFLICT (field3, id) DO UPDATE SET field1=excluded.field1, field2=excluded.field2, field3=excluded.field3, id=excluded.id, nullable=excluded.nullable;)";
+      R"(INSERT OR REPLACE INTO "TestTable" BY NAME ( SELECT "field1" AS "field1", "field2" AS "field2", "field3" AS "field3", "id" AS "id", "nullable" AS "nullable" FROM sqlgen_appended_data);)";
 
   EXPECT_EQ(conn->to_sql(insert_stmt), expected);
 }

@@ -20,7 +20,7 @@ TEST(duckdb, test_to_insert) {
                                                 sqlgen::dynamic::Insert>();
   const auto conn = sqlgen::duckdb::connect().value();
   const auto expected =
-      R"(INSERT INTO "TestTable" ("field1", "field2", "id", "nullable") VALUES (?, ?, ?, ?);)";
+      R"(INSERT INTO "TestTable" BY NAME ( SELECT "field1" AS "field1", "field2" AS "field2", "id" AS "id", "nullable" AS "nullable" FROM sqlgen_appended_data);)";
 
   EXPECT_EQ(conn->to_sql(insert_stmt), expected);
 }
