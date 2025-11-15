@@ -22,7 +22,8 @@ template <class T, class... FieldTs, class... Ts, class... ColNames>
 struct FromChunkPtrs<T, rfl::NamedTuple<FieldTs...>,
                      rfl::Tuple<ColumnData<Ts, ColNames>...>> {
   Result<T> operator()(
-      const rfl::Tuple<ColumnData<Ts, ColNames>...>& _chunk_ptrs, idx_t _i) {
+      const rfl::Tuple<ColumnData<Ts, ColNames>...>& _chunk_ptrs,
+      idx_t _i) noexcept {
     return [&]<int... _is>(std::integer_sequence<int, _is...>) -> Result<T> {
       try {
         return T{duckdb::parsing::Parser<typename FieldTs::Type>::read(

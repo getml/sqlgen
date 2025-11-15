@@ -75,14 +75,17 @@ class Iterator {
             return Ref<std::vector<Result<T>>>::make();
           }
           const idx_t row_count = duckdb_data_chunk_get_size(chunk);
-          return make_chunk_ptrs<T>(_res, chunk)
-              .transform([&](auto&& _chunk_ptrs) {
-                auto batch = Ref<std::vector<Result<T>>>::make();
-                for (idx_t i = 0; i < row_count; ++i) {
-                  batch->emplace_back(from_chunk_ptrs<T>(_chunk_ptrs, i));
-                }
-                return batch;
-              });
+          auto res =
+              make_chunk_ptrs<T>(_res, chunk)
+                  .transform([&](auto&& _chunk_ptrs) {
+                    auto batch = Ref<std::vector<Result<T>>>::make();
+                    for (idx_t i = 0; i < row_count; ++i) {
+                      batch->emplace_back(from_chunk_ptrs<T>(_chunk_ptrs, i));
+                    }
+                    return batch;
+                  });
+          duckdb_destroy_data_chunk(&chunk);
+          return res;
         })
         .or_else([](auto _err) {
           return Ref<std::vector<Result<T>>>::make(
