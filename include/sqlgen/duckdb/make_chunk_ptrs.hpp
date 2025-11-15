@@ -19,21 +19,21 @@ namespace sqlgen::duckdb {
 template <class T>
 struct MakeChunkPtrs;
 
-template <class... Ts>
-struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts>...>> {
-  Result<rfl::Tuple<ColumnData<Ts>...>> operator()(
+template <class... Ts, class... ColNames>
+struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts, ColNames>...>> {
+  Result<rfl::Tuple<ColumnData<Ts, ColNames>...>> operator()(
       const Ref<DuckDBResult>& _res, duckdb_data_chunk _chunk) {
     try {
       return [&]<int... _is>(std::integer_sequence<int, _is...>) {
-        return rfl::Tuple<ColumnData<Ts>...>(
-            make_column_data<Ts, _is>(_res, _chunk)...);
+        return rfl::Tuple<ColumnData<Ts, ColNames>...>(
+            make_column_data<Ts, ColNames, _is>(_res, _chunk)...);
       }(std::make_integer_sequence<int, sizeof...(Ts)>());
     } catch (const std::exception& e) {
       return error(e.what());
     }
   }
 
-  template <class T, int _i>
+  template <class T, class ColName, int _i>
   static auto make_column_data(const Ref<DuckDBResult>& _res,
                                duckdb_data_chunk _chunk) {
     if (duckdb_column_type(&_res->res(), _i) != get_duckdb_type<T>()) {
@@ -43,9 +43,10 @@ struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts>...>> {
           rfl::enum_to_string(duckdb_column_type(&_res->res(), _i)) + ".");
     }
     auto vec = duckdb_data_chunk_get_vector(_chunk, _i);
-    return ColumnData<T>{.vec = vec,
-                         .data = static_cast<T*>(duckdb_vector_get_data(vec)),
-                         .validity = duckdb_vector_get_validity(vec)};
+    return ColumnData<T, ColName>{
+        .vec = vec,
+        .data = static_cast<T*>(duckdb_vector_get_data(vec)),
+        .validity = duckdb_vector_get_validity(vec)};
   }
 };
 
