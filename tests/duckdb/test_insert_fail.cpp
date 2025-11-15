@@ -34,9 +34,7 @@ TEST(duckdb, test_insert_fail) {
                         .and_then(drop<Person> | if_exists)
                         .and_then(write(people1.at(0)));
 
-  const auto res = conn.and_then(begin_transaction)
-                       .and_then(insert(people1.at(0)))
-                       .and_then(commit);
+  const auto res = conn.and_then(insert(people1.at(0)));
 
   // Should fail - duplicate key violation.
   EXPECT_FALSE(res && true);

@@ -48,8 +48,8 @@ TEST(duckdb, test_foreign_key) {
                           .and_then(create_table<Relationship>)
                           .and_then(insert(std::ref(people1)))
                           .and_then(insert(std::ref(relationships)))
-                          .and_then(drop<Person> | if_exists)
                           .and_then(drop<Relationship> | if_exists)
+                          .and_then(drop<Person> | if_exists)
                           .and_then(commit)
                           .value();
 }
