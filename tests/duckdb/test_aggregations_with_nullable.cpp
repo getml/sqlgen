@@ -29,8 +29,8 @@ TEST(duckdb, test_aggregations_with_nullable) {
   using namespace sqlgen::literals;
 
   struct Children {
-    int num_children;
-    int num_last_names;
+    int64_t num_children;
+    uint64_t num_last_names;
     std::optional<double> avg_age;
     std::optional<double> max_age;
     std::optional<double> min_age;

@@ -14,8 +14,9 @@ struct ChunkPtrsType;
 
 template <class... FieldTs>
 struct ChunkPtrsType<rfl::NamedTuple<FieldTs...>> {
-  using Type = rfl::Tuple<ColumnData<typename duckdb::parsing::Parser<
-      typename FieldTs::Type>::ResultingType>...>;
+  using Type = rfl::Tuple<ColumnData<
+      typename duckdb::parsing::Parser<typename FieldTs::Type>::ResultingType,
+      typename FieldTs::Name>...>;
 };
 
 template <class T>
