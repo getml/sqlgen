@@ -48,8 +48,14 @@ duckdb_type get_duckdb_type() {
   } else if constexpr (std::is_same_v<Type, double>) {
     return DUCKDB_TYPE_DOUBLE;
 
+  } else if constexpr (std::is_same_v<Type, duckdb_date>) {
+    return DUCKDB_TYPE_DATE;
+
   } else if constexpr (std::is_same_v<Type, duckdb_string_t>) {
     return DUCKDB_TYPE_VARCHAR;
+
+  } else if constexpr (std::is_same_v<Type, duckdb_timestamp>) {
+    return DUCKDB_TYPE_TIMESTAMP;
 
   } else {
     static_assert(rfl::always_false_v<T>, "Unsupported type.");
