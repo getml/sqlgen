@@ -15,7 +15,11 @@ template <class T, class U>
 Ref<std::vector<T>> cast_as_vector(const size_t _size, U* _ptr) {
   auto vec = Ref<std::vector<T>>::make(_size);
   for (size_t i = 0; i < _size; ++i) {
-    (*vec)[i] = static_cast<T>(_ptr[i]);
+    if constexpr (std::is_same_v<U, duckdb_hugeint>) {
+      (*vec)[i] = static_cast<T>(duckdb_hugeint_to_double(_ptr[i]));
+    } else {
+      (*vec)[i] = static_cast<T>(_ptr[i]);
+    }
   }
   return vec;
 }
@@ -57,6 +61,9 @@ Result<Ref<std::vector<T>>> cast_duckdb_type(const duckdb_type _type,
 
     } else if (_type == DUCKDB_TYPE_DOUBLE) {
       return cast_as_vector<T>(_size, static_cast<double*>(_raw_ptr));
+
+    } else if (_type == DUCKDB_TYPE_HUGEINT) {
+      return cast_as_vector<T>(_size, static_cast<duckdb_hugeint*>(_raw_ptr));
 
     } else {
       return error("Could not cast");
