@@ -64,6 +64,14 @@ class DuckDBAppender {
 
   duckdb_appender& appender() { return appender_; }
 
+  Result<Nothing> close() {
+    const auto state = duckdb_appender_close(appender_);
+    if (state == DuckDBError) {
+      return error(duckdb_appender_error(appender_));
+    }
+    return Nothing{};
+  }
+
  private:
   bool destroy_;
 

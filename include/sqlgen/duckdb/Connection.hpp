@@ -64,8 +64,9 @@ class Connection {
         .and_then([&](const auto &_types) {
           return DuckDBAppender::make(sql, conn_, columns, _types);
         })
-        .and_then([&](const auto &_appender) {
-          return write_to_appender(_begin, _end, _appender->appender());
+        .and_then([&](auto _appender) {
+          return write_to_appender(_begin, _end, _appender->appender())
+              .and_then([&](const auto &) { return _appender->close(); });
         });
   }
 
@@ -155,7 +156,10 @@ class Connection {
       if (!res) {
         return res;
       }
-      duckdb_appender_end_row(_appender);
+      const auto state = duckdb_appender_end_row(_appender);
+      if (state == DuckDBError) {
+        return error(duckdb_appender_error(_appender));
+      }
     }
     return Nothing{};
   }
@@ -165,16 +169,17 @@ class Connection {
                             duckdb_appender _appender) noexcept {
     using ViewType =
         internal::remove_auto_incr_primary_t<rfl::view_t<const StructT>>;
-    Result<Nothing> res = Nothing{};
-    ViewType(rfl::to_view(_struct)).apply([&](const auto &_field) {
-      using ValueType = std::remove_cvref_t<std::remove_pointer_t<
-          typename std::remove_cvref_t<decltype(_field)>::Type>>;
-      if (res) {
-        res = duckdb::parsing::Parser<ValueType>::write(*_field.value(),
-                                                        _appender);
-      }
-    });
-    return res;
+    try {
+      ViewType(rfl::to_view(_struct)).apply([&](const auto &_field) {
+        using ValueType = std::remove_cvref_t<std::remove_pointer_t<
+            typename std::remove_cvref_t<decltype(_field)>::Type>>;
+        duckdb::parsing::Parser<ValueType>::write(*_field.value(), _appender)
+            .value();
+      });
+    } catch (const std::exception &e) {
+      return error(e.what());
+    }
+    return Nothing{};
   }
 
  private:
