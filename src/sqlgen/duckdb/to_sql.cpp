@@ -335,17 +335,15 @@ std::string create_enums(const dynamic::CreateTable& _stmt) noexcept {
   std::stringstream stream;
 
   for (const auto& [enum_name, enum_values] : get_enum_types(_stmt)) {
+    stream << "CREATE TYPE ";
     if (_stmt.if_not_exists) {
-      stream << "DO $$ BEGIN ";
+      stream << "IF NOT EXISTS ";
     }
-    stream << "CREATE TYPE " << enum_name << " AS ENUM ("
+    stream << enum_name << " AS ENUM ("
            << internal::strings::join(
                   ", ", internal::collect::vector(
                             enum_values | transform(wrap_in_single_quotes)))
            << "); ";
-    if (_stmt.if_not_exists) {
-      stream << "EXCEPTION WHEN duplicate_object THEN NULL; END $$;";
-    }
   }
 
   return stream.str();
