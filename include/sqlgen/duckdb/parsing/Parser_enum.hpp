@@ -18,10 +18,11 @@ template <class EnumT>
 struct Parser<EnumT> {
   using ResultingType = uint8_t;
 
+  static_assert(enchantum::ScopedEnum<EnumT>, "The enum must be scoped.");
+  static constexpr auto arr = rfl::get_enumerator_array<EnumT>();
+  static_assert(arr.size() < 255, "Enum size cannot exceed 255.");
+
   static Result<EnumT> read(const ResultingType* _r) noexcept {
-    static_assert(enchantum::ScopedEnum<EnumT>, "The enum must be scoped.");
-    constexpr auto arr = rfl::get_enumerator_array<EnumT>();
-    static_assert(arr.size() < 255, "Enum size cannot exceed 255.");
     if (!_r) {
       return error("Enum value cannot be NULL.");
     }

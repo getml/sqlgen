@@ -5,6 +5,7 @@
 
 #include <rfl.hpp>
 #include <rfl/enums.hpp>
+#include <rfl/type_name_t.hpp>
 #include <type_traits>
 #include <utility>
 
@@ -12,8 +13,8 @@
 #include "ColumnData.hpp"
 #include "DuckDBResult.hpp"
 #include "cast_duckdb_type.hpp"
+#include "check_duckdb_type.hpp"
 #include "chunk_ptrs_t.hpp"
-#include "get_duckdb_type.hpp"
 
 namespace sqlgen::duckdb {
 
@@ -41,7 +42,7 @@ struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts, ColNames>...>> {
 
     auto vec = duckdb_data_chunk_get_vector(_chunk, _i);
 
-    if (actual_duckdb_type == get_duckdb_type<T>()) {
+    if (check_duckdb_type<T>(actual_duckdb_type)) {
       return ColumnData<T, ColName>{
           .vec = vec,
           .data = static_cast<T*>(duckdb_vector_get_data(vec)),
@@ -49,10 +50,10 @@ struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts, ColNames>...>> {
     }
 
     if constexpr (std::is_same_v<T, bool>) {
-      throw std::runtime_error(
-          "Wrong type in field '" + ColName().str() + "'. Expected " +
-          rfl::enum_to_string(get_duckdb_type<T>()) + ", got " +
-          rfl::enum_to_string(actual_duckdb_type) + ".");
+      throw std::runtime_error("Wrong type in field '" + ColName().str() +
+                               "'. " + rfl::enum_to_string(actual_duckdb_type) +
+                               " could not be cast to " +
+                               rfl::type_name_t<T>().str() + ".");
 
     } else {
       const auto ptr_res = cast_duckdb_type<T>(
@@ -61,9 +62,9 @@ struct MakeChunkPtrs<rfl::Tuple<ColumnData<Ts, ColNames>...>> {
 
       if (!ptr_res) {
         throw std::runtime_error(
-            "Wrong type in field '" + ColName().str() + "'. Expected " +
-            rfl::enum_to_string(get_duckdb_type<T>()) + ", got " +
-            rfl::enum_to_string(actual_duckdb_type) + ".");
+            "Wrong type in field '" + ColName().str() + "'. " +
+            rfl::enum_to_string(actual_duckdb_type) + " could not be cast to " +
+            rfl::type_name_t<T>().str() + ".");
       }
 
       return ColumnData<T, ColName>{.vec = vec,

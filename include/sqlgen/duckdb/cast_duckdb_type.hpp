@@ -63,7 +63,6 @@ Result<Ref<std::vector<T>>> cast_duckdb_type(const duckdb_type _type,
         return cast_as_vector<T>(_size, static_cast<int8_t*>(_raw_ptr));
 
       case DUCKDB_TYPE_UTINYINT:
-      case DUCKDB_TYPE_ENUM:
         return cast_as_vector<T>(_size, static_cast<uint8_t*>(_raw_ptr));
 
       case DUCKDB_TYPE_SMALLINT:
