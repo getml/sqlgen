@@ -5,6 +5,7 @@
 
 #include <rfl.hpp>
 #include <rfl/NamedTuple.hpp>
+#include <rfl/from_named_tuple.hpp>
 #include <type_traits>
 #include <utility>
 
@@ -26,11 +27,12 @@ struct FromChunkPtrs<T, rfl::NamedTuple<FieldTs...>,
       idx_t _i) noexcept {
     return [&]<int... _is>(std::integer_sequence<int, _is...>) -> Result<T> {
       try {
-        return T{duckdb::parsing::Parser<typename FieldTs::Type>::read(
-                     rfl::get<_is>(_chunk_ptrs).is_not_null(_i)
-                         ? rfl::get<_is>(_chunk_ptrs).data + _i
-                         : nullptr)
-                     .value()...};
+        return rfl::from_named_tuple<T>(rfl::named_tuple_t<T>(
+            duckdb::parsing::Parser<typename FieldTs::Type>::read(
+                rfl::get<_is>(_chunk_ptrs).is_not_null(_i)
+                    ? rfl::get<_is>(_chunk_ptrs).data + _i
+                    : nullptr)
+                .value()...));
       } catch (const std::exception& e) {
         return error(e.what());
       }
