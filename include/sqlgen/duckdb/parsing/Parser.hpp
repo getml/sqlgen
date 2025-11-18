@@ -5,6 +5,7 @@
 #include "Parser_date.hpp"
 #include "Parser_default.hpp"
 #include "Parser_enum.hpp"
+#include "Parser_json.hpp"
 #include "Parser_optional.hpp"
 #include "Parser_reflection_type.hpp"
 #include "Parser_smart_ptr.hpp"

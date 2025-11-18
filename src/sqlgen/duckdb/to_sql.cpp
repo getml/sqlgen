@@ -890,7 +890,7 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
       return "VARCHAR(" + std::to_string(_t.length) + ")";
 
     } else if constexpr (std::is_same_v<T, dynamic::types::JSON>) {
-      return "JSONB";
+      return "JSON";
 
     } else if constexpr (std::is_same_v<T, dynamic::types::Date>) {
       return "DATE";
