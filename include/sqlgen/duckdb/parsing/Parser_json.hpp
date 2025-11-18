@@ -25,7 +25,12 @@ struct Parser<JSON<T>> {
 
   static Result<Nothing> write(const JSON<T>& _t,
                                duckdb_appender _appender) noexcept {
-    return Parser<std::string>::write(rfl::json::write(_t.value()), _appender);
+    try {
+      return Parser<std::string>::write(rfl::json::write(_t.value()),
+                                        _appender);
+    } catch (const std::exception& e) {
+      return error(e.what());
+    }
   }
 };
 
