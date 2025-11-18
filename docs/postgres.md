@@ -22,7 +22,7 @@ const auto creds = sqlgen::postgres::Credentials{
 const auto conn = sqlgen::postgres::connect(creds);
 ```
 
-The connection is wrapped in a `sqlgen::Result<Ref<Connection>>` for error handling:
+The type of `conn` is `sqlgen::Result<sqlgen::Ref<sqlgen::postgres::Connection>>`, which is useful for error handling:
 
 ```cpp
 // Handle connection errors

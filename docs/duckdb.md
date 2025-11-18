@@ -1,33 +1,26 @@
-# `sqlgen::mysql`
+∂# `sqlgen::duckdb`
 
-The `sqlgen::mysql` module provides a type-safe and efficient interface for interacting with MySQL and MariaDB databases. It implements the core database operations through a connection-based API with support for prepared statements, transactions, and efficient data iteration.
+The `sqlgen::duckdb` module provides a type-safe and efficient interface for interacting with DuckDB databases. It implements the core database operations through a connection-based API with support for prepared statements, transactions, and efficient data iteration.
 
 ## Usage
 
 ### Basic Connection
 
-Create a connection to a MySQL/MariaDB database using credentials:
+Create a connection to a DuckDB database:
 
 ```cpp
-// Create credentials for the database connection
-const auto creds = sqlgen::mysql::Credentials{
-                        .host = "localhost",
-                        .user = "myuser",
-                        .password = "mypassword",
-                        .dbname = "mydatabase",
-                        .port = 3306,  // Optional, defaults to 3306
-                        .unix_socket = "/var/run/mysqld/mysqld.sock"  // Optional, defaults to "/var/run/mysqld/mysqld.sock"
-                    };
+// Connect to an in-memory database
+const auto conn = sqlgen::duckdb::connect();
 
-// Connect to the database
-const auto conn = sqlgen::mysql::connect(creds);
+// Connect to a file-based database
+const auto conn = sqlgen::duckdb::connect("database.db");
 ```
 
-The type of `conn` is `sqlgen::Result<sqlgen::Ref<sqlgen::mysql::Connection>>`, which is useful for error handling:
+The type of `conn` is `sqlgen::Result<sqlgen::Ref<sqlgen::duckdb::Connection>>`, which is useful for error handling:
 
 ```cpp
 // Handle connection errors
-const auto conn = sqlgen::mysql::connect(creds);
+const auto conn = sqlgen::duckdb::connect("database.db");
 if (!conn) {
     // Handle error...
     return;
@@ -107,70 +100,43 @@ const auto result = begin_transaction(conn)
                        .value();
 ```
 
-### Advanced Queries
+### Update Operations
 
-Use complex queries with joins and projections:
+Update data in a table:
 
 ```cpp
 using namespace sqlgen;
 using namespace sqlgen::literals;
 
-// Select specific columns with aliases
-struct FirstName {
-    std::string first_name;
-};
+// Update multiple columns
+const auto query = update<Person>("first_name"_c.set("last_name"_c), "age"_c.set(100)) |
+                  where("first_name"_c == "Hugo");
 
-const auto names = select_from<Person>("first_name"_c) | 
-                  order_by("id"_c) |
-                  to<std::vector<FirstName>>;
-
-// Join operations
-const auto joined_data = select_from<Person, "t1">(
-    "id"_t1 | as<"id">, 
-    "first_name"_t1 | as<"first_name">,
-    "last_name"_t2 | as<"last_name">, 
-    "age"_t2 | as<"age">) |
-    inner_join<Person, "t2">("id"_t1 == "id"_t2) |
-    order_by("id"_t1) |
-    to<std::vector<Person>>;
-```
-
-### Connection Pools
-
-Use connection pools for efficient resource management:
-
-```cpp
-const auto pool_config = sqlgen::ConnectionPoolConfig{.size = 2};
-
-const auto pool = sqlgen::make_connection_pool<sqlgen::mysql::Connection>(
-    pool_config, credentials);
-
-// Use the pool in a session
-const auto result = session(pool)
-                       .and_then(write(std::ref(people)))
-                       .and_then(sqlgen::read<std::vector<Person>>)
-                       .value();
+query(conn).value();
 ```
 
 ## Notes
 
-- The module provides a type-safe interface for MySQL/MariaDB operations
+- The module provides a type-safe interface for DuckDB operations
 - All operations return `sqlgen::Result<T>` for error handling
 - Prepared statements are used for efficient query execution
 - The iterator interface supports batch processing of results
-- SQL generation adapts to MySQL's dialect
+- SQL generation adapts to DuckDB's dialect
 - The module supports:
-  - Connection management with credentials (host, port, database name, unix socket)
+  - In-memory and file-based databases
   - Transactions (begin, commit, rollback)
-  - Prepared statements for efficient execution
   - Efficient batch operations
   - Type-safe SQL generation
   - Error handling through `Result<T>`
   - Resource management through `Ref<T>`
-  - Connection pooling for high-performance applications
   - Auto-incrementing primary keys
   - Various data types including VARCHAR, TIMESTAMP, DATE
   - Complex queries with WHERE clauses, ORDER BY, LIMIT, JOINs
   - LIKE and pattern matching operations
   - Mathematical operations and string functions
-
+  - JSON data types
+  - Foreign keys and referential integrity
+  - Unique constraints
+  - Views and materialized views
+  - Indexes
+```
