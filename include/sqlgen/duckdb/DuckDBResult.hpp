@@ -5,11 +5,12 @@
 
 #include <string>
 
+#include "../sqlgen_api.hpp"
 #include "DuckDBConnection.hpp"
 
 namespace sqlgen::duckdb {
 
-class DuckDBResult {
+class SQLGEN_API DuckDBResult {
   using ConnPtr = Ref<DuckDBConnection>;
 
  public:
