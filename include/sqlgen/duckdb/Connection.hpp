@@ -16,6 +16,8 @@
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../Transaction.hpp"
+#include "../dynamic/Operation.hpp"
+#include "../dynamic/SelectFrom.hpp"
 #include "../dynamic/Write.hpp"
 #include "../internal/iterator_t.hpp"
 #include "../internal/remove_auto_incr_primary_t.hpp"
@@ -26,8 +28,6 @@
 #include "DuckDBConnection.hpp"
 #include "DuckDBResult.hpp"
 #include "Iterator.hpp"
-#include "sqlgen/dynamic/Operation.hpp"
-#include "sqlgen/dynamic/SelectFrom.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::duckdb {
