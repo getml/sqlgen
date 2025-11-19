@@ -11,14 +11,16 @@
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../sqlgen_api.hpp"
+#include "PostgresV2Connection.hpp"
+#include "PostgresV2Result.hpp"
 
 namespace sqlgen::postgres {
 
 class SQLGEN_API Iterator {
-  using ConnPtr = Ref<PGconn>;
+  using Conn = PostgresV2Connection;
 
  public:
-  Iterator(const std::string& _sql, const ConnPtr& _conn);
+  Iterator(const std::string& _sql, const Conn& _conn);
 
   Iterator(const Iterator& _other) = delete;
 
@@ -54,7 +56,7 @@ class SQLGEN_API Iterator {
 
   /// The underlying postgres connection. We have this in here to prevent its
   /// destruction for the lifetime of the iterator.
-  ConnPtr conn_;
+  Conn conn_;
 
   /// Whether the end is reached.
   bool end_;
