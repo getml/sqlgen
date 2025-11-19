@@ -4,12 +4,13 @@
 #include <string>
 
 #include "../dynamic/Statement.hpp"
+#include "../sqlgen_api.hpp"
 #include "../transpilation/to_sql.hpp"
 
 namespace sqlgen::duckdb {
 
 /// Transpiles a dynamic general SQL statement to the duckdb dialect.
-std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept;
+SQLGEN_API std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept;
 
 /// Transpiles any  SQL statement to the duckdb dialect.
 template <class T>

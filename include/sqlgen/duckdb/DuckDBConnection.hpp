@@ -8,10 +8,11 @@
 
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../sqlgen_api.hpp"
 
 namespace sqlgen::duckdb {
 
-class DuckDBConnection {
+class SQLGEN_API DuckDBConnection {
  public:
   static Result<Ref<DuckDBConnection>> make(
       const std::optional<std::string>& _fname);

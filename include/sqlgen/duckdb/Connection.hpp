@@ -23,6 +23,7 @@
 #include "../internal/remove_auto_incr_primary_t.hpp"
 #include "../internal/to_container.hpp"
 #include "../is_connection.hpp"
+#include "../sqlgen_api.hpp"
 #include "./parsing/Parser_default.hpp"
 #include "DuckDBAppender.hpp"
 #include "DuckDBConnection.hpp"
@@ -32,7 +33,7 @@
 
 namespace sqlgen::duckdb {
 
-class Connection {
+class SQLGEN_API Connection {
   using ConnPtr = Ref<DuckDBConnection>;
 
  public:
