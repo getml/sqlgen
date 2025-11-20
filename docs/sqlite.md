@@ -16,7 +16,7 @@ const auto conn = sqlgen::sqlite::connect();
 const auto conn = sqlgen::sqlite::connect("database.db");
 ```
 
-The connection is wrapped in a `sqlgen::Result<Ref<Connection>>` for error handling:
+The type of `conn` is `sqlgen::Result<sqlgen::Ref<sqlgen::sqlite::Connection>>`, which is useful for error handling:
 
 ```cpp
 // Handle connection errors

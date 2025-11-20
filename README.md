@@ -31,6 +31,7 @@ The following table lists the databases currently supported by sqlgen and the un
 
 | Database      | Library                                                                  | Version      | License       | Remarks                                              |
 |---------------|--------------------------------------------------------------------------|--------------|---------------| -----------------------------------------------------|
+| DuckDB        | [duckdb](https://github.com/duckdb/duckdb)                               | >= 1.4.1     | MIT           |                                                      |
 | MySQL/MariaDB | [libmariadb](https://github.com/mariadb-corporation/mariadb-connector-c) | >= 3.4.5     | LGPL          |                                                      |
 | PostgreSQL    | [libpq](https://github.com/postgres/postgres)                            | >= 16.4      | PostgreSQL    | Will work for all libpq-compatible databases         |
 | sqlite        | [sqlite](https://sqlite.org/index.html)                                  | >= 3.49.1    | Public Domain |                                                      |

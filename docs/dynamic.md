@@ -45,6 +45,50 @@ struct Parser<boost::uuids::uuid> {
 }  // namespace sqlgen::parsing
 ```
 
+### DuckDB parser specialization
+
+**Important:** If you're using DuckDB, you must also implement a separate parser specialization in the `sqlgen::duckdb::parsing` namespace. This is required for performance reasons, as DuckDB uses its own native types and appender interface.
+
+The DuckDB parser has a different interface than the generic parser:
+
+```cpp
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <sqlgen/duckdb.hpp>
+#include <exception>
+
+namespace sqlgen::duckdb::parsing {
+
+template <>
+struct Parser<boost::uuids::uuid> {
+  using ResultingType = duckdb_string_t;
+
+  static Result<boost::uuids::uuid> read(const ResultingType* _r) noexcept {
+    return Parser<std::string>::read(_r).and_then(
+        [&](const std::string& _str) -> Result<boost::uuids::uuid> {
+          try {
+            return boost::lexical_cast<boost::uuids::uuid>(_str);
+          } catch (const std::exception& e) {
+            return error(e.what());
+          }
+        });
+  }
+
+  static Result<Nothing> write(const boost::uuids::uuid& _u,
+                               duckdb_appender _appender) noexcept {
+    return Parser<std::string>::write(boost::uuids::to_string(_u), _appender);
+  }
+};
+
+}  // namespace sqlgen::duckdb::parsing
+```
+
+Key differences from the generic parser:
+- `read` takes `const ResultingType*` (where `ResultingType = duckdb_string_t`) instead of `const std::optional<std::string>&`
+- `write` takes a `duckdb_appender` parameter and returns `Result<Nothing>` instead of `std::optional<std::string>`
+- No `to_type()` method is required (the generic parser's `to_type()` is used for schema generation)
+
 The second step is to specialize `sqlgen::transpilation::ToValue` for `boost::uuids::uuid` and implement `operator()`:
 
 ```cpp
@@ -157,6 +201,15 @@ static dynamic::Type to_type() noexcept {
 }
 ```
 
+- DuckDB:
+```cpp
+static dynamic::Type to_type() noexcept {
+  return sqlgen::dynamic::types::Dynamic{"TEXT"};
+}
+```
+
+Note: For DuckDB, you must also implement the `sqlgen::duckdb::parsing::Parser` specialization as shown in the DuckDB parser specialization section above.
+
 ## Parser specialization requirements
 
 Specializing `sqlgen::parsing::Parser<T>` requires three methods. These guidelines help ensure correctness and portability:
@@ -200,4 +253,5 @@ Additional best practices:
 - Works with all operations: `create_table`, `insert`, `select`, `update`, `delete`
 - The type name is passed directly to the database; ensure it is valid for the target dialect
 - Keep specializations in the `sqlgen::parsing` namespace
+- **DuckDB users:** You must implement both `sqlgen::parsing::Parser` and `sqlgen::duckdb::parsing::Parser` specializations for your custom type
 
