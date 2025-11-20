@@ -6,6 +6,15 @@
     }
   ],
   "features": {
+    "duckdb": {
+      "description": "Enable DuckDB support",
+      "dependencies": [
+        {
+          "name": "duckdb",
+          "version>=": "1.4.1"
+        }
+      ]
+    },
     "mysql": {
       "description": "Enable MySQL/MariaDB support",
       "dependencies": [

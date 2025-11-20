@@ -15,6 +15,7 @@
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Statement.hpp"
 #include "../dynamic/Write.hpp"
+#include "../internal/iterator_t.hpp"
 #include "../internal/to_container.hpp"
 #include "../internal/write_or_insert.hpp"
 #include "../is_connection.hpp"
