@@ -1,25 +1,42 @@
 #ifndef SQLGEN_TRANSPILATION_TO_UNION_HPP_
 #define SQLGEN_TRANSPILATION_TO_UNION_HPP_
 
-#include <variant>
+#include <rfl.hpp>
+#include <rfl/named_tuple_t.hpp>
 #include <vector>
 
 #include "../Ref.hpp"
 #include "../dynamic/SelectFrom.hpp"
 #include "../dynamic/Union.hpp"
-#include "../union.hpp"
-#include "to_table_or_query.hpp"
+#include "table_tuple_t.hpp"
+#include "to_select_from.hpp"
+#include "value_t.hpp"
 
 namespace sqlgen::transpilation {
 
-template <class... Selects>
-dynamic::Union to_union(const Union<Selects...>& _union) {
-    std::vector<Ref<dynamic::SelectFrom>> selects;
-    rfl::for_each(_union.selects_, [&](const auto& _select) {
-        const auto s = to_table_or_query(_select);
-        selects.push_back(std::get<Ref<dynamic::SelectFrom>>(s));
-    });
-    return dynamic::Union{ .selects_ = std::move(selects) };
+template <class ContainerType, class... Selects>
+dynamic::Union to_union(const rfl::Tuple<Selects...>& _selects) noexcept {
+  using ValueType = value_t<ContainerType>;
+  using NamedTupleType = rfl::named_tuple_t<ValueType>;
+
+  const auto columns = NamedTupleType::Names::names();
+
+  const auto selects = rfl::apply(
+      [](const auto... _s) {
+        return Ref<std::vector<dynamic::SelectFrom>>::make(
+            std::vector<dynamic::SelectFrom>({to_select_from<
+                table_tuple_t<typename Selects::TableOrQueryType,
+                              typename Selects::AliasType,
+                              typename Selects::JoinsType>,
+                typename Selects::AliasType, typename Selects::FieldsType,
+                typename Selects::TableOrQueryType, typename Selects::JoinsType,
+                typename Selects::WhereType, typename Selects::GroupByType,
+                typename Selects::OrderByType, typename Selects::LimitType>(
+                _s.fields_, _s.from_, _s.joins_, _s.where_, _s.limit_)...}));
+      },
+      _selects);
+
+  return dynamic::Union{.columns = columns, .selects = selects};
 }
 
 }  // namespace sqlgen::transpilation

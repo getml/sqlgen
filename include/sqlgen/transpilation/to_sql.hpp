@@ -12,6 +12,7 @@
 #include "../insert.hpp"
 #include "../read.hpp"
 #include "../select_from.hpp"
+#include "../unite.hpp"
 #include "../update.hpp"
 #include "columns_t.hpp"
 #include "read_to_select_from.hpp"
@@ -22,6 +23,7 @@
 #include "to_drop.hpp"
 #include "to_insert_or_write.hpp"
 #include "to_select_from.hpp"
+#include "to_union.hpp"
 #include "to_update.hpp"
 #include "value_t.hpp"
 
@@ -117,6 +119,13 @@ template <class T, class SetsType, class WhereType>
 struct ToSQL<Update<T, SetsType, WhereType>> {
   dynamic::Statement operator()(const auto& _update) const {
     return to_update<T, SetsType, WhereType>(_update.sets_, _update.where_);
+  }
+};
+
+template <class ContainerType, class... Selects>
+struct ToSQL<Union<ContainerType, Selects...>> {
+  dynamic::Statement operator()(const auto& _union) const {
+    return to_union<ContainerType>(_union.selects_);
   }
 };
 

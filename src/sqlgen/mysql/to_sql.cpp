@@ -885,15 +885,19 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
 
 std::string union_to_sql(const dynamic::Union& _stmt) noexcept {
   using namespace std::ranges::views;
-  const auto to_str = [](const auto& _select) {
-    return "(" + select_from_to_sql(*_select) + ")";
+
+  const auto columns = internal::strings::join(
+      ", ",
+      internal::collect::vector(_stmt.columns | transform(wrap_in_quotes)));
+
+  const auto to_str = [&](const auto& _select) {
+    return "SELECT " + columns + " FROM (" + select_from_to_sql(_select) + ")";
   };
-  std::stringstream stream;
-  stream << internal::strings::join(
-      " UNION ",
-      internal::collect::vector(_stmt.selects_ | transform(to_str)));
-  stream << ";";
-  return stream.str();
+
+  return internal::strings::join(
+             " UNION ",
+             internal::collect::vector(*_stmt.selects | transform(to_str))) +
+         ";";
 }
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept {

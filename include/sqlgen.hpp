@@ -45,6 +45,7 @@
 #include "sqlgen/select_from.hpp"
 #include "sqlgen/sqlgen_api.hpp"
 #include "sqlgen/to.hpp"
+#include "sqlgen/unite.hpp"
 #include "sqlgen/update.hpp"
 #include "sqlgen/where.hpp"
 #include "sqlgen/write.hpp"

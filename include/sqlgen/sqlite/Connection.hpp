@@ -13,6 +13,8 @@
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../Transaction.hpp"
+#include "../dynamic/SelectFrom.hpp"
+#include "../dynamic/Union.hpp"
 #include "../dynamic/Write.hpp"
 #include "../internal/to_container.hpp"
 #include "../internal/write_or_insert.hpp"
@@ -50,7 +52,7 @@ class SQLGEN_API Connection {
   }
 
   template <class ContainerType>
-  auto read(const dynamic::SelectFrom& _query) {
+  auto read(const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query) {
     using ValueType = transpilation::value_t<ContainerType>;
     return internal::to_container<ContainerType>(
         read_impl(_query).transform([](auto&& _it) {
@@ -92,7 +94,8 @@ class SQLGEN_API Connection {
   Result<StmtPtr> prepare_statement(const std::string& _sql) const noexcept;
 
   /// Implements the actual read.
-  Result<Ref<Iterator>> read_impl(const dynamic::SelectFrom& _query);
+  Result<Ref<Iterator>> read_impl(
+      const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query);
 
   /// Implements the actual write
   Result<Nothing> write_impl(

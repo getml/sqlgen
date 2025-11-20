@@ -96,11 +96,21 @@ auto select_from_impl(const Result<Ref<Connection>>& _res,
   });
 }
 
-template <class TableOrQueryType, class AliasType, class FieldsType,
-          class JoinsType = Nothing, class WhereType = Nothing,
-          class GroupByType = Nothing, class OrderByType = Nothing,
-          class LimitType = Nothing, class ToType = Nothing>
+template <class _TableOrQueryType, class _AliasType, class _FieldsType,
+          class _JoinsType = Nothing, class _WhereType = Nothing,
+          class _GroupByType = Nothing, class _OrderByType = Nothing,
+          class _LimitType = Nothing, class _ToType = Nothing>
 struct SelectFrom {
+  using TableOrQueryType = _TableOrQueryType;
+  using AliasType = _AliasType;
+  using FieldsType = _FieldsType;
+  using JoinsType = _JoinsType;
+  using WhereType = _WhereType;
+  using GroupByType = _GroupByType;
+  using OrderByType = _OrderByType;
+  using LimitType = _LimitType;
+  using ToType = _ToType;
+
   auto operator()(const auto& _conn) const {
     using TableTupleType =
         transpilation::table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
