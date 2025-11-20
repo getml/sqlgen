@@ -53,6 +53,8 @@ std::string table_or_query_to_sql(
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept;
 
+std::string union_to_sql(const dynamic::Union& _stmt) noexcept;
+
 std::string update_to_sql(const dynamic::Update& _stmt) noexcept;
 
 // ----------------------------------------------------------------------------
@@ -756,10 +758,26 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
     } else if constexpr (std::is_same_v<S, dynamic::Write>) {
       return insert_or_write_to_sql(_s);
 
+    } else if constexpr (std::is_same_v<S, dynamic::Union>) {
+      return union_to_sql(_s);
+
     } else {
       static_assert(rfl::always_false_v<S>, "Unsupported type.");
     }
   });
+}
+
+std::string union_to_sql(const dynamic::Union& _stmt) noexcept {
+  using namespace std::ranges::views;
+  const auto to_str = [](const auto& _select) {
+    return "(" + select_from_to_sql(*_select) + ")";
+  };
+  std::stringstream stream;
+  stream << internal::strings::join(
+      " UNION ",
+      internal::collect::vector(_stmt.selects_ | transform(to_str)));
+  stream << ";";
+  return stream.str();
 }
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept {
