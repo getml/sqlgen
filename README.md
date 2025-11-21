@@ -66,7 +66,7 @@ Run `./vcpkg/vcpkg help triplets` to view all supported triplets.
 Common triplets for shared libraries are `x64-linux-dynamic`, 
 `arm64-osx-dynamic` or `x64-osx-dynamic`.   
 
-Add `-DSQLGEN_MYSQL=ON` to support MySQL/MariaDB.
+Add `-DSQLGEN_MYSQL=ON` to support MySQL/MariaDB. Add `-DSQLGEN_DUCKDB=ON` to support DuckDB.
 
 4. Include in your CMake project:
 ```cmake

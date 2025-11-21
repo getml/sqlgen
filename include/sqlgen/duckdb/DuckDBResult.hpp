@@ -15,27 +15,11 @@ class SQLGEN_API DuckDBResult {
 
  public:
   static Result<Ref<DuckDBResult>> make(const std::string& _query,
-                                        const ConnPtr& _conn) {
-    try {
-      return Ref<DuckDBResult>::make(_query, _conn);
-    } catch (const std::exception& e) {
-      return error(e.what());
-    }
-  }
+                                        const ConnPtr& _conn);
 
-  DuckDBResult(const std::string& _query, const ConnPtr& _conn)
-      : destroy_(false) {
-    if (duckdb_query(_conn->conn(), _query.c_str(), &res_) == DuckDBError) {
-      throw std::runtime_error(duckdb_result_error(&res_));
-    }
-    destroy_ = true;
-  }
+  DuckDBResult(const std::string& _query, const ConnPtr& _conn);
 
-  ~DuckDBResult() {
-    if (destroy_) {
-      duckdb_destroy_result(&res_);
-    }
-  }
+  ~DuckDBResult();
 
   DuckDBResult(const DuckDBResult& _other) = delete;
 
@@ -46,15 +30,7 @@ class SQLGEN_API DuckDBResult {
 
   DuckDBResult& operator=(const DuckDBResult& _other) = delete;
 
-  DuckDBResult& operator=(DuckDBResult&& _other) {
-    if (this == &_other) {
-      return *this;
-    }
-    destroy_ = _other.destroy_;
-    res_ = _other.res_;
-    _other.destroy_ = false;
-    return *this;
-  }
+  DuckDBResult& operator=(DuckDBResult&& _other);
 
   duckdb_result& res() { return res_; }
 
