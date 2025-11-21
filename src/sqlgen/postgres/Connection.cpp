@@ -9,13 +9,14 @@
 #include "sqlgen/internal/random.hpp"
 #include "sqlgen/internal/strings/strings.hpp"
 #include "sqlgen/postgres/Iterator.hpp"
+#include "sqlgen/postgres/PostgresV2Result.hpp"
 
 namespace sqlgen::postgres {
 
-Connection::Connection(const Credentials& _credentials)
-    : conn_(make_conn(_credentials.to_str())), credentials_(_credentials) {}
+Connection::Connection(const Conn& _conn) : conn_(_conn) {}
 
-Connection::~Connection() = default;
+Connection::Connection(const Credentials& _credentials)
+    : conn_(PostgresV2Connection::make(_credentials.to_str()).value()) {}
 
 Result<Nothing> Connection::begin_transaction() noexcept {
   return execute("BEGIN TRANSACTION;");
@@ -24,20 +25,19 @@ Result<Nothing> Connection::begin_transaction() noexcept {
 Result<Nothing> Connection::commit() noexcept { return execute("COMMIT;"); }
 
 Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
-  return exec(conn_, _sql).transform([](auto&&) { return Nothing{}; });
+  return PostgresV2Result::make(_sql, conn_).transform([](auto&&) {
+    return Nothing{};
+  });
 }
 
 Result<Nothing> Connection::end_write() {
-  if (PQputCopyEnd(conn_.get(), NULL) == -1) {
-    return error(PQerrorMessage(conn_.get()));
+  if (PQputCopyEnd(conn_.ptr(), NULL) == -1) {
+    return error(PQerrorMessage(conn_.ptr()));
   }
-  const auto res = PQgetResult(conn_.get());
-  if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-    const auto err = error(PQerrorMessage(conn_.get()));
-    PQclear(res);
-    return err;
+  const auto res = PostgresV2Result(PQgetResult(conn_.ptr()));
+  if (PQresultStatus(res.ptr()) != PGRES_COMMAND_OK) {
+    return error(PQerrorMessage(conn_.ptr()));
   }
-  PQclear(res);
   return Nothing{};
 }
 
@@ -53,14 +53,14 @@ Result<Nothing> Connection::insert_impl(
 
   const auto sql = to_sql_impl(_stmt);
 
-  const auto res = PQprepare(conn_.get(), name.c_str(), sql.c_str(),
-                             _data.at(0).size(), nullptr);
+  const auto res = PostgresV2Result(PQprepare(
+      conn_.ptr(), name.c_str(), sql.c_str(), _data.at(0).size(), nullptr));
 
-  const auto status = PQresultStatus(res);
+  const auto status = PQresultStatus(res.ptr());
 
   if (status != PGRES_COMMAND_OK) {
     return error("Generating prepared statement for '" + sql +
-                 "' failed: " + PQresultErrorMessage(res));
+                 "' failed: " + PQresultErrorMessage(res.ptr()));
   }
 
   std::vector<const char*> current_row(_data[0].size());
@@ -71,7 +71,6 @@ Result<Nothing> Connection::insert_impl(
     const auto& d = _data[i];
 
     if (d.size() != current_row.size()) {
-      execute("ROLLBACK;");
       execute("DEALLOCATE " + name + ";");
       return error("Error in entry " + std::to_string(i) + ": Expected " +
                    std::to_string(current_row.size()) + " entries, got " +
@@ -82,25 +81,24 @@ Result<Nothing> Connection::insert_impl(
       current_row[j] = d[j] ? d[j]->c_str() : nullptr;
     }
 
-    const auto res = PQexecPrepared(conn_.get(),         // conn
-                                    name.c_str(),        // stmtName
-                                    n_params,            // nParams
-                                    current_row.data(),  // paramValues
-                                    nullptr,             // paramLengths
-                                    nullptr,             // paramFormats
-                                    0                    // resultFormat
-    );
+    const auto res =
+        PostgresV2Result(PQexecPrepared(conn_.ptr(),         // conn
+                                        name.c_str(),        // stmtName
+                                        n_params,            // nParams
+                                        current_row.data(),  // paramValues
+                                        nullptr,             // paramLengths
+                                        nullptr,             // paramFormats
+                                        0                    // resultFormat
+                                        ));
 
-    const auto status = PQresultStatus(res);
+    const auto status = PQresultStatus(res.ptr());
+
     if (status != PGRES_COMMAND_OK) {
-      PQclear(res);
       const auto err = error(std::string("Executing INSERT failed: ") +
-                             PQresultErrorMessage(res));
-      execute("ROLLBACK;");
+                             PQresultErrorMessage(res.ptr()));
       execute("DEALLOCATE " + name + ";");
       return err;
     }
-    PQclear(res);
   }
 
   return execute("DEALLOCATE " + name + ";");
@@ -108,34 +106,13 @@ Result<Nothing> Connection::insert_impl(
 
 rfl::Result<Ref<Connection>> Connection::make(
     const Credentials& _credentials) noexcept {
-  try {
-    return Ref<Connection>::make(_credentials);
-  } catch (std::exception& e) {
-    return error(e.what());
-  }
-}
-
-typename Connection::ConnPtr Connection::make_conn(
-    const std::string& _conn_str) {
-  const auto raw_ptr = PQconnectdb(_conn_str.c_str());
-
-  if (PQstatus(raw_ptr) != CONNECTION_OK) {
-    const auto msg = std::string("Connection to postgres failed: ") +
-                     PQerrorMessage(raw_ptr);
-    PQfinish(raw_ptr);
-    throw std::runtime_error(msg.c_str());
-  }
-
-  return ConnPtr::make(std::shared_ptr<PGconn>(raw_ptr, &PQfinish)).value();
+  return PostgresV2Connection::make(_credentials.to_str())
+      .transform([](auto&& _conn) { return Ref<Connection>::make(_conn); });
 }
 
 Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
   const auto sql = postgres::to_sql_impl(_query);
-  try {
-    return Ref<Iterator>::make(sql, conn_);
-  } catch (std::exception& e) {
-    return error(e.what());
-  }
+  return Ref<Iterator>::make(sql, conn_);
 }
 
 Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
@@ -172,13 +149,10 @@ Result<Nothing> Connection::write_impl(
     const std::vector<std::vector<std::optional<std::string>>>& _data) {
   for (const auto& line : _data) {
     const auto buffer = to_buffer(line);
-    const auto success = PQputCopyData(conn_.get(), buffer.c_str(),
+    const auto success = PQputCopyData(conn_.ptr(), buffer.c_str(),
                                        static_cast<int>(buffer.size()));
     if (success != 1) {
-      PQputCopyEnd(conn_.get(), NULL);
-      while (auto res = PQgetResult(conn_.get()))
-        PQclear(res);
-
+      PQputCopyEnd(conn_.ptr(), NULL);
       return error("Error occurred while writing data to postgres.");
     }
   }
@@ -186,3 +160,4 @@ Result<Nothing> Connection::write_impl(
 }
 
 }  // namespace sqlgen::postgres
+

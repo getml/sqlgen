@@ -9,11 +9,13 @@
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../sqlgen_api.hpp"
+#include "PostgresV2Connection.hpp"
+#include "PostgresV2Result.hpp"
 
 namespace sqlgen::postgres {
 
-Result<Ref<PGresult>> SQLGEN_API exec(const Ref<PGconn>& _conn,
-                                      const std::string& _sql) noexcept;
+Result<PostgresV2Result> SQLGEN_API exec(const PostgresV2Connection& _conn,
+                                         const std::string& _sql) noexcept;
 
 }  // namespace sqlgen::postgres
 
