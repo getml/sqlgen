@@ -72,6 +72,8 @@ std::string table_or_query_to_sql(
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept;
 
+std::string union_to_sql(const dynamic::Union& _stmt) noexcept;
+
 std::string update_to_sql(const dynamic::Update& _stmt) noexcept;
 
 std::string write_to_sql(const dynamic::Write& _stmt) noexcept;
@@ -829,6 +831,9 @@ std::string to_sql_impl(const dynamic::Statement& _stmt) noexcept {
     } else if constexpr (std::is_same_v<S, dynamic::SelectFrom>) {
       return select_from_to_sql(_s);
 
+    } else if constexpr (std::is_same_v<S, dynamic::Union>) {
+      return union_to_sql(_s);
+
     } else if constexpr (std::is_same_v<S, dynamic::Update>) {
       return update_to_sql(_s);
 
@@ -907,6 +912,23 @@ std::string type_to_sql(const dynamic::Type& _type) noexcept {
       static_assert(rfl::always_false_v<T>, "Not all cases were covered.");
     }
   });
+}
+
+std::string union_to_sql(const dynamic::Union& _stmt) noexcept {
+  using namespace std::ranges::views;
+
+  const auto columns = internal::strings::join(
+      ", ",
+      internal::collect::vector(_stmt.columns | transform(wrap_in_quotes)));
+
+  const auto to_str = [&](const auto& _select) {
+    return "SELECT " + columns + " FROM (" + select_from_to_sql(_select) + ")";
+  };
+
+  return internal::strings::join(
+             " UNION ",
+             internal::collect::vector(*_stmt.selects | transform(to_str))) +
+         ";";
 }
 
 std::string update_to_sql(const dynamic::Update& _stmt) noexcept {
