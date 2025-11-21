@@ -23,21 +23,24 @@
 #include "../transpilation/value_t.hpp"
 #include "Credentials.hpp"
 #include "Iterator.hpp"
+#include "PostgresV2Connection.hpp"
 #include "exec.hpp"
 #include "to_sql.hpp"
 
 namespace sqlgen::postgres {
 
 class SQLGEN_API Connection {
-  using ConnPtr = Ref<PGconn>;
+  using Conn = PostgresV2Connection;
 
  public:
+  Connection(const Conn& _conn);
+
   Connection(const Credentials& _credentials);
 
   static rfl::Result<Ref<Connection>> make(
       const Credentials& _credentials) noexcept;
 
-  ~Connection();
+  ~Connection() = default;
 
   Result<Nothing> begin_transaction() noexcept;
 
@@ -83,8 +86,6 @@ class SQLGEN_API Connection {
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
 
-  static ConnPtr make_conn(const std::string& _conn_str);
-
   Result<Ref<Iterator>> read_impl(const dynamic::SelectFrom& _query);
 
   std::string to_buffer(
@@ -94,9 +95,7 @@ class SQLGEN_API Connection {
       const std::vector<std::vector<std::optional<std::string>>>& _data);
 
  private:
-  ConnPtr conn_;
-
-  Credentials credentials_;
+  Conn conn_;
 };
 
 static_assert(is_connection<Connection>,

@@ -7,24 +7,9 @@
 
 namespace sqlgen::postgres {
 
-Result<Ref<PGresult>> exec(const Ref<PGconn>& _conn,
-                           const std::string& _sql) noexcept {
-  auto res = PQexec(_conn.get(), _sql.c_str());
-
-  const auto status = PQresultStatus(res);
-
-  if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK &&
-      status != PGRES_COPY_IN) {
-    const auto err =
-        error("Executing '" + _sql + "' failed: " + PQresultErrorMessage(res));
-    PQclear(res);
-    while ((res = PQgetResult(_conn.get())) != nullptr)
-        PQclear(res);
-
-    return err;
-  }
-
-  return Ref<PGresult>::make(std::shared_ptr<PGresult>(res, PQclear));
+Result<PostgresV2Result> exec(const PostgresV2Connection& _conn,
+                              const std::string& _sql) noexcept {
+  return PostgresV2Result::make(_sql, _conn);
 }
 
 }  // namespace sqlgen::postgres
