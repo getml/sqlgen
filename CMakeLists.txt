@@ -4,6 +4,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(SQLGEN_BUILD_SHARED "Build shared library" ${BUILD_SHARED_LIBS})
 
+option(SQLGEN_DUCKDB "Enable DuckDB support" OFF) 
+
 option(SQLGEN_MYSQL "Enable MySQL support" OFF) 
 
 option(SQLGEN_POSTGRES "Enable PostgreSQL support" ON) # enabled by default
@@ -28,6 +30,10 @@ option(SQLGEN_USE_VCPKG "Use VCPKG to download and build dependencies" ${SQLGEN_
 if (SQLGEN_USE_VCPKG)
     if (SQLGEN_BUILD_TESTS)
         list(APPEND VCPKG_MANIFEST_FEATURES "tests")
+    endif()
+    
+    if (SQLGEN_DUCKDB OR SQLGEN_CHECK_HEADERS)
+        list(APPEND VCPKG_MANIFEST_FEATURES "duckdb")
     endif()
     
     if (SQLGEN_MYSQL OR SQLGEN_CHECK_HEADERS)
@@ -88,6 +94,16 @@ target_include_directories(
     sqlgen PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
+
+
+if (SQLGEN_DUCKDB OR SQLGEN_CHECK_HEADERS)
+    list(APPEND SQLGEN_SOURCES src/sqlgen_duckdb.cpp)
+    if (NOT TARGET DuckDB)
+        find_package(DuckDB REQUIRED)
+    endif()
+    target_link_libraries(sqlgen PUBLIC $<IF:$<TARGET_EXISTS:duckdb>,duckdb,duckdb_static>)
+endif()
+
 
 if(SQLGEN_MYSQL OR SQLGEN_CHECK_HEADERS)
     list(APPEND SQLGEN_SOURCES src/sqlgen_mysql.cpp)

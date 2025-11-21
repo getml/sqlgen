@@ -12,11 +12,12 @@ namespace sqlgen::internal {
 template <class ContainerType, class IteratorType>
 auto to_container(const Result<IteratorType>& _res) {
   if constexpr (internal::is_range_v<ContainerType>) {
-    return _res.transform([](auto&& _it) { return Range<IteratorType>(_it); });
+    return _res.transform(
+        [](auto&& _it) { return Range<IteratorType>(std::move(_it)); });
 
   } else {
     return to_container<Range<IteratorType>>(_res).and_then(
-        [](auto range) -> Result<ContainerType> {
+        [](const auto& range) -> Result<ContainerType> {
           ContainerType container;
           for (auto& res : range) {
             if (res) {

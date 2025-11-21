@@ -23,7 +23,7 @@ const auto creds = sqlgen::mysql::Credentials{
 const auto conn = sqlgen::mysql::connect(creds);
 ```
 
-The connection is wrapped in a `sqlgen::Result<Ref<Connection>>` for error handling:
+The type of `conn` is `sqlgen::Result<sqlgen::Ref<sqlgen::mysql::Connection>>`, which is useful for error handling:
 
 ```cpp
 // Handle connection errors
