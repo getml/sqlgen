@@ -74,9 +74,7 @@ struct Login {
 
 const auto united = sqlgen::unite<std::vector<User1>>(s1, s2);
 
-const auto sel =
-    sqlgen::select_from<Login>(
-        "id"_c, "username"_c,
-        sqlgen::inner_join(united.as("u"), "username"_c == "u.name"_c))
-        .where("id"_c == 1);
+const auto sel = select_from<Login, "t1">("id"_t1, "username"_t1) |
+                 inner_join<"t2">(united, "username"_t1 == "name"_t2) |
+                 where("id"_t1 == 1) | to<std::vector<Login>>;
 ```
