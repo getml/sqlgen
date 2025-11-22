@@ -892,19 +892,20 @@ std::string union_to_sql(const dynamic::Union& _stmt) noexcept {
 
   const auto columns = internal::strings::join(
       ", ",
-      internal::collect::vector(_stmt.columns | transform(wrap_in_quotes)));
+      internal::collect::vector(_stmt.columns | transform([](const auto& _col) {
+                                  return "t." + wrap_in_quotes(_col);
+                                })));
 
   const auto to_str = [&](const auto& _select) {
-    return "SELECT " + columns + " FROM (" + select_from_to_sql(_select) + ")";
+    return "SELECT " + columns + " FROM (" + select_from_to_sql(_select) +
+           ") t";
   };
 
   const auto separator =
       _stmt.all ? std::string(" UNION ALL ") : std::string(" UNION ");
 
   return internal::strings::join(
-             separator,
-             internal::collect::vector(*_stmt.selects | transform(to_str))) +
-         ";";
+      separator, internal::collect::vector(*_stmt.selects | transform(to_str)));
 }
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept {

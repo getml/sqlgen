@@ -121,7 +121,9 @@ struct GetTableType<Literal<_alias>,
                     sqlgen::Union<ContainerType, SelectTs...>> {
   using TableType = get_table_t<
       Literal<_alias>,
-      extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>>;
+      rfl::Tuple<std::pair<
+          extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>,
+          Literal<_alias>>>>;
 };
 
 template <class ContainerType, class... SelectTs>
@@ -137,6 +139,21 @@ struct GetTableType<std::integral_constant<size_t, _i>,
   using TableType = get_table_t<
       std::integral_constant<size_t, _i>,
       extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>>;
+};
+
+template <class ContainerType, class... SelectTs, class AliasType>
+struct TableTupleType<sqlgen::Union<ContainerType, SelectTs...>, AliasType,
+                      Nothing> {
+  using Type = rfl::Tuple<std::pair<
+      extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>,
+      AliasType>>;
+};
+
+template <class ContainerType, class... SelectTs>
+struct TableTupleType<sqlgen::Union<ContainerType, SelectTs...>, Literal<"">,
+                      Nothing> {
+  using Type =
+      extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>;
 };
 
 }  // namespace transpilation
