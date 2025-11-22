@@ -764,6 +764,10 @@ std::string table_or_query_to_sql(
         return wrap_in_quotes(*_t.schema) + "." + wrap_in_quotes(_t.name);
       }
       return wrap_in_quotes(_t.name);
+
+    } else if constexpr (std::is_same_v<Type, Ref<dynamic::Union>>) {
+      return "(" + union_to_sql(*_t) + ")";
+
     } else {
       return "(" + select_from_to_sql(*_t) + ")";
     }
@@ -821,8 +825,11 @@ std::string union_to_sql(const dynamic::Union& _stmt) noexcept {
     return "SELECT " + columns + " FROM (" + select_from_to_sql(_select) + ")";
   };
 
+  const auto separator =
+      _stmt.all ? std::string(" UNION ALL ") : std::string(" UNION ");
+
   return internal::strings::join(
-             " UNION ",
+             separator,
              internal::collect::vector(*_stmt.selects | transform(to_str))) +
          ";";
 }
