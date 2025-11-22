@@ -782,8 +782,11 @@ std::string union_to_sql(const dynamic::Union& _stmt) noexcept {
     return "SELECT " + columns + " FROM (" + select_from_to_sql(_select) + ")";
   };
 
+  const auto separator =
+      _stmt.all ? std::string(" UNION ALL ") : std::string(" UNION ");
+
   return internal::strings::join(
-             " UNION ",
+             separator,
              internal::collect::vector(*_stmt.selects | transform(to_str))) +
          ";";
 }

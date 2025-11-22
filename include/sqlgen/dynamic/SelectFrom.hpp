@@ -21,6 +21,7 @@ struct SelectFrom {
   struct Union {
     std::vector<std::string> columns;
     Ref<std::vector<SelectFrom>> selects;
+    bool all = false;
   };
 
   using TableOrQueryType = rfl::Variant<Table, Ref<SelectFrom>, Ref<Union>>;

@@ -20,9 +20,10 @@ namespace sqlgen {
 template <class ContainerType, class Connection, class... SelectTs>
   requires is_connection<Connection>
 auto unite_impl(const Ref<Connection>& _conn,
-                const rfl::Tuple<SelectTs...>& _selects) {
+                const rfl::Tuple<SelectTs...>& _selects, const bool _all) {
   if constexpr (internal::is_range_v<ContainerType>) {
-    const auto query = transpilation::to_union<ContainerType>(_selects);
+    auto query = transpilation::to_union<ContainerType>(_selects);
+    query.all = _all;
     return _conn->template read<ContainerType>(query);
 
   } else {
@@ -46,7 +47,7 @@ auto unite_impl(const Ref<Connection>& _conn,
 
     using RangeType = Range<IteratorType>;
 
-    return unite_impl<RangeType>(_conn, _selects).and_then(to_container);
+    return unite_impl<RangeType>(_conn, _selects, _all).and_then(to_container);
   }
 }
 
@@ -62,7 +63,7 @@ struct Union {
             Connection>>,
         _ContainerType>;
 
-    return unite_impl<ContainerType>(_conn, selects_);
+    return unite_impl<ContainerType>(_conn, selects_, all_);
   }
 
   template <class Connection>
@@ -72,6 +73,7 @@ struct Union {
   }
 
   rfl::Tuple<SelectTs...> selects_;
+  bool all_ = false;
 };
 
 namespace transpilation {
@@ -96,12 +98,23 @@ struct ToTableOrQuery<Union<ContainerType, SelectTs...>> {
 template <class ContainerType, class... SelectTs>
 auto unite(const SelectTs&... _selects) {
   return Union<ContainerType, SelectTs...>{
-      rfl::Tuple<SelectTs...>(_selects...)};
+      .selects_ = rfl::Tuple<SelectTs...>(_selects...), .all_ = false};
 }
 
 template <class... SelectTs>
 auto unite(const SelectTs&... _selects) {
   return unite<Nothing>(_selects...);
+}
+
+template <class ContainerType, class... SelectTs>
+auto unite_all(const SelectTs&... _selects) {
+  return Union<ContainerType, SelectTs...>{
+      .selects_ = rfl::Tuple<SelectTs...>(_selects...), .all_ = true};
+}
+
+template <class... SelectTs>
+auto unite_all(const SelectTs&... _selects) {
+  return unite_all<Nothing>(_selects...);
 }
 
 }  // namespace sqlgen
