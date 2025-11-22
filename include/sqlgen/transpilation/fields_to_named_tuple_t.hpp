@@ -5,6 +5,7 @@
 
 #include "../Literal.hpp"
 #include "../internal/all_same_v.hpp"
+#include "Union.hpp"
 #include "make_field.hpp"
 #include "table_tuple_t.hpp"
 
@@ -41,7 +42,7 @@ struct FieldsToNamedTupleType<StructType, rfl::Tuple<FieldTypes...>> {
 };
 
 template <class... SelectTs>
-struct FieldsToNamedTupleType<rfl::Tuple<SelectTs...>> {
+struct FieldsToNamedTupleType<Union<SelectTs...>> {
   using NamedTupleTypes = rfl::Tuple<typename FieldsToNamedTupleType<
       table_tuple_t<typename SelectTs::TableOrQueryType,
                     typename SelectTs::AliasType, typename SelectTs::JoinsType>,
@@ -51,6 +52,19 @@ struct FieldsToNamedTupleType<rfl::Tuple<SelectTs...>> {
       "All SELECT statements in a UNION must return the same columns with "
       "the same types.");
   using Type = rfl::tuple_element_t<0, NamedTupleTypes>;
+};
+
+template <class... SelectTs, class... FieldTypes>
+struct FieldsToNamedTupleType<Union<SelectTs...>, FieldTypes...> {
+  using Type = typename FieldsToNamedTupleType<
+      typename FieldsToNamedTupleType<Union<SelectTs...>>::Type,
+      FieldTypes...>::Type;
+};
+
+template <class... SelectTs, class... FieldTypes>
+struct FieldsToNamedTupleType<Union<SelectTs...>, rfl::Tuple<FieldTypes...>> {
+  using Type =
+      typename FieldsToNamedTupleType<Union<SelectTs...>, FieldTypes...>::Type;
 };
 
 template <class StructType, class... FieldTypes>

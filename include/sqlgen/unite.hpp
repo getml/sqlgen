@@ -4,6 +4,7 @@
 #include <rfl.hpp>
 #include <type_traits>
 
+#include "Literal.hpp"
 #include "Range.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
@@ -11,9 +12,12 @@
 #include "internal/is_range.hpp"
 #include "internal/iterator_t.hpp"
 #include "is_connection.hpp"
+#include "transpilation/Union.hpp"
 #include "transpilation/fields_to_named_tuple_t.hpp"
+#include "transpilation/get_table_t.hpp"
 #include "transpilation/to_union.hpp"
 #include "transpilation/value_t.hpp"
+#include "transpilation/wrap_in_optional_t.hpp"
 
 namespace sqlgen {
 
@@ -41,9 +45,10 @@ auto unite_impl(const Ref<Connection>& _conn,
       return container;
     };
 
-    using IteratorType = internal::iterator_t<
-        transpilation::fields_to_named_tuple_t<rfl::Tuple<SelectTs...>>,
-        decltype(_conn)>;
+    using IteratorType =
+        internal::iterator_t<transpilation::fields_to_named_tuple_t<
+                                 transpilation::Union<SelectTs...>>,
+                             decltype(_conn)>;
 
     using RangeType = Range<IteratorType>;
 
@@ -58,9 +63,9 @@ struct Union {
   auto operator()(const Ref<Connection>& _conn) const {
     using ContainerType = std::conditional_t<
         std::is_same_v<std::remove_cvref_t<_ContainerType>, Nothing>,
-        Range<internal::iterator_t<
-            transpilation::fields_to_named_tuple_t<rfl::Tuple<SelectTs...>>,
-            Connection>>,
+        Range<internal::iterator_t<transpilation::fields_to_named_tuple_t<
+                                       transpilation::Union<SelectTs...>>,
+                                   Connection>>,
         _ContainerType>;
 
     return unite_impl<ContainerType>(_conn, selects_, all_);
@@ -79,18 +84,59 @@ struct Union {
 namespace transpilation {
 
 template <class ContainerType, class... SelectTs>
-struct ExtractTable<Union<ContainerType, SelectTs...>, false> {
+struct ExtractTable<sqlgen::Union<ContainerType, SelectTs...>, false> {
   using Type = std::conditional_t<
       std::is_same_v<std::remove_cvref_t<ContainerType>, Nothing>,
-      transpilation::fields_to_named_tuple_t<rfl::Tuple<SelectTs...>>,
-      transpilation::value_t<ContainerType>>;
+      fields_to_named_tuple_t<Union<SelectTs...>>, value_t<ContainerType>>;
 };
 
 template <class ContainerType, class... SelectTs>
-struct ToTableOrQuery<Union<ContainerType, SelectTs...>> {
+struct ExtractTable<sqlgen::Union<ContainerType, SelectTs...>, true> {
+  using Type = wrap_in_optional_t<typename ExtractTable<
+      sqlgen::Union<ContainerType, SelectTs...>, false>::Type>;
+};
+
+template <class ContainerType, class... SelectTs>
+struct ToTableOrQuery<sqlgen::Union<ContainerType, SelectTs...>> {
   dynamic::SelectFrom::TableOrQueryType operator()(const auto& _query) {
-    return transpilation::to_union<ContainerType>(_query.selects_);
+    return Ref<dynamic::Union>::make(to_union<ContainerType>(_query.selects_));
   }
+};
+
+template <class ContainerType, class... SelectTs, class... FieldTs>
+struct FieldsToNamedTupleType<sqlgen::Union<ContainerType, SelectTs...>,
+                              FieldTs...> {
+  using Type = fields_to_named_tuple_t<Union<SelectTs...>, FieldTs...>;
+};
+
+template <class ContainerType, class... SelectTs, class... FieldTs>
+struct FieldsToNamedTupleType<sqlgen::Union<ContainerType, SelectTs...>,
+                              rfl::Tuple<FieldTs...>> {
+  using Type = fields_to_named_tuple_t<Union<SelectTs...>, FieldTs...>;
+};
+
+template <rfl::internal::StringLiteral _alias, class ContainerType,
+          class... SelectTs>
+struct GetTableType<Literal<_alias>,
+                    sqlgen::Union<ContainerType, SelectTs...>> {
+  using TableType = get_table_t<
+      Literal<_alias>,
+      extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>>;
+};
+
+template <class ContainerType, class... SelectTs>
+struct GetTableType<Literal<"">, sqlgen::Union<ContainerType, SelectTs...>> {
+  using TableType = get_table_t<
+      Literal<"">,
+      extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>>;
+};
+
+template <size_t _i, class ContainerType, class... SelectTs>
+struct GetTableType<std::integral_constant<size_t, _i>,
+                    sqlgen::Union<ContainerType, SelectTs...>> {
+  using TableType = get_table_t<
+      std::integral_constant<size_t, _i>,
+      extract_table_t<sqlgen::Union<ContainerType, SelectTs...>, false>>;
 };
 
 }  // namespace transpilation

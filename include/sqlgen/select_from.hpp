@@ -357,7 +357,7 @@ inline auto select_from(const FieldTypes&... _fields) {
       .from_ = transpilation::TableWrapper<TableType>{}};
 }
 
-template <rfl::internal::StringLiteral _alias, class QueryType,
+template <rfl::internal::StringLiteral _alias = "", class QueryType,
           class... FieldTypes>
 inline auto select_from(const QueryType& _query, const FieldTypes&... _fields) {
   using FieldsType =

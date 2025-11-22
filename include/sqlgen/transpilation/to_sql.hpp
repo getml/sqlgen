@@ -123,7 +123,7 @@ struct ToSQL<Update<T, SetsType, WhereType>> {
 };
 
 template <class ContainerType, class... Selects>
-struct ToSQL<Union<ContainerType, Selects...>> {
+struct ToSQL<sqlgen::Union<ContainerType, Selects...>> {
   dynamic::Statement operator()(const auto& _union) const {
     return to_union<ContainerType>(_union.selects_);
   }
