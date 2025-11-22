@@ -829,9 +829,7 @@ std::string union_to_sql(const dynamic::Union& _stmt) noexcept {
       _stmt.all ? std::string(" UNION ALL ") : std::string(" UNION ");
 
   return internal::strings::join(
-             separator,
-             internal::collect::vector(*_stmt.selects | transform(to_str))) +
-         ";";
+      separator, internal::collect::vector(*_stmt.selects | transform(to_str)));
 }
 
 std::string type_to_sql(const dynamic::Type& _type) noexcept {
