@@ -17,11 +17,17 @@ struct GetColType {
   static Type get_value(const T& _t) { return _t; }
 };
 
-template <rfl::internal::StringLiteral _name>
-struct GetColType<Col<_name>> {
-  using Type = transpilation::Col<_name>;
-  static Type get_value(const auto&) { return transpilation::Col<_name>{}; }
+template <rfl::internal::StringLiteral _name,
+          rfl::internal::StringLiteral _alias>
+struct GetColType<Col<_name, _alias>> {
+  using Type = transpilation::Col<_name, _alias>;
+  static Type get_value(const auto&) {
+    return transpilation::Col<_name, _alias>{};
+  }
 };
+
+template <class T>
+using get_col_type_t = typename GetColType<T>::Type;
 
 }  // namespace sqlgen::internal
 

@@ -2,6 +2,7 @@
 
 #include <ranges>
 #include <rfl.hpp>
+#include <rfl/Variant.hpp>
 #include <sstream>
 
 #include "sqlgen/internal/collect/vector.hpp"
@@ -101,8 +102,9 @@ typename Connection::ConnPtr Connection::make_conn(const std::string& _fname) {
   return ConnPtr::make(std::shared_ptr<sqlite3>(conn, &sqlite3_close)).value();
 }
 
-Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
-  const auto sql = to_sql_impl(_query);
+Result<Ref<Iterator>> Connection::read_impl(
+    const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query) {
+  const auto sql = _query.visit([](const auto& _q) { return to_sql_impl(_q); });
 
   sqlite3_stmt* p_stmt = nullptr;
 

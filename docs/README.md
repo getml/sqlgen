@@ -29,6 +29,7 @@ Welcome to the sqlgen documentation. This guide provides detailed information ab
 - [sqlgen::inner_join, sqlgen::left_join, sqlgen::right_join, sqlgen::full_join](joins.md) - How to join different tables
 - [sqlgen::insert](insert.md) - How to insert data within transactions
 - [sqlgen::select_from](select_from.md) - How to read data from a database using more complex queries
+- [sqlgen::unite and sqlgen::unite_all](unite.md) - How to combine results from multiple SELECT statements
 - [sqlgen::update](update.md) - How to update data in a table
 
 ## Other Operations

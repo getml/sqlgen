@@ -4,16 +4,21 @@
 #include <libpq-fe.h>
 
 #include <memory>
+#include <optional>
 #include <rfl.hpp>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "../Iterator.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Column.hpp"
+#include "../dynamic/Insert.hpp"
+#include "../dynamic/SelectFrom.hpp"
 #include "../dynamic/Statement.hpp"
+#include "../dynamic/Union.hpp"
 #include "../dynamic/Write.hpp"
 #include "../internal/iterator_t.hpp"
 #include "../internal/to_container.hpp"
@@ -57,7 +62,7 @@ class SQLGEN_API Connection {
   }
 
   template <class ContainerType>
-  auto read(const dynamic::SelectFrom& _query) {
+  auto read(const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query) {
     using ValueType = transpilation::value_t<ContainerType>;
     return internal::to_container<ContainerType>(
         read_impl(_query).transform([](auto&& _it) {
@@ -86,7 +91,8 @@ class SQLGEN_API Connection {
       const std::vector<std::vector<std::optional<std::string>>>&
           _data) noexcept;
 
-  Result<Ref<Iterator>> read_impl(const dynamic::SelectFrom& _query);
+  Result<Ref<Iterator>> read_impl(
+      const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query);
 
   std::string to_buffer(
       const std::vector<std::optional<std::string>>& _line) const noexcept;

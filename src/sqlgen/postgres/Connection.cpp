@@ -110,8 +110,9 @@ rfl::Result<Ref<Connection>> Connection::make(
       .transform([](auto&& _conn) { return Ref<Connection>::make(_conn); });
 }
 
-Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
-  const auto sql = postgres::to_sql_impl(_query);
+Result<Ref<Iterator>> Connection::read_impl(
+    const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query) {
+  const auto sql = _query.visit([](const auto& _q) { return to_sql_impl(_q); });
   return Ref<Iterator>::make(sql, conn_);
 }
 

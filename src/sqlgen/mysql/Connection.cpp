@@ -137,8 +137,10 @@ Result<Connection::StmtPtr> Connection::prepare_statement(
   return stmt_ptr;
 }
 
-Result<Ref<Iterator>> Connection::read_impl(const dynamic::SelectFrom& _query) {
-  const auto sql = mysql::to_sql_impl(_query);
+Result<Ref<Iterator>> Connection::read_impl(
+    const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query) {
+  const auto sql =
+      _query.visit([](const auto& _q) { return mysql::to_sql_impl(_q); });
   const auto err =
       mysql_real_query(conn_.get(), sql.c_str(), static_cast<int>(sql.size()));
   if (err) {
