@@ -722,6 +722,10 @@ std::string table_or_query_to_sql(
         return wrap_in_quotes(*_t.schema) + "." + wrap_in_quotes(_t.name);
       }
       return wrap_in_quotes(_t.name);
+
+    } else if constexpr (std::is_same_v<Type, Ref<dynamic::Union>>) {
+      return "(" + union_to_sql(*_t) + ")";
+
     } else {
       return "(" + select_from_to_sql(*_t) + ")";
     }

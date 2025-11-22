@@ -29,7 +29,7 @@ TEST(sqlite, test_union) {
   using namespace sqlgen::literals;
 
   // Connect to SQLite database
-  const auto conn = sqlgen::sqlite::connect("test.db");
+  const auto conn = sqlgen::sqlite::connect();
 
   // Create and insert a user
   const auto user1 = User1{.name = "John", .age = 30};

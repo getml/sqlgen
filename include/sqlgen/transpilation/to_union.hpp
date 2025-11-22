@@ -14,8 +14,8 @@
 
 namespace sqlgen::transpilation {
 
-template <class ContainerType, class... Selects>
-dynamic::Union to_union(const rfl::Tuple<Selects...>& _selects) noexcept {
+template <class ContainerType, class... SelectTs>
+dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _selects) noexcept {
   using ValueType = value_t<ContainerType>;
   using NamedTupleType = rfl::named_tuple_t<ValueType>;
 
@@ -25,14 +25,15 @@ dynamic::Union to_union(const rfl::Tuple<Selects...>& _selects) noexcept {
       [](const auto... _s) {
         return Ref<std::vector<dynamic::SelectFrom>>::make(
             std::vector<dynamic::SelectFrom>({to_select_from<
-                table_tuple_t<typename Selects::TableOrQueryType,
-                              typename Selects::AliasType,
-                              typename Selects::JoinsType>,
-                typename Selects::AliasType, typename Selects::FieldsType,
-                typename Selects::TableOrQueryType, typename Selects::JoinsType,
-                typename Selects::WhereType, typename Selects::GroupByType,
-                typename Selects::OrderByType, typename Selects::LimitType>(
-                _s.fields_, _s.from_, _s.joins_, _s.where_, _s.limit_)...}));
+                table_tuple_t<typename SelectTs::TableOrQueryType,
+                              typename SelectTs::AliasType,
+                              typename SelectTs::JoinsType>,
+                typename SelectTs::AliasType, typename SelectTs::FieldsType,
+                typename SelectTs::TableOrQueryType,
+                typename SelectTs::JoinsType, typename SelectTs::WhereType,
+                typename SelectTs::GroupByType, typename SelectTs::OrderByType,
+                typename SelectTs::LimitType>(_s.fields_, _s.from_, _s.joins_,
+                                              _s.where_, _s.limit_)...}));
       },
       _selects);
 

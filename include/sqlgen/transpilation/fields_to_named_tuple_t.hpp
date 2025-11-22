@@ -4,7 +4,9 @@
 #include <rfl.hpp>
 
 #include "../Literal.hpp"
+#include "../internal/all_same_v.hpp"
 #include "make_field.hpp"
+#include "table_tuple_t.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -36,6 +38,19 @@ struct FieldsToNamedTupleType {
 template <class StructType, class... FieldTypes>
 struct FieldsToNamedTupleType<StructType, rfl::Tuple<FieldTypes...>> {
   using Type = typename FieldsToNamedTupleType<StructType, FieldTypes...>::Type;
+};
+
+template <class... SelectTs>
+struct FieldsToNamedTupleType<rfl::Tuple<SelectTs...>> {
+  using NamedTupleTypes = rfl::Tuple<typename FieldsToNamedTupleType<
+      table_tuple_t<typename SelectTs::TableOrQueryType,
+                    typename SelectTs::AliasType, typename SelectTs::JoinsType>,
+      typename SelectTs::FieldsType>::Type...>;
+  static_assert(
+      sqlgen::internal::all_same_v<NamedTupleTypes>,
+      "All SELECT statements in a UNION must return the same columns with "
+      "the same types.");
+  using Type = rfl::tuple_element_t<0, NamedTupleTypes>;
 };
 
 template <class StructType, class... FieldTypes>
