@@ -62,7 +62,7 @@ TEST(mysql, test_union_all) {
 
   EXPECT_EQ(
       query,
-      R"(SELECT t.`name`, t.`age` FROM (SELECT `name`, `age` FROM `User1`) t UNION SELECT t.`name`, t.`age` FROM (SELECT `name`, `age` FROM `User2`) t UNION SELECT t.`name`, t.`age` FROM (SELECT `name`, `age` FROM `User3`) t)");
+      R"(SELECT t.`name`, t.`age` FROM (SELECT `name`, `age` FROM `User1`) t UNION ALL SELECT t.`name`, t.`age` FROM (SELECT `name`, `age` FROM `User2`) t UNION ALL SELECT t.`name`, t.`age` FROM (SELECT `name`, `age` FROM `User3`) t)");
 
   EXPECT_EQ(users.size(), 3);
   EXPECT_EQ(users.at(0).name, "John");

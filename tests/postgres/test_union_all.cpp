@@ -62,7 +62,7 @@ TEST(postgres, test_union_all) {
 
   EXPECT_EQ(
       query,
-      R"(SELECT "name", "age" FROM (SELECT "name", "age" FROM "User1") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User2") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User3"))");
+      R"(SELECT "name", "age" FROM (SELECT "name", "age" FROM "User1") UNION ALL SELECT "name", "age" FROM (SELECT "name", "age" FROM "User2") UNION ALL SELECT "name", "age" FROM (SELECT "name", "age" FROM "User3"))");
 
   EXPECT_EQ(users.size(), 3);
   EXPECT_EQ(users.at(0).name, "John");
