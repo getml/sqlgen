@@ -24,9 +24,9 @@ namespace sqlgen {
 template <class ContainerType, class Connection, class... SelectTs>
   requires is_connection<Connection>
 auto unite_impl(const Ref<Connection>& _conn,
-                const rfl::Tuple<SelectTs...>& _selects, const bool _all) {
+                const rfl::Tuple<SelectTs...>& _stmts, const bool _all) {
   if constexpr (internal::is_range_v<ContainerType>) {
-    auto query = transpilation::to_union<ContainerType>(_selects);
+    auto query = transpilation::to_union<ContainerType>(_stmts);
     query.all = _all;
     return _conn->template read<ContainerType>(query);
 
@@ -52,7 +52,7 @@ auto unite_impl(const Ref<Connection>& _conn,
 
     using RangeType = Range<IteratorType>;
 
-    return unite_impl<RangeType>(_conn, _selects, _all).and_then(to_container);
+    return unite_impl<RangeType>(_conn, _stmts, _all).and_then(to_container);
   }
 }
 
@@ -159,25 +159,25 @@ struct TableTupleType<sqlgen::Union<ContainerType, SelectTs...>, Literal<"">,
 }  // namespace transpilation
 
 template <class ContainerType, class... SelectTs>
-auto unite(const SelectTs&... _selects) {
+auto unite(const SelectTs&... _stmts) {
   return Union<ContainerType, SelectTs...>{
-      .selects_ = rfl::Tuple<SelectTs...>(_selects...), .all_ = false};
+      .selects_ = rfl::Tuple<SelectTs...>(_stmts...), .all_ = false};
 }
 
 template <class... SelectTs>
-auto unite(const SelectTs&... _selects) {
-  return unite<Nothing>(_selects...);
+auto unite(const SelectTs&... _stmts) {
+  return unite<Nothing>(_stmts...);
 }
 
 template <class ContainerType, class... SelectTs>
-auto unite_all(const SelectTs&... _selects) {
+auto unite_all(const SelectTs&... _stmts) {
   return Union<ContainerType, SelectTs...>{
-      .selects_ = rfl::Tuple<SelectTs...>(_selects...), .all_ = true};
+      .selects_ = rfl::Tuple<SelectTs...>(_stmts...), .all_ = true};
 }
 
 template <class... SelectTs>
-auto unite_all(const SelectTs&... _selects) {
-  return unite_all<Nothing>(_selects...);
+auto unite_all(const SelectTs&... _stmts) {
+  return unite_all<Nothing>(_stmts...);
 }
 
 }  // namespace sqlgen
