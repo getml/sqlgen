@@ -97,9 +97,9 @@ struct ExtractTable<sqlgen::Union<ContainerType, SelectTs...>, true> {
 
 template <class ContainerType, class... SelectTs>
 struct ToTableOrQuery<sqlgen::Union<ContainerType, SelectTs...>> {
-  dynamic::SelectFrom::TableOrQueryType operator()(const auto& _query) {
+  dynamic::SelectFrom::TableOrQueryType operator()(const auto& _stmt) {
     return Ref<dynamic::Union>::make(
-        to_union<ContainerType>(_query.selects_, _query.all_));
+        to_union<ContainerType>(_stmt.selects_, _stmt.all_));
   }
 };
 
