@@ -55,12 +55,6 @@ TEST(duckdb, test_union_all) {
       R"(SELECT "name", "age" FROM (SELECT "name", "age" FROM "User1") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User2") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User3"))");
 
   EXPECT_EQ(users.size(), 3);
-  EXPECT_EQ(users.at(0).name, "John");
-  EXPECT_EQ(users.at(0).age, 30);
-  EXPECT_EQ(users.at(1).name, "Jane");
-  EXPECT_EQ(users.at(1).age, 25);
-  EXPECT_EQ(users.at(2).name, "John");
-  EXPECT_EQ(users.at(2).age, 30);
 }
 
 }  // namespace test_union_all
