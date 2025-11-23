@@ -20,6 +20,7 @@
 #include "flatten_fields_t.hpp"
 #include "get_table_t.hpp"
 #include "make_fields.hpp"
+#include "table_tuple_t.hpp"
 #include "to_alias.hpp"
 #include "to_condition.hpp"
 #include "to_group_by.hpp"
@@ -30,14 +31,32 @@
 
 namespace sqlgen::transpilation {
 
-template <class TableTupleType, class AliasType, class FieldsType,
-          class TableOrQueryType, class JoinsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType>
-dynamic::SelectFrom to_select_from(const FieldsType& _fields,
-                                   const TableOrQueryType& _table_or_query,
-                                   const JoinsType& _joins,
-                                   const WhereType& _where,
-                                   const LimitType& _limit) {
+template <class AliasT, class FieldsT, class TableOrQueryT, class JoinsT,
+          class WhereT, class GroupByT, class OrderByT, class LimitT>
+struct SelectFromTypes {
+  using AliasType = AliasT;
+  using FieldsType = FieldsT;
+  using TableOrQueryType = TableOrQueryT;
+  using JoinsType = JoinsT;
+  using WhereType = WhereT;
+  using GroupByType = GroupByT;
+  using OrderByType = OrderByT;
+  using LimitType = LimitT;
+
+  using TableTupleType = table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
+};
+
+template <class SelectFromT>
+dynamic::SelectFrom to_select_from(const auto& _fields,
+                                   const auto& _table_or_query,
+                                   const auto& _joins, const auto& _where,
+                                   const auto& _limit) {
+  using TableTupleType = typename SelectFromT::TableTupleType;
+  using AliasType = typename SelectFromT::AliasType;
+  using FieldsType = typename SelectFromT::FieldsType;
+  using GroupByType = typename SelectFromT::GroupByType;
+  using OrderByType = typename SelectFromT::OrderByType;
+
   static_assert(check_aggregations<TableTupleType,
                                    flatten_fields_t<TableTupleType, FieldsType>,
                                    GroupByType>(),

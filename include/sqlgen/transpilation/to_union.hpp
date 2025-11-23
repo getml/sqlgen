@@ -14,8 +14,8 @@
 
 namespace sqlgen::transpilation {
 
-template <class ContainerType, class... SelectTs>
-dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _stmts,
+template <class ContainerType, class... Ts>
+dynamic::Union to_union(const rfl::Tuple<Ts...>& _stmts,
                         const bool _all) noexcept {
   using ValueType = value_t<ContainerType>;
   using NamedTupleType = rfl::named_tuple_t<ValueType>;
@@ -23,19 +23,13 @@ dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _stmts,
   const auto columns = NamedTupleType::Names::names();
 
   const auto selects = rfl::apply(
+
       [](const auto... _stmt) {
-        return Ref<std::vector<dynamic::SelectFrom>>::make(
-            std::vector<dynamic::SelectFrom>({to_select_from<
-                table_tuple_t<typename SelectTs::TableOrQueryType,
-                              typename SelectTs::AliasType,
-                              typename SelectTs::JoinsType>,
-                typename SelectTs::AliasType, typename SelectTs::FieldsType,
-                typename SelectTs::TableOrQueryType,
-                typename SelectTs::JoinsType, typename SelectTs::WhereType,
-                typename SelectTs::GroupByType, typename SelectTs::OrderByType,
-                typename SelectTs::LimitType>(_stmt.fields_, _stmt.from_,
-                                              _stmt.joins_, _stmt.where_,
-                                              _stmt.limit_)...}));
+        auto vec = std::vector<dynamic::SelectFrom>(
+            {to_select_from<typename Ts::SelectFromTypes>(
+                _stmt.fields_, _stmt.from_, _stmt.joins_, _stmt.where_,
+                _stmt.limit_)...});
+        return Ref<std::vector<dynamic::SelectFrom>>::make(std::move(vec));
       },
       _stmts);
 
