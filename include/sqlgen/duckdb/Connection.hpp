@@ -74,7 +74,7 @@ class SQLGEN_API Connection {
   template <class ContainerType>
   auto read(const rfl::Variant<dynamic::SelectFrom, dynamic::Union> &_query) {
     using ValueType = transpilation::value_t<ContainerType>;
-    const auto sql = _query.visit([](const auto &_q) { return to_sql(_q); });
+    const auto sql = _query.visit([&](const auto &_q) { return to_sql(_q); });
     return internal::to_container<ContainerType, Iterator<ValueType>>(
         Iterator<ValueType>(sql, conn_));
   }
