@@ -26,8 +26,7 @@ template <class ContainerType, class Connection, class... SelectTs>
 auto unite_impl(const Ref<Connection>& _conn,
                 const rfl::Tuple<SelectTs...>& _stmts, const bool _all) {
   if constexpr (internal::is_range_v<ContainerType>) {
-    auto query = transpilation::to_union<ContainerType>(_stmts);
-    query.all = _all;
+    const auto query = transpilation::to_union<ContainerType>(_stmts, _all);
     return _conn->template read<ContainerType>(query);
 
   } else {

@@ -15,7 +15,8 @@
 namespace sqlgen::transpilation {
 
 template <class ContainerType, class... SelectTs>
-dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _stmts) noexcept {
+dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _stmts,
+                        const bool _all) noexcept {
   using ValueType = value_t<ContainerType>;
   using NamedTupleType = rfl::named_tuple_t<ValueType>;
 
@@ -37,7 +38,7 @@ dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _stmts) noexcept {
       },
       _stmts);
 
-  return dynamic::Union{.columns = columns, .selects = selects};
+  return dynamic::Union{.columns = columns, .selects = selects, .all = _all};
 }
 
 }  // namespace sqlgen::transpilation
