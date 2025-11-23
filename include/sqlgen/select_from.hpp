@@ -96,20 +96,20 @@ auto select_from_impl(const Result<Ref<Connection>>& _res,
   });
 }
 
-template <class _TableOrQueryType, class _AliasType, class _FieldsType,
-          class _JoinsType = Nothing, class _WhereType = Nothing,
-          class _GroupByType = Nothing, class _OrderByType = Nothing,
-          class _LimitType = Nothing, class _ToType = Nothing>
+template <class TableOrQueryT, class AliasT, class FieldsT,
+          class JoinsT = Nothing, class WhereT = Nothing,
+          class GroupByT = Nothing, class OrderByT = Nothing,
+          class LimitT = Nothing, class ToT = Nothing>
 struct SelectFrom {
-  using TableOrQueryType = _TableOrQueryType;
-  using AliasType = _AliasType;
-  using FieldsType = _FieldsType;
-  using JoinsType = _JoinsType;
-  using WhereType = _WhereType;
-  using GroupByType = _GroupByType;
-  using OrderByType = _OrderByType;
-  using LimitType = _LimitType;
-  using ToType = _ToType;
+  using TableOrQueryType = TableOrQueryT;
+  using AliasType = AliasT;
+  using FieldsType = FieldsT;
+  using JoinsType = JoinsT;
+  using WhereType = WhereT;
+  using GroupByType = GroupByT;
+  using OrderByType = OrderByT;
+  using LimitType = LimitT;
+  using ToType = ToT;
 
   auto operator()(const auto& _conn) const {
     using TableTupleType =
