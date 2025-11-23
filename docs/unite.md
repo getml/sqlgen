@@ -57,7 +57,7 @@ You can use the result of a `unite` or `unite_all` operation as a subquery in a 
 ```cpp
 const auto united = sqlgen::unite<std::vector<User1>>(s1, s2);
 
-const auto sel = sqlgen::select_from(united.as("u"), "name"_c, "age"_c);
+const auto sel = sqlgen::select_from(united, "name"_c, "age"_c);
 ```
 
 ## Nesting in `JOIN` statements
