@@ -32,21 +32,14 @@
 
 namespace sqlgen {
 
-template <class TableTupleType, class AliasType, class FieldsType,
-          class TableOrQueryType, class JoinsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType,
-          class ContainerType, class Connection>
+template <class SelectFromT, class ContainerType, class Connection>
   requires is_connection<Connection>
-auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
-                      const TableOrQueryType& _table_or_query,
-                      const JoinsType& _joins, const WhereType& _where,
-                      const LimitType& _limit) {
+auto select_from_impl(const Ref<Connection>& _conn, const auto& _fields,
+                      const auto& _table_or_query, const auto& _joins,
+                      const auto& _where, const auto& _limit) {
   if constexpr (internal::is_range_v<ContainerType>) {
-    const auto query =
-        transpilation::to_select_from<TableTupleType, AliasType, FieldsType,
-                                      TableOrQueryType, JoinsType, WhereType,
-                                      GroupByType, OrderByType, LimitType>(
-            _fields, _table_or_query, _joins, _where, _limit);
+    const auto query = transpilation::to_select_from<SelectFromT>(
+        _fields, _table_or_query, _joins, _where, _limit);
     return _conn->template read<ContainerType>(query);
 
   } else {
@@ -64,43 +57,51 @@ auto select_from_impl(const Ref<Connection>& _conn, const FieldsType& _fields,
       return container;
     };
 
-    using IteratorType = internal::iterator_t<
-        transpilation::fields_to_named_tuple_t<TableTupleType, FieldsType>,
-        decltype(_conn)>;
+    using IteratorType =
+        internal::iterator_t<transpilation::fields_to_named_tuple_t<
+                                 typename SelectFromT::TableTupleType,
+                                 typename SelectFromT::FieldsType>,
+                             decltype(_conn)>;
 
     using RangeType = Range<IteratorType>;
 
-    return select_from_impl<TableTupleType, AliasType, FieldsType,
-                            TableOrQueryType, JoinsType, WhereType, GroupByType,
-                            OrderByType, LimitType, RangeType>(
+    return select_from_impl<SelectFromT, RangeType>(
                _conn, _fields, _table_or_query, _joins, _where, _limit)
         .and_then(to_container);
   }
 }
 
-template <class TableTupleType, class AliasType, class FieldsType,
-          class TableOrQueryType, class JoinsType, class WhereType,
-          class GroupByType, class OrderByType, class LimitType,
-          class ContainerType, class Connection>
+template <class SelectFromT, class ContainerType, class Connection>
   requires is_connection<Connection>
-auto select_from_impl(const Result<Ref<Connection>>& _res,
-                      const FieldsType& _fields,
-                      const TableOrQueryType& _table_or_query,
-                      const JoinsType& _joins, const WhereType& _where,
-                      const LimitType& _limit) {
+auto select_from_impl(const Result<Ref<Connection>>& _res, const auto& _fields,
+                      const auto& _table_or_query, const auto& _joins,
+                      const auto& _where, const auto& _limit) {
   return _res.and_then([&](const auto& _conn) {
-    return select_from_impl<TableTupleType, AliasType, FieldsType,
-                            TableOrQueryType, JoinsType, WhereType, GroupByType,
-                            OrderByType, LimitType, ContainerType>(
+    return select_from_impl<SelectFromT, ContainerType>(
         _conn, _fields, _table_or_query, _joins, _where, _limit);
   });
 }
 
-template <class TableOrQueryType, class AliasType, class FieldsType,
-          class JoinsType = Nothing, class WhereType = Nothing,
-          class GroupByType = Nothing, class OrderByType = Nothing,
-          class LimitType = Nothing, class ToType = Nothing>
+template <class TableOrQueryT, class AliasT, class FieldsT,
+          class JoinsT = Nothing, class WhereT = Nothing,
+          class GroupByT = Nothing, class OrderByT = Nothing,
+          class LimitT = Nothing, class ToT = Nothing>
 struct SelectFrom {
+  using TableOrQueryType = TableOrQueryT;
+  using AliasType = AliasT;
+  using FieldsType = FieldsT;
+  using JoinsType = JoinsT;
+  using WhereType = WhereT;
+  using GroupByType = GroupByT;
+  using OrderByType = OrderByT;
+  using LimitType = LimitT;
+  using ToType = ToT;
+
+  using SelectFromTypes =
+      transpilation::SelectFromTypes<AliasType, FieldsType, TableOrQueryType,
+                                     JoinsType, WhereType, GroupByType,
+                                     OrderByType, LimitType>;
+
   auto operator()(const auto& _conn) const {
     using TableTupleType =
         transpilation::table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
@@ -113,9 +114,7 @@ struct SelectFrom {
 
       using ContainerType = std::conditional_t<std::is_same_v<ToType, Nothing>,
                                                Range<IteratorType>, ToType>;
-      return select_from_impl<
-          TableTupleType, AliasType, FieldsType, TableOrQueryType, JoinsType,
-          WhereType, GroupByType, OrderByType, LimitType, ContainerType>(
+      return select_from_impl<SelectFromTypes, ContainerType>(
           _conn, fields_, from_, joins_, where_, limit_);
 
     } else {
@@ -129,9 +128,7 @@ struct SelectFrom {
         return std::move(_vec[0]);
       };
 
-      return select_from_impl<TableTupleType, AliasType, FieldsType,
-                              TableOrQueryType, JoinsType, WhereType,
-                              GroupByType, OrderByType, LimitType,
+      return select_from_impl<SelectFromTypes,
                               std::vector<std::remove_cvref_t<ToType>>>(
                  _conn, fields_, from_, joins_, where_, limit_)
           .and_then(extract_result);
@@ -311,12 +308,9 @@ struct ToTableOrQuery<
     SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
                GroupByType, OrderByType, LimitType, ToType>> {
   dynamic::SelectFrom::TableOrQueryType operator()(const auto& _query) {
-    using TableTupleType =
-        table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
+    using QueryType = std::remove_cvref_t<decltype(_query)>;
     return Ref<dynamic::SelectFrom>::make(
-        transpilation::to_select_from<TableTupleType, AliasType, FieldsType,
-                                      TableOrQueryType, JoinsType, WhereType,
-                                      GroupByType, OrderByType, LimitType>(
+        transpilation::to_select_from<typename QueryType::SelectFromTypes>(
             _query.fields_, _query.from_, _query.joins_, _query.where_,
             _query.limit_));
   }
@@ -347,7 +341,7 @@ inline auto select_from(const FieldTypes&... _fields) {
       .from_ = transpilation::TableWrapper<TableType>{}};
 }
 
-template <rfl::internal::StringLiteral _alias, class QueryType,
+template <rfl::internal::StringLiteral _alias = "", class QueryType,
           class... FieldTypes>
 inline auto select_from(const QueryType& _query, const FieldTypes&... _fields) {
   using FieldsType =

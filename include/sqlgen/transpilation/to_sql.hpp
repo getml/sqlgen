@@ -12,6 +12,7 @@
 #include "../insert.hpp"
 #include "../read.hpp"
 #include "../select_from.hpp"
+#include "../unite.hpp"
 #include "../update.hpp"
 #include "columns_t.hpp"
 #include "read_to_select_from.hpp"
@@ -22,6 +23,7 @@
 #include "to_drop.hpp"
 #include "to_insert_or_write.hpp"
 #include "to_select_from.hpp"
+#include "to_union.hpp"
 #include "to_update.hpp"
 #include "value_t.hpp"
 
@@ -96,18 +98,11 @@ struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType>> {
   }
 };
 
-template <class TableOrQueryType, class AliasType, class FieldsType,
-          class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ToType>
-struct ToSQL<
-    SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
-               GroupByType, OrderByType, LimitType, ToType>> {
+template <class... Ts>
+struct ToSQL<SelectFrom<Ts...>> {
   dynamic::Statement operator()(const auto& _select_from) const {
-    using TableTupleType =
-        table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
-    return to_select_from<TableTupleType, AliasType, FieldsType,
-                          TableOrQueryType, JoinsType, WhereType, GroupByType,
-                          OrderByType, LimitType>(
+    using SelectFromTypes = typename SelectFrom<Ts...>::SelectFromTypes;
+    return to_select_from<SelectFromTypes>(
         _select_from.fields_, _select_from.from_, _select_from.joins_,
         _select_from.where_, _select_from.limit_);
   }
@@ -117,6 +112,13 @@ template <class T, class SetsType, class WhereType>
 struct ToSQL<Update<T, SetsType, WhereType>> {
   dynamic::Statement operator()(const auto& _update) const {
     return to_update<T, SetsType, WhereType>(_update.sets_, _update.where_);
+  }
+};
+
+template <class ContainerType, class... Selects>
+struct ToSQL<sqlgen::Union<ContainerType, Selects...>> {
+  dynamic::Statement operator()(const auto& _union) const {
+    return to_union<ContainerType>(_union.selects_, _union.all_);
   }
 };
 

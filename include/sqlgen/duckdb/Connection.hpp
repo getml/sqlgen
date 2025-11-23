@@ -72,10 +72,11 @@ class SQLGEN_API Connection {
   }
 
   template <class ContainerType>
-  auto read(const dynamic::SelectFrom &_query) {
+  auto read(const rfl::Variant<dynamic::SelectFrom, dynamic::Union> &_query) {
     using ValueType = transpilation::value_t<ContainerType>;
+    const auto sql = _query.visit([&](const auto &_q) { return to_sql(_q); });
     return internal::to_container<ContainerType, Iterator<ValueType>>(
-        Iterator<ValueType>(to_sql(_query), conn_));
+        Iterator<ValueType>(sql, conn_));
   }
 
   Result<Nothing> rollback() noexcept;
