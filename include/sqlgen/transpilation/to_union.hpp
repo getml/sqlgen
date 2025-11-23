@@ -23,7 +23,7 @@ dynamic::Union to_union(const rfl::Tuple<Ts...>& _stmts,
   const auto columns = NamedTupleType::Names::names();
 
   const auto selects = rfl::apply(
-      []<class StmtTs>(const StmtTs... _stmt) {
+      []<class... StmtTs>(const StmtTs... _stmt) {
         auto vec = std::vector<dynamic::SelectFrom>(
             {to_select_from<typename StmtTs::SelectFromTypes>(
                 _stmt.fields_, _stmt.from_, _stmt.joins_, _stmt.where_,
