@@ -9,13 +9,13 @@
 #include "../dynamic/SelectFrom.hpp"
 #include "../dynamic/Union.hpp"
 #include "table_tuple_t.hpp"
-#include "to_stmtelect_from.hpp"
+#include "to_select_from.hpp"
 #include "value_t.hpp"
 
 namespace sqlgen::transpilation {
 
 template <class ContainerType, class... SelectTs>
-dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _stmttmts,
+dynamic::Union to_union(const rfl::Tuple<SelectTs...>& _stmts,
                         const bool _all) noexcept {
   using ValueType = value_t<ContainerType>;
   using NamedTupleType = rfl::named_tuple_t<ValueType>;
