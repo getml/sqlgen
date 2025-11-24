@@ -54,7 +54,7 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
       - name: Install ninja 
-        run: brew install ninja autoconf bison flex
+        run: brew install ninja autoconf bison flex pkg-config
         if: matrix.os == 'macos-latest'
       - name: Compile
         if: matrix.db == 'duckdb' 
