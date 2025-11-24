@@ -67,7 +67,7 @@ jobs:
             export CMAKE_GENERATOR=Ninja
           fi
           $CXX --version
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_DUCKDB=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF 
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_DUCKDB=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF 
           cmake --build build -j 4
       - name: Compile
         if: matrix.db == 'postgres' 
@@ -81,7 +81,7 @@ jobs:
             export MACOSX_DEPLOYMENT_TARGET="$(sw_vers -productVersion)"
           fi
           $CXX --version
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON 
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_SQLITE3=OFF -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON 
           cmake --build build -j 4
       - name: Compile
         if: matrix.db == 'sqlite' 
@@ -94,7 +94,7 @@ jobs:
             export CMAKE_GENERATOR=Ninja
           fi
           $CXX --version
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_POSTGRES=OFF
           cmake --build build -j 4
       - name: Compile
         if: matrix.db == 'mysql' 
@@ -108,9 +108,9 @@ jobs:
           fi
           $CXX --version
           if [[ "${{ matrix.os == 'macos-latest' }}" == "true" ]]; then
-            cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=arm64-osx-dynamic -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
+            cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=arm64-osx-dynamic -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
           else
-            cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=x64-osx-dynamic -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
+            cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_MYSQL=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=x64-osx-dynamic -DSQLGEN_BUILD_DRY_TESTS_ONLY=ON
           fi
           cmake --build build -j 4
       - name: Run tests
