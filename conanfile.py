@@ -19,7 +19,7 @@ class SQLGenConan(ConanFile):
     license = "MIT"
     url = "https://github.com/conan-io/conan-center-index"
     homepage = "https://github.com/getml/sqlgen"
-    topics = ("postgres", "sqlite", "orm")
+    topics = ("duckdb", "mypy", "postgres", "sqlite", "orm")
     package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
 
@@ -29,6 +29,7 @@ class SQLGenConan(ConanFile):
         "with_mysql": [True, False],
         "with_postgres": [True, False],
         "with_sqlite3": [True, False],
+        "with_duckdb": [True, False],
     }
     default_options = {
         "shared": False,
@@ -36,6 +37,7 @@ class SQLGenConan(ConanFile):
         "with_mysql": False,
         "with_postgres": True,
         "with_sqlite3": True,
+        "with_duckdb": False,
     }
 
     def config_options(self):
@@ -54,6 +56,8 @@ class SQLGenConan(ConanFile):
             self.requires("libpq/17.5", transitive_headers=True)
         if self.options.with_sqlite3:
             self.requires("sqlite3/3.49.1", transitive_headers=True)
+        if self.options.with_duckdb:
+            self.requires("duckdb/1.1.3", transitive_headers=True)
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.23 <4]")
@@ -78,6 +82,7 @@ class SQLGenConan(ConanFile):
         tc.cache_variables["SQLGEN_MYSQL"] = self.options.with_mysql
         tc.cache_variables["SQLGEN_POSTGRES"] = self.options.with_postgres
         tc.cache_variables["SQLGEN_SQLITE3"] = self.options.with_sqlite3
+        tc.cache_variables["SQLGEN_DUCKDB"] = self.options.with_duckdb
         tc.cache_variables["SQLGEN_USE_VCPKG"] = False
         tc.generate()
 
