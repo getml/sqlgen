@@ -11,6 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - db: duckdb 
           - db: postgres
           - db: sqlite
           - db: mysql 
@@ -33,6 +34,11 @@ jobs:
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
       - uses: ilammy/msvc-dev-cmd@v1
       - uses: lukka/run-vcpkg@v11
+      - name: Compile
+        if: matrix.db == 'duckdb' 
+        run: |
+          cmake -S . -B build -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_DUCKDB=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF 
+          cmake --build build --config Release -j4 
       - name: Compile
         if: matrix.db == 'postgres' 
         run: |

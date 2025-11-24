@@ -18,12 +18,16 @@ jobs:
             db: sqlite
           - os: "macos-latest"
             db: mysql 
+          - os: "macos-latest"
+            db: duckdb
           - os: "macos-13"
             db: postgres
           - os: "macos-13"
             db: sqlite
           - os: "macos-13"
             db: mysql 
+          - os: "macos-13"
+            db: duckdb
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
     concurrency:
       group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.db }}
@@ -52,6 +56,19 @@ jobs:
       - name: Install ninja 
         run: brew install ninja autoconf bison flex
         if: matrix.os == 'macos-latest'
+      - name: Compile
+        if: matrix.db == 'duckdb' 
+        env:
+          CC: clang
+          CXX: clang++
+        run: |
+          if [[ "${{ matrix.os == 'macos-latest' }}" == "true" ]]; then
+            export VCPKG_FORCE_SYSTEM_BINARIES=arm
+            export CMAKE_GENERATOR=Ninja
+          fi
+          $CXX --version
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_DUCKDB=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF 
+          cmake --build build -j 4
       - name: Compile
         if: matrix.db == 'postgres' 
         env:
