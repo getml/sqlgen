@@ -27,15 +27,18 @@ dynamic::CreateAs to_create_as(const dynamic::CreateAs::What _what,
                                const TableOrQueryType& _table_or_query,
                                const JoinsType& _joins, const WhereType& _where,
                                const LimitType& _limit) {
+  using SelectFromTypes =
+      transpilation::SelectFromTypes<AliasType, FieldsType, TableOrQueryType,
+                                     JoinsType, WhereType, GroupByType,
+                                     OrderByType, LimitType>;
+
   return dynamic::CreateAs{
       .what = _what,
       .table_or_view = dynamic::Table{.alias = std::nullopt,
                                       .name = get_tablename<T>(),
                                       .schema = get_schema<T>()},
-      .query = to_select_from<TableTupleType, AliasType, FieldsType,
-                              TableOrQueryType, JoinsType, WhereType,
-                              GroupByType, OrderByType, LimitType>(
-          _fields, _table_or_query, _joins, _where, _limit),
+      .query = to_select_from<SelectFromTypes>(_fields, _table_or_query, _joins,
+                                               _where, _limit),
       .or_replace = _or_replace,
       .if_not_exists = _if_not_exists};
 }
