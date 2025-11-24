@@ -6,6 +6,7 @@
 [![Generic badge](https://img.shields.io/badge/gcc-11+-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/clang-14+-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://shields.io/)
+[![Conan Center](https://img.shields.io/conan/v/sqlgen)](https://conan.io/center/recipes/sqlgen)
 
 **📖 Documentation**: [Click here](docs/README.md)
 
@@ -38,7 +39,14 @@ The following table lists the databases currently supported by sqlgen and the un
 
 ## Quick Start
 
-### Installation using vcpkg
+### Install using vcpkg or Conan
+
+You can install the latest release of sqlgen 
+using either [vcpkg](https://vcpkg.io/en/package/sqlgen) or [Conan](https://conan.io/center/recipes/sqlgen).
+
+### Build using vcpkg
+
+Alternatively, you can build sqlgen from source using vcpkg:
 
 1. Make sure you have the required dependencies installed (skip this step on Windows):
 ```bash
@@ -74,7 +82,9 @@ find_package(sqlgen REQUIRED)
 target_link_libraries(your_target PRIVATE sqlgen::sqlgen)
 ```
 
-### Installation using Conan
+### Build using Conan
+
+You can also build sqlgen from source using Conan:
 
 1. Install Conan (assuming you have Python and pipx installed):
 
