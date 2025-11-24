@@ -46,7 +46,7 @@ TEST(duckdb, test_union_in_select) {
   const auto united = sqlgen::unite<std::vector<User1>>(s1, s2, s3);
 
   const auto sel = sqlgen::select_from(united, "name"_c, "age"_c) |
-                   sqlgen::to<std::vector<User1>>;
+                   sqlgen::order_by("name"_c) | sqlgen::to<std::vector<User1>>;
 
   const auto result = sel(conn);
 
@@ -56,7 +56,7 @@ TEST(duckdb, test_union_in_select) {
 
   EXPECT_EQ(
       query,
-      R"(SELECT "name", "age" FROM (SELECT "name", "age" FROM (SELECT "name", "age" FROM "User1") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User2") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User3")))");
+      R"(SELECT "name", "age" FROM (SELECT "name", "age" FROM (SELECT "name", "age" FROM "User1") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User2") UNION SELECT "name", "age" FROM (SELECT "name", "age" FROM "User3")) ORDER BY "name")");
 
   EXPECT_EQ(users.size(), 3);
   EXPECT_EQ(users.at(0).name, "Jane");
