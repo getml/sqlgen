@@ -6,6 +6,7 @@
 [![Generic badge](https://img.shields.io/badge/gcc-11+-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/clang-14+-blue.svg)](https://shields.io/)
 [![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://shields.io/)
+[![Conan Center](https://img.shields.io/conan/v/sqlgen)](https://conan.io/center/recipes/sqlgen)
 
 **📖 Documentation**: [Click here](docs/README.md)
 
@@ -31,14 +32,21 @@ The following table lists the databases currently supported by sqlgen and the un
 
 | Database      | Library                                                                  | Version      | License       | Remarks                                              |
 |---------------|--------------------------------------------------------------------------|--------------|---------------| -----------------------------------------------------|
-| DuckDB        | [duckdb](https://github.com/duckdb/duckdb)                               | >= 1.4.1     | MIT           |                                                      |
+| DuckDB        | [duckdb](https://github.com/duckdb/duckdb)                               | >= 1.4.2     | MIT           |                                                      |
 | MySQL/MariaDB | [libmariadb](https://github.com/mariadb-corporation/mariadb-connector-c) | >= 3.4.5     | LGPL          |                                                      |
 | PostgreSQL    | [libpq](https://github.com/postgres/postgres)                            | >= 16.4      | PostgreSQL    | Will work for all libpq-compatible databases         |
 | sqlite        | [sqlite](https://sqlite.org/index.html)                                  | >= 3.49.1    | Public Domain |                                                      |
 
 ## Quick Start
 
-### Installation using vcpkg
+### Install using vcpkg or Conan
+
+You can install the latest release of sqlgen 
+using either [vcpkg](https://vcpkg.io/en/package/sqlgen) or [Conan](https://conan.io/center/recipes/sqlgen).
+
+### Build using vcpkg
+
+Alternatively, you can build sqlgen from source using vcpkg:
 
 1. Make sure you have the required dependencies installed (skip this step on Windows):
 ```bash
@@ -66,7 +74,7 @@ Run `./vcpkg/vcpkg help triplets` to view all supported triplets.
 Common triplets for shared libraries are `x64-linux-dynamic`, 
 `arm64-osx-dynamic` or `x64-osx-dynamic`.   
 
-Add `-DSQLGEN_MYSQL=ON` to support MySQL/MariaDB.
+Add `-DSQLGEN_MYSQL=ON` to support MySQL/MariaDB. Add `-DSQLGEN_DUCKDB=ON` to support DuckDB.
 
 4. Include in your CMake project:
 ```cmake
@@ -74,7 +82,9 @@ find_package(sqlgen REQUIRED)
 target_link_libraries(your_target PRIVATE sqlgen::sqlgen)
 ```
 
-### Installation using Conan
+### Build using Conan
+
+You can also build sqlgen from source using Conan:
 
 1. Install Conan (assuming you have Python and pipx installed):
 

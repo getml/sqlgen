@@ -11,8 +11,12 @@
       "dependencies": [
         {
           "name": "duckdb",
-          "version>=": "1.4.1"
-        }
+          "version>=": "1.4.2"
+        },
+	{
+	  "name":"icu",
+	  "version>=":"78.1"
+	}
       ]
     },
     "mysql": {
