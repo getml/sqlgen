@@ -20,14 +20,6 @@ jobs:
             db: mysql 
           - os: "macos-latest"
             db: duckdb
-          - os: "macos-15-intel"
-            db: postgres
-          - os: "macos-15-intel"
-            db: sqlite
-          - os: "macos-15-intel"
-            db: mysql 
-          - os: "macos-15-intel"
-            db: duckdb
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
     concurrency:
       group: ci-${{ github.ref }}-${{ github.job }}-${{ matrix.os }}-${{ matrix.db }}
@@ -67,7 +59,7 @@ jobs:
             export CMAKE_GENERATOR=Ninja
           fi
           $CXX --version
-          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_DUCKDB=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/icu4c 
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_STANDARD=20 -DCMAKE_BUILD_TYPE=Release -DSQLGEN_BUILD_TESTS=ON -DSQLGEN_DUCKDB=ON -DSQLGEN_POSTGRES=OFF -DSQLGEN_SQLITE3=OFF 
           cmake --build build -j 4
       - name: Compile
         if: matrix.db == 'postgres' 
