@@ -20,13 +20,13 @@ jobs:
             db: mysql 
           - os: "macos-latest"
             db: duckdb
-          - os: "macos-13"
+          - os: "macos-15-intel"
             db: postgres
-          - os: "macos-13"
+          - os: "macos-15-intel"
             db: sqlite
-          - os: "macos-13"
+          - os: "macos-15-intel"
             db: mysql 
-          - os: "macos-13"
+          - os: "macos-15-intel"
             db: duckdb
     name: "${{ github.job }} (${{ matrix.os }}-${{ matrix.db }})"
     concurrency:
