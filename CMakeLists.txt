@@ -51,7 +51,7 @@ if (SQLGEN_USE_VCPKG)
     set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 endif ()
 
-project(sqlgen VERSION 0.4.0 LANGUAGES CXX)
+project(sqlgen VERSION 0.5.0 LANGUAGES CXX)
 
 if (SQLGEN_BUILD_SHARED)
     add_library(sqlgen SHARED)
