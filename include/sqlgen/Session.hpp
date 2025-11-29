@@ -12,12 +12,14 @@
 #include "dynamic/SelectFrom.hpp"
 #include "dynamic/Statement.hpp"
 #include "dynamic/Write.hpp"
+#include "internal/iterator_t.hpp"
 
 namespace sqlgen {
 
-template <class Connection>
+template <class _Connection>
 class Session {
  public:
+  using Connection = _Connection;
   using ConnPtr = Ref<Connection>;
 
   Session(const Ref<Connection>& _conn, const Ref<std::atomic_flag>& _flag)
@@ -94,5 +96,14 @@ class Session {
 };
 
 }  // namespace sqlgen
+
+namespace sqlgen::internal {
+
+template <class ValueType, class Connection>
+struct IteratorType<ValueType, sqlgen::Session<Connection>> {
+  using Type = typename IteratorType<ValueType, Connection>::Type;
+};
+
+}  // namespace sqlgen::internal
 
 #endif
