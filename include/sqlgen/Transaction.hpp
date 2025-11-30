@@ -2,6 +2,7 @@
 #define SQLGEN_TRANSACTION_HPP_
 
 #include "Ref.hpp"
+#include "internal/iterator_t.hpp"
 #include "is_connection.hpp"
 
 namespace sqlgen {
@@ -74,7 +75,7 @@ class Transaction {
   }
 
   template <class ContainerType>
-  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+  auto read(const dynamic::SelectFrom& _query) {
     return conn_->template read<ContainerType>(_query);
   }
 
@@ -111,4 +112,12 @@ class Transaction {
 
 }  // namespace sqlgen
 
+namespace sqlgen::internal {
+
+template <class ValueType, class Connection>
+struct IteratorType<ValueType, sqlgen::Transaction<Connection>> {
+  using Type = typename IteratorType<ValueType, Connection>::Type;
+};
+
+}  // namespace sqlgen::internal
 #endif

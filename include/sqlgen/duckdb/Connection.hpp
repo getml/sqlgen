@@ -192,11 +192,6 @@ class SQLGEN_API Connection {
   ConnPtr conn_;
 };
 
-static_assert(is_connection<Connection>,
-              "Must fulfill the is_connection concept.");
-static_assert(is_connection<Transaction<Connection>>,
-              "Must fulfill the is_connection concept.");
-
 }  // namespace sqlgen::duckdb
 
 namespace sqlgen::internal {
@@ -204,6 +199,13 @@ template <class ValueType>
 struct IteratorType<ValueType, duckdb::Connection> {
   using Type = duckdb::Iterator<ValueType>;
 };
+
+static_assert(is_connection<duckdb::Connection>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Session<duckdb::Connection>>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Transaction<duckdb::Connection>>,
+              "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::internal
 

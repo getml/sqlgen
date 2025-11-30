@@ -6,6 +6,7 @@
 #include "../Result.hpp"
 #include "../transpilation/value_t.hpp"
 #include "is_range.hpp"
+#include "iterator_t.hpp"
 
 namespace sqlgen::internal {
 

@@ -13,6 +13,7 @@
 #include "../Iterator.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../Session.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Insert.hpp"
@@ -104,11 +105,6 @@ class SQLGEN_API Connection {
   Conn conn_;
 };
 
-static_assert(is_connection<Connection>,
-              "Must fulfill the is_connection concept.");
-static_assert(is_connection<Transaction<Connection>>,
-              "Must fulfill the is_connection concept.");
-
 }  // namespace sqlgen::postgres
 
 namespace sqlgen::internal {
@@ -117,6 +113,13 @@ template <class ValueType>
 struct IteratorType<ValueType, postgres::Connection> {
   using Type = Iterator<ValueType, postgres::Iterator>;
 };
+
+static_assert(is_connection<postgres::Connection>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Session<postgres::Connection>>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Transaction<postgres::Connection>>,
+              "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::internal
 

@@ -6,12 +6,14 @@
 #include <string>
 #include <vector>
 
+#include "Range.hpp"
 #include "Ref.hpp"
 #include "Result.hpp"
 #include "dynamic/SelectFrom.hpp"
 #include "dynamic/Statement.hpp"
 #include "dynamic/Write.hpp"
 #include "internal/MockTable.hpp"
+#include "internal/iterator_t.hpp"
 
 namespace sqlgen {
 
@@ -40,6 +42,12 @@ concept is_connection = requires(
   {
     c.template read<std::vector<internal::MockTable>>(_select_from)
   } -> std::same_as<Result<std::vector<internal::MockTable>>>;
+
+  /// Reads the results of a SelectFrom statement as a Range.
+  {
+    c.template read<Range<internal::MockTable>>(_select_from)
+  } -> std::same_as<
+        Result<Range<internal::iterator_t<internal::MockTable, ConnType>>>>;
 
   /// Commits a transaction.
   { c.rollback() } -> std::same_as<Result<Nothing>>;

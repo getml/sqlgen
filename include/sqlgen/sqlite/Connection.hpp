@@ -12,6 +12,7 @@
 #include "../Iterator.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../Session.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/SelectFrom.hpp"
 #include "../dynamic/Union.hpp"
@@ -110,11 +111,6 @@ class SQLGEN_API Connection {
   ConnPtr conn_;
 };
 
-static_assert(is_connection<Connection>,
-              "Must fulfill the is_connection concept.");
-static_assert(is_connection<Transaction<Connection>>,
-              "Must fulfill the is_connection concept.");
-
 }  // namespace sqlgen::sqlite
 
 namespace sqlgen::internal {
@@ -124,6 +120,12 @@ struct IteratorType<ValueType, sqlite::Connection> {
   using Type = Iterator<ValueType, sqlite::Iterator>;
 };
 
+static_assert(is_connection<sqlite::Connection>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Session<sqlite::Connection>>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Transaction<sqlite::Connection>>,
+              "Must fulfill the is_connection concept.");
 }  // namespace sqlgen::internal
 
 #endif
