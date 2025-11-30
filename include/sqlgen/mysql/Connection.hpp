@@ -11,6 +11,7 @@
 #include "../Iterator.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../Session.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Column.hpp"
 #include "../dynamic/Insert.hpp"
@@ -112,11 +113,6 @@ class SQLGEN_API Connection {
   ConnPtr conn_;
 };
 
-static_assert(is_connection<Connection>,
-              "Must fulfill the is_connection concept.");
-static_assert(is_connection<Transaction<Connection>>,
-              "Must fulfill the is_connection concept.");
-
 }  // namespace sqlgen::mysql
 
 namespace sqlgen::internal {
@@ -125,6 +121,13 @@ template <class ValueType>
 struct IteratorType<ValueType, mysql::Connection> {
   using Type = Iterator<ValueType, mysql::Iterator>;
 };
+
+static_assert(is_connection<mysql::Connection>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Session<mysql::Connection>>,
+              "Must fulfill the is_connection concept.");
+static_assert(is_connection<Transaction<mysql::Connection>>,
+              "Must fulfill the is_connection concept.");
 
 }  // namespace sqlgen::internal
 

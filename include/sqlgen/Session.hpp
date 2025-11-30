@@ -65,7 +65,7 @@ class Session {
   }
 
   template <class ContainerType>
-  Result<ContainerType> read(const dynamic::SelectFrom& _query) {
+  auto read(const dynamic::SelectFrom& _query) {
     return conn_->template read<ContainerType>(_query);
   }
 
