@@ -34,10 +34,10 @@ struct ToSQL;
 
 template <class ValueType, class TableOrQueryType, class AliasType,
           class FieldsType, class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ToType>
+          class OrderByType, class LimitType, class OffsetType, class ToType>
 struct ToSQL<
     CreateAs<ValueType, TableOrQueryType, AliasType, FieldsType, JoinsType,
-             WhereType, GroupByType, OrderByType, LimitType, ToType>> {
+             WhereType, GroupByType, OrderByType, LimitType, OffsetType, ToType>> {
   dynamic::Statement operator()(const auto& _create_as) const {
     using TableTupleType =
         transpilation::table_tuple_t<ValueType, AliasType, JoinsType>;
@@ -46,7 +46,7 @@ struct ToSQL<
                         OrderByType, LimitType>(
         _create_as.what_, _create_as.or_replace_, _create_as.if_not_exists_,
         _create_as.as_.fields_, _create_as.as_.from_, _create_as.as_.joins_,
-        _create_as.as_.where_, _create_as.as_.limit_);
+        _create_as.as_.where_, _create_as.as_.limit_, _create_as.as_.offset_);
   }
 };
 
@@ -90,11 +90,11 @@ struct ToSQL<Insert<T>> {
 };
 
 template <class ContainerType, class WhereType, class OrderByType,
-          class LimitType>
-struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType>> {
+          class LimitType, class OffsetType>
+struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType, OffsetType>> {
   dynamic::Statement operator()(const auto& _read) const {
     return read_to_select_from<value_t<ContainerType>, WhereType, OrderByType,
-                               LimitType>(_read.where_, _read.limit_);
+                               LimitType, OffsetType>(_read.where_, _read.limit_, _read.offset_);
   }
 };
 
@@ -104,7 +104,7 @@ struct ToSQL<SelectFrom<Ts...>> {
     using SelectFromTypes = typename SelectFrom<Ts...>::SelectFromTypes;
     return to_select_from<SelectFromTypes>(
         _select_from.fields_, _select_from.from_, _select_from.joins_,
-        _select_from.where_, _select_from.limit_);
+        _select_from.where_, _select_from.limit_, _select_from.offset_);
   }
 };
 

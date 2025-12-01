@@ -113,7 +113,8 @@ using namespace sqlgen::literals;
 const auto query = sqlgen::read<std::vector<Person>>
                    | where("age"_c >= 18 and "last_name"_c == "Simpson")
                    | order_by("first_name"_c.desc())
-                   | limit(10);
+                   | limit(10)
+                   | offset(3);
 ```
 
 This generates:
@@ -123,5 +124,6 @@ SELECT "id", "first_name", "last_name", "age"
 FROM "Person"
 WHERE ("age" >= 18) AND ("last_name" = 'Simpson')
 ORDER BY "first_name" DESC
-LIMIT 10;
+LIMIT 10
+OFFSET 3;
 ```

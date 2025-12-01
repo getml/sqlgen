@@ -216,10 +216,9 @@ In this example, each field in the `Result` struct must have a name that matches
 
 ## Notes
 
-- The `group_by` clause must be used before `order_by` or `limit` clauses
+- The `group_by` clause must be used before `order_by` or `limit` and `offset` clauses
 - You cannot use `group_by` multiple times in the same query
 - Aggregation functions can be used with or without `group_by`
 - The result type must match the structure of your select statement. Note that fields are matched by name, not order.
 - All aggregations are type-safe and will map to appropriate SQL types
 - The `Result<...>` type provides error handling; use `.value()` to extract the result (will throw an exception if there's an error) or handle errors as needed
-

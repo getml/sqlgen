@@ -11,6 +11,7 @@
 #include "GroupBy.hpp"
 #include "JoinType.hpp"
 #include "Limit.hpp"
+#include "Offset.hpp"
 #include "Operation.hpp"
 #include "OrderBy.hpp"
 #include "Table.hpp"
@@ -46,6 +47,7 @@ struct SelectFrom {
   std::optional<GroupBy> group_by = std::nullopt;
   std::optional<OrderBy> order_by = std::nullopt;
   std::optional<Limit> limit = std::nullopt;
+  std::optional<Offset> offset = std::nullopt;
 };
 
 }  // namespace sqlgen::dynamic
