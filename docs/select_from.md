@@ -136,10 +136,11 @@ const auto query = select_from<Person>(
     "first_name"_c,
     "last_name"_c,
     "age"_c
-) 
+)
 | where("age"_c >= 18)              // Filter results
 | order_by("last_name"_c, "first_name"_c)  // Order results
 | limit(10)                         // Limit number of results
+| offset(5)                         // Offset the result set
 | to<std::vector<Person>>;          // Convert to container
 ```
 

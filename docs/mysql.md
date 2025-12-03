@@ -170,7 +170,6 @@ const auto result = session(pool)
   - Connection pooling for high-performance applications
   - Auto-incrementing primary keys
   - Various data types including VARCHAR, TIMESTAMP, DATE
-  - Complex queries with WHERE clauses, ORDER BY, LIMIT, JOINs
+  - Complex queries with WHERE clauses, ORDER BY, LIMIT, OFFSET, JOINs
   - LIKE and pattern matching operations
   - Mathematical operations and string functions
-

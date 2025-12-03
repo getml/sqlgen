@@ -18,16 +18,18 @@
 #include "make_columns.hpp"
 #include "to_condition.hpp"
 #include "to_limit.hpp"
+#include "to_offset.hpp"
 #include "to_order_by.hpp"
 
 namespace sqlgen::transpilation {
 
 template <class T, class WhereType = Nothing, class OrderByType = Nothing,
-          class LimitType = Nothing>
+          class LimitType = Nothing, class OffsetType = Nothing>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
 dynamic::SelectFrom read_to_select_from(const WhereType& _where = WhereType{},
-                                        const LimitType& _limit = LimitType{}) {
+                                        const LimitType& _limit = LimitType{},
+                                        const OffsetType& _offset = OffsetType{}) {
   using namespace std::ranges::views;
 
   using NamedTupleType = rfl::named_tuple_t<std::remove_cvref_t<T>>;
@@ -48,7 +50,8 @@ dynamic::SelectFrom read_to_select_from(const WhereType& _where = WhereType{},
       .fields = fields,
       .where = to_condition<std::remove_cvref_t<T>>(_where),
       .order_by = to_order_by<OrderByType>(),
-      .limit = to_limit(_limit)};
+      .limit = to_limit(_limit),
+      .offset = to_offset(_offset)};
 }
 
 }  // namespace sqlgen::transpilation

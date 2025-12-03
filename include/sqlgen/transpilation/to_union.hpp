@@ -27,7 +27,7 @@ dynamic::Union to_union(const rfl::Tuple<Ts...>& _stmts,
         auto vec = std::vector<dynamic::SelectFrom>(
             {to_select_from<typename StmtTs::SelectFromTypes>(
                 _stmt.fields_, _stmt.from_, _stmt.joins_, _stmt.where_,
-                _stmt.limit_)...});
+                _stmt.limit_, _stmt.offset_)...});
         return Ref<std::vector<dynamic::SelectFrom>>::make(std::move(vec));
       },
       _stmts);

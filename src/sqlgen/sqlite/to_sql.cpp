@@ -710,6 +710,10 @@ std::string select_from_to_sql(const dynamic::SelectFrom& _stmt) noexcept {
     stream << " LIMIT " << _stmt.limit->val;
   }
 
+  if (_stmt.offset) {
+    stream << " OFFSET " << _stmt.offset->val;
+  }
+
   return stream.str();
 }
 
