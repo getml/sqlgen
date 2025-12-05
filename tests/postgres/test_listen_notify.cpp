@@ -7,24 +7,20 @@
 #include <string_view>
 #include <sqlgen/postgres.hpp>
 
-namespace {
+namespace test_listen_notify {
 
 using namespace sqlgen;
 using namespace sqlgen::postgres;
 
 // Simple helper to wait for notifications with timeout
-std::vector<Notification> wait_for_notifications(
-    Connection& conn,
-    std::chrono::milliseconds timeout = std::chrono::milliseconds{1000}
-) {
-    auto wait_res = conn.wait_for_notification(timeout);
-    if (!wait_res || *wait_res != NotificationWaitResult::Ready) {
-        return {};
-    }
-    return conn.get_notifications();
+std::vector<Notification> wait_for_notifications(auto& conn,
+  std::chrono::milliseconds timeout = std::chrono::milliseconds{1000}) {
+  auto wait_res = conn->wait_for_notification(timeout);
+  if (!wait_res || *wait_res != NotificationWaitResult::Ready) {
+    return {};
+  }
+  return conn->get_notifications();
 }
-
-} // anonymous namespace
 
 TEST(postgres, basic_listen_notify) {
   using namespace sqlgen;
@@ -35,18 +31,21 @@ TEST(postgres, basic_listen_notify) {
                                                          .host = "localhost",
                                                          .dbname = "postgres"};
 
-  auto listener = postgres::connect(credentials);
-  auto sender = postgres::connect(credentials);
+  auto listener_result = sqlgen::postgres::connect(credentials);
+  auto sender_result = sqlgen::postgres::connect(credentials);
 
-  ASSERT_TRUE(listener);
-  ASSERT_TRUE(sender);
+  ASSERT_TRUE(listener_result);
+  ASSERT_TRUE(sender_result);
+
+  auto listener = listener_result.value();
+  auto sender = sender_result.value();
 
   // Listener subscribes to channel
-  auto listen_res = listener.listen("test_channel");
+  auto listen_res = listener->listen("test_channel");
   ASSERT_TRUE(listen_res) << listen_res.error().what();
 
   // Sender sends a notification
-  auto notify_res = sender.notify("test_channel", "hello world");
+  auto notify_res = sender->notify("test_channel", "hello world");
   ASSERT_TRUE(notify_res) << notify_res.error().what();
 
   // Listener waits and receives
@@ -66,11 +65,14 @@ TEST(postgres, notify_without_listener_is_silent) {
                                                          .host = "localhost",
                                                          .dbname = "postgres"};
 
-  auto sender = postgres::connect(credentials);
-  ASSERT_TRUE(sender);
+  auto sender_result = sqlgen::postgres::connect(credentials);
+
+  ASSERT_TRUE(sender_result);
+
+  auto sender = sender_result.value();
 
   // Notify on a channel with no listener → should not error
-  auto res = sender.notify("unused_channel", "payload");
+  auto res = sender->notify("unused_channel", "payload");
   ASSERT_TRUE(res) << res.error().what();
 }
 
@@ -83,20 +85,29 @@ TEST(postgres, InvalidChannelNameRejected) {
                                                          .host = "localhost",
                                                          .dbname = "postgres"};
 
-  auto conn = postgres::connect(creds);
+  auto listener_result = sqlgen::postgres::connect(credentials);
+  auto sender_result = sqlgen::postgres::connect(credentials);
+
+  ASSERT_TRUE(listener_result);
+  ASSERT_TRUE(sender_result);
+
+  auto listener = listener_result.value();
+  auto sender = sender_result.value();
+
+  auto conn = postgres::connect(credentials);
   ASSERT_TRUE(conn);
 
   // Invalid: starts with digit
-  EXPECT_FALSE(conn.listen("123chan"));
-  EXPECT_FALSE(conn.notify("123chan"));
+  EXPECT_FALSE(listener->listen("123chan"));
+  EXPECT_FALSE(sender->notify("123chan"));
 
   // Invalid: contains hyphen
-  EXPECT_FALSE(conn.listen("my-chan"));
-  EXPECT_FALSE(conn.notify("my-chan"));
+  EXPECT_FALSE(listener->listen("my-chan"));
+  EXPECT_FALSE(sender->notify("my-chan"));
 
   // Valid: underscore + alphanumeric
-  EXPECT_TRUE(conn.listen("_chan1"));
-  EXPECT_TRUE(conn.unlisten("_chan1"));
+  EXPECT_TRUE(listener->listen("_chan1"));
+  EXPECT_TRUE(sender->unlisten("_chan1"));
 }
 
 TEST(postgres, unlisten_star) {
@@ -108,18 +119,21 @@ TEST(postgres, unlisten_star) {
                                                          .host = "localhost",
                                                          .dbname = "postgres"};
 
-  auto conn = postgres::connect(credentials);
-  ASSERT_TRUE(conn);
+  auto listener_result = sqlgen::postgres::connect(credentials);
 
-  ASSERT_TRUE(conn.listen("chan_a"));
-  ASSERT_TRUE(conn.listen("chan_b"));
+  ASSERT_TRUE(listener_result);
+
+  auto listener = listener_result.value();
+
+  ASSERT_TRUE(listener->listen("chan_a"));
+  ASSERT_TRUE(listener->listen("chan_b"));
 
   // Unlisten all
-  ASSERT_TRUE(conn.unlisten("*"));
+  ASSERT_TRUE(listener->unlisten("*"));
 
   // Notify won't be received, but we just verify no error
-  auto sender = postgres::connect(creds);
-  ASSERT_TRUE(sender.notify("chan_a", "test"));
+  auto sender = postgres::connect(credentials);
+  ASSERT_TRUE(listener->notify("chan_a", "test"));
 }
 
 TEST(postgres, multiple_notifications_in_burst) {
@@ -130,35 +144,43 @@ TEST(postgres, multiple_notifications_in_burst) {
                                                          .password = "password",
                                                          .host = "localhost",
                                                          .dbname = "postgres"};
-    auto listener = postgres::connect(credentials);
-    auto sender = postgres::connect(credentials);
 
-    ASSERT_TRUE(listener);
-    ASSERT_TRUE(sender);
+  auto listener_result = sqlgen::postgres::connect(credentials);
+  auto sender_result = sqlgen::postgres::connect(credentials);
 
-    const std::string channel = "burst_channel";
-    ASSERT_TRUE(listener.listen(channel));
+  ASSERT_TRUE(listener_result);
+  ASSERT_TRUE(sender_result);
 
-    const int num_notifications = 5;
-    std::vector<std::string> expected_payloads;
-    for (int i = 0; i < num_notifications; ++i) {
-        const std::string payload = "msg_" + std::to_string(i);
-        expected_payloads.push_back(payload);
-        ASSERT_TRUE(sender.notify(channel, payload));
-        // Small delay to improve reliability on slow CI (optional but safe)
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
+  auto listener = listener_result.value();
+  auto sender = sender_result.value();
 
-    // Wait once — PostgreSQL typically delivers all in one socket read
-    auto notifications = wait_for_notifications(listener, std::chrono::milliseconds{2000});
+  const std::string channel = "burst_channel";
+  ASSERT_TRUE(listener->listen(channel));
 
-    ASSERT_EQ(notifications.size(), num_notifications)
-        << "Expected " << num_notifications << " notifications, got " << notifications.size();
+  const int num_notifications = 5;
+  std::vector<std::string> expected_payloads;
+  for (int i = 0; i < num_notifications; ++i) {
+    const std::string payload = "msg_" + std::to_string(i);
+    expected_payloads.push_back(payload);
+    ASSERT_TRUE(sender->notify(channel, payload));
+    // Small delay to improve reliability on slow CI (optional but safe)
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 
-    // Payloads may arrive in order (PG guarantees per-backend order)
-    for (int i = 0; i < num_notifications; ++i) {
-        EXPECT_EQ(notifications[i].channel, channel);
-        EXPECT_EQ(notifications[i].payload, expected_payloads[i]);
-        EXPECT_GT(notifications[i].backend_pid, 0);
-    }
+  // Wait once — PostgreSQL typically delivers all in one socket read
+  auto notifications = wait_for_notifications(listener, std::chrono::milliseconds{2000});
+
+  ASSERT_EQ(notifications.size(), num_notifications)
+          << "Expected " << num_notifications << " notifications, got " << notifications.size();
+
+  // Payloads may arrive in order (PG guarantees per-backend order)
+  for (int i = 0; i < num_notifications; ++i) {
+    EXPECT_EQ(notifications[i].channel, channel);
+    EXPECT_EQ(notifications[i].payload, expected_payloads[i]);
+    EXPECT_GT(notifications[i].backend_pid, 0);
+  }
 }
+
+}
+
+#endif
