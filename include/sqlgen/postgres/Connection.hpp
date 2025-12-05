@@ -98,9 +98,6 @@ class SQLGEN_API Connection {
         [&](const auto& _data) { return write_impl(_data); }, _begin, _end);
   }
 
-  rfl::Result<NotificationWaitResult>
-  wait_for_notification(std::optional<std::chrono::milliseconds> timeout = std::nullopt) noexcept;
-
   std::list<Notification> get_notifications() noexcept;
 
   rfl::Result<Nothing> listen(const std::string& channel) noexcept;
@@ -108,6 +105,8 @@ class SQLGEN_API Connection {
   rfl::Result<Nothing> unlisten(const std:: string& channel) noexcept;
 
   rfl::Result<Nothing> notify(const std::string& channel, const std::string& payload = "") noexcept;
+
+  int native_socket() const noexcept;
 
  private:
   Result<Nothing> insert_impl(

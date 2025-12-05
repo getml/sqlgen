@@ -41,51 +41,6 @@ Result<Nothing> Connection::end_write() {
   return Nothing{};
 }
 
-rfl::Result<NotificationWaitResult>
-Connection::wait_for_notification(std::optional<std::chrono::milliseconds> timeout) noexcept {
-
-  if (PQstatus(conn_.ptr()) != CONNECTION_OK) {
-    return error("Connection is not active");
-  }
-
-  const int sockfd = PQsocket(conn_.ptr());
-  if (sockfd == -1) {
-    return error("Invalid PostgreSQL socket");
-  }
-
-  fd_set input_mask;
-  FD_ZERO(&input_mask);
-  FD_SET(sockfd, &input_mask);
-
-  struct timeval tv;
-  struct timeval* tv_ptr = nullptr;
-
-  if (timeout.has_value()) {
-    const auto ms = timeout->count();
-    tv.tv_sec = static_cast<long>(ms / 1000);
-    tv.tv_usec = static_cast<long>((ms % 1000) * 1000);
-    tv_ptr = &tv;
-  }
-
-  const int result = select(sockfd + 1, &input_mask, nullptr, nullptr, tv_ptr);
-
-  if (result < 0) {
-    if (errno == EINTR) {
-      // Interrupted by signal — treat as non-error, but not ready
-      return NotificationWaitResult::Timeout; // or a new enum like Interrupted?
-    }
-    return error("select() failed: " + std::string(strerror(errno)));
-  }
-
-  if (result == 0) {
-    return NotificationWaitResult::Timeout;
-  }
-
-  // Data is available (could be NOTIFY, error response, etc.)
-  // We do NOT consume it here — that’s the user’s responsibility via get_notifications()
-  return NotificationWaitResult::Ready;
-}
-
 std::list<Notification> Connection::get_notifications() noexcept {
   std::list<Notification> notices;
 
@@ -143,6 +98,10 @@ rfl::Result<Nothing> Connection::notify(const std::string& channel, const std::s
   auto result = execute(sql);
   PQflush(conn_.ptr());
   return result;
+}
+
+int Connection::native_socket() const noexcept {
+  return PQsocket(conn_.ptr());
 }
 
 Result<Nothing> Connection::insert_impl(

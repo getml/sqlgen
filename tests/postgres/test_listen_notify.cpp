@@ -12,14 +12,23 @@ namespace test_listen_notify {
 using namespace sqlgen;
 using namespace sqlgen::postgres;
 
-// Simple helper to wait for notifications with timeout
 std::list<Notification> wait_for_notifications(auto& conn,
-  std::chrono::milliseconds timeout = std::chrono::milliseconds{1000}) {
-  auto wait_res = conn->wait_for_notification(timeout);
-  if (!wait_res || *wait_res != NotificationWaitResult::Ready) {
-    return {};
+  std::chrono::milliseconds timeout = std::chrono::milliseconds{2000}) {
+  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  std::list<Notification> all;
+
+  while (std::chrono::steady_clock::now() < deadline) {
+    auto batch = conn->get_notifications();
+    if (!batch.empty()) {
+      all.splice(all.end(), batch);  // efficient for list
+      // Continue looping briefly in case more arrived
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    } else {
+      std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
   }
-  return conn->get_notifications();
+
+  return all;
 }
 
 TEST(postgres, basic_listen_notify) {
