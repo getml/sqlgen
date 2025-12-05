@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <list>
 
 #include "../Iterator.hpp"
 #include "../Ref.hpp"
@@ -33,6 +34,18 @@
 #include "to_sql.hpp"
 
 namespace sqlgen::postgres {
+
+enum class NotificationWaitResult {
+ Ready, // Data available (possibly a NOTIFY)
+ Timeout, // Timeout elapsed
+ Error // I/O or connection error
+};
+
+struct Notification {
+ std::string channel;
+ std::string payload;
+ int backend_pid;
+};
 
 class SQLGEN_API Connection {
   using Conn = PostgresV2Connection;
@@ -85,6 +98,16 @@ class SQLGEN_API Connection {
         [&](const auto& _data) { return write_impl(_data); }, _begin, _end);
   }
 
+  std::list<Notification> get_notifications() noexcept;
+
+  rfl::Result<Nothing> listen(const std::string& channel) noexcept;
+
+  rfl::Result<Nothing> unlisten(const std:: string& channel) noexcept;
+
+  rfl::Result<Nothing> notify(const std::string& channel, const std::string& payload = "") noexcept;
+
+  int native_socket() const noexcept;
+
  private:
   Result<Nothing> insert_impl(
       const dynamic::Insert& _stmt,
@@ -99,6 +122,8 @@ class SQLGEN_API Connection {
 
   Result<Nothing> write_impl(
       const std::vector<std::vector<std::optional<std::string>>>& _data);
+
+  bool is_valid_channel_name(const std::string& s) const noexcept;
 
  private:
   Conn conn_;
