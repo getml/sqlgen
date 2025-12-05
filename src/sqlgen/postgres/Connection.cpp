@@ -41,6 +41,108 @@ Result<Nothing> Connection::end_write() {
   return Nothing{};
 }
 
+rfl::Result<NotificationWaitResult>
+Connection::wait_for_notification(std::optional<std::chrono::milliseconds> timeout) noexcept {
+
+  if (PQstatus(conn_.ptr()) != CONNECTION_OK) {
+    return error("Connection is not active");
+  }
+
+  const int sockfd = PQsocket(conn_.ptr());
+  if (sockfd == -1) {
+    return error("Invalid PostgreSQL socket");
+  }
+
+  fd_set input_mask;
+  FD_ZERO(&input_mask);
+  FD_SET(sockfd, &input_mask);
+
+  struct timeval tv;
+  struct timeval* tv_ptr = nullptr;
+
+  if (timeout.has_value()) {
+    const auto ms = timeout->count();
+    tv.tv_sec = static_cast<long>(ms / 1000);
+    tv.tv_usec = static_cast<long>((ms % 1000) * 1000);
+    tv_ptr = &tv;
+  }
+
+  const int result = select(sockfd + 1, &input_mask, nullptr, nullptr, tv_ptr);
+
+  if (result < 0) {
+    if (errno == EINTR) {
+      // Interrupted by signal — treat as non-error, but not ready
+      return NotificationWaitResult::Timeout; // or a new enum like Interrupted?
+    }
+    return error("select() failed: " + std::string(strerror(errno)));
+  }
+
+  if (result == 0) {
+    return NotificationWaitResult::Timeout;
+  }
+
+  // Data is available (could be NOTIFY, error response, etc.)
+  // We do NOT consume it here — that’s the user’s responsibility via get_notifications()
+  return NotificationWaitResult::Ready;
+}
+
+std::vector<Notification> Connection::get_notifications() noexcept {
+  std::vector<Notification> notices;
+
+  // Safe to call even if no data — just returns true
+  if (!PQconsumeInput(conn_.ptr())) {
+    // Note: In pure wait/consume pattern, this should rarely happen if socket is healthy
+    // But we don't error here — just skip
+    return notices;
+  }
+
+  PGnotify* notify;
+  while ((notify = PQnotifies(conn_.ptr())) != nullptr) {
+    notices.push_back({
+      .channel = std::string(notify->relname),
+      .payload = notify->extra[0] ? std::string(notify->extra) : "",
+      .backend_pid = notify->be_pid
+    });
+    PQfreemem(notify);
+  }
+
+  return notices;
+}
+
+rfl::Result<Nothing> Connection::listen(const std::string& channel) noexcept {
+  if (!is_valid_channel_name(channel)) {
+    return error("Invalid channel name: must be a PostgreSQL identifier");
+  }
+  const std::string sql = "LISTEN " + channel;
+  return execute(sql);
+}
+
+rfl::Result<Nothing> Connection::unlisten(const std::string& channel) noexcept {
+  if (channel == "*") {
+    return execute("UNLISTEN *");
+  }
+  if (!is_valid_channel_name(channel)) {
+    return error("Invalid channel name");
+  }
+  const std::string sql = "UNLISTEN " + channel;
+  return execute(sql);
+}
+
+rfl::Result<Nothing> Connection::notify(const std::string& channel, const std::string& payload) noexcept {
+  if (!is_valid_channel_name(channel)) {
+    return error("Invalid channel name");
+  }
+
+  auto* escaped_payload = PQescapeLiteral(conn_.ptr(), payload.c_str(), payload.size());
+  if (!escaped_payload) {
+    return error("Failed to escape NOTIFY payload");
+  }
+  const std::string sql = "NOTIFY " + channel + ", " + std::string(escaped_payload);
+  PQfreemem(escaped_payload);
+
+  return execute(sql);
+}
+
 Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
@@ -160,5 +262,14 @@ Result<Nothing> Connection::write_impl(
   return Nothing{};
 }
 
-}  // namespace sqlgen::postgres
+bool Connection::is_valid_channel_name(const std::string& s) const noexcept {
+  if (s.empty()) return false;
+  const char first = s[0];
+  if (first != '_' && !std::isalpha(static_cast<unsigned char>(first)))
+    return false;
+  return std::all_of(s.begin() + 1, s.end(), [](char c) {
+    return c == '_' || std::isalnum(static_cast<unsigned char>(c));
+  });
+}
 
+}  // namespace sqlgen::postgres
