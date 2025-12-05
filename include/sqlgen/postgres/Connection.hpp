@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <list>
 
 #include "../Iterator.hpp"
 #include "../Ref.hpp"
@@ -100,7 +101,7 @@ class SQLGEN_API Connection {
   rfl::Result<NotificationWaitResult>
   wait_for_notification(std::optional<std::chrono::milliseconds> timeout = std::nullopt) noexcept;
 
-  std::vector<Notification> get_notifications() noexcept;
+  std::list<Notification> get_notifications() noexcept;
 
   rfl::Result<Nothing> listen(const std::string& channel) noexcept;
 

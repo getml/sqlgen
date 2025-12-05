@@ -86,8 +86,8 @@ Connection::wait_for_notification(std::optional<std::chrono::milliseconds> timeo
   return NotificationWaitResult::Ready;
 }
 
-std::vector<Notification> Connection::get_notifications() noexcept {
-  std::vector<Notification> notices;
+std::list<Notification> Connection::get_notifications() noexcept {
+  std::list<Notification> notices;
 
   // Safe to call even if no data — just returns true
   if (!PQconsumeInput(conn_.ptr())) {
@@ -140,7 +140,9 @@ rfl::Result<Nothing> Connection::notify(const std::string& channel, const std::s
   const std::string sql = "NOTIFY " + channel + ", " + std::string(escaped_payload);
   PQfreemem(escaped_payload);
 
-  return execute(sql);
+  auto result = execute(sql);
+  PQflush(conn_.ptr());
+  return result;
 }
 
 Result<Nothing> Connection::insert_impl(

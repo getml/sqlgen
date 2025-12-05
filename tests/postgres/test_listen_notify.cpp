@@ -13,7 +13,7 @@ using namespace sqlgen;
 using namespace sqlgen::postgres;
 
 // Simple helper to wait for notifications with timeout
-std::vector<Notification> wait_for_notifications(auto& conn,
+std::list<Notification> wait_for_notifications(auto& conn,
   std::chrono::milliseconds timeout = std::chrono::milliseconds{1000}) {
   auto wait_res = conn->wait_for_notification(timeout);
   if (!wait_res || *wait_res != NotificationWaitResult::Ready) {
@@ -51,9 +51,9 @@ TEST(postgres, basic_listen_notify) {
   // Listener waits and receives
   auto notifications = wait_for_notifications(listener);
   ASSERT_EQ(notifications.size(), 1);
-  EXPECT_EQ(notifications[0].channel, "test_channel");
-  EXPECT_EQ(notifications[0].payload, "hello world");
-  EXPECT_GT(notifications[0].backend_pid, 0);
+  EXPECT_EQ(notifications.front().channel, "test_channel");
+  EXPECT_EQ(notifications.front().payload, "hello world");
+  EXPECT_GT(notifications.front().backend_pid, 0);
 }
 
 TEST(postgres, notify_without_listener_is_silent) {
@@ -158,7 +158,7 @@ TEST(postgres, multiple_notifications_in_burst) {
   ASSERT_TRUE(listener->listen(channel));
 
   const int num_notifications = 5;
-  std::vector<std::string> expected_payloads;
+  std::list<std::string> expected_payloads;
   for (int i = 0; i < num_notifications; ++i) {
     const std::string payload = "msg_" + std::to_string(i);
     expected_payloads.push_back(payload);
@@ -167,17 +167,24 @@ TEST(postgres, multiple_notifications_in_burst) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // Wait once — PostgreSQL typically delivers all in one socket read
-  auto notifications = wait_for_notifications(listener, std::chrono::milliseconds{2000});
+  // Drain all notifications with retry
+  std::list<sqlgen::postgres::Notification> notifications;
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+  while (notifications.size() < num_notifications && std::chrono::steady_clock::now() < deadline) {
+    auto batch = wait_for_notifications(listener, std::chrono::milliseconds{100});
+    std::move(batch.begin(), batch.end(), std::back_inserter(notifications));
+  }
 
-  ASSERT_EQ(notifications.size(), num_notifications)
-          << "Expected " << num_notifications << " notifications, got " << notifications.size();
+  ASSERT_EQ(notifications.size(), expected_payloads.size());
 
-  // Payloads may arrive in order (PG guarantees per-backend order)
-  for (int i = 0; i < num_notifications; ++i) {
-    EXPECT_EQ(notifications[i].channel, channel);
-    EXPECT_EQ(notifications[i].payload, expected_payloads[i]);
-    EXPECT_GT(notifications[i].backend_pid, 0);
+  auto expected_it = expected_payloads.begin();
+  auto notify_it = notifications.begin();
+  int i = 0;
+
+  for (; expected_it != expected_payloads.end(); ++expected_it, ++notify_it, ++i) {
+    EXPECT_EQ(notify_it->channel, channel) << "Notification #" << i;
+    EXPECT_EQ(notify_it->payload, *expected_it) << "Notification #" << i;
+    EXPECT_GT(notify_it->backend_pid, 0) << "Notification #" << i;
   }
 }
 
