@@ -15,6 +15,7 @@
 #include "../Range.hpp"
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../Session.hpp"
 #include "../Transaction.hpp"
 #include "../dynamic/Operation.hpp"
 #include "../dynamic/SelectFrom.hpp"
@@ -138,8 +139,10 @@ class SQLGEN_API Connection {
               .as = std::nullopt};
         }));
 
-    const auto select_from = dynamic::SelectFrom{
-        .table_or_query = _table, .fields = fields, .limit = dynamic::Limit{0}, .offset = dynamic::Offset{0}};
+    const auto select_from = dynamic::SelectFrom{.table_or_query = _table,
+                                                 .fields = fields,
+                                                 .limit = dynamic::Limit{0},
+                                                 .offset = dynamic::Offset{0}};
 
     return DuckDBResult::make(to_sql(select_from), conn_)
         .transform([&](const auto &_res) {
