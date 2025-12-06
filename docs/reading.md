@@ -97,6 +97,32 @@ ORDER BY "age"
 LIMIT 2;
 ```
 
+You can also combine `limit` with `offset` to perform paging:
+
+```cpp
+using namespace sqlgen;
+using namespace sqlgen::literals;
+
+const auto query = sqlgen::read<std::vector<Person>> |
+                   order_by("age"_c) |
+                   limit(2) |
+                   offset(3);
+
+const auto skip_three = query(conn).value();
+```
+
+This generates the following SQL:
+
+```sql
+SELECT "id", "first_name", "last_name", "age"
+FROM "Person"
+ORDER BY "age"
+LIMIT 2
+OFFSET 3;
+```
+
+- **SQLite and MySql Limitation*: You cannot use `offset` without `limit`.
+
 ### With ranges
 
 Read results as a lazy range:

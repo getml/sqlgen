@@ -18,12 +18,12 @@ namespace sqlgen {
 
 template <class ValueType, class TableOrQueryType, class AliasType,
           class FieldsType, class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ToType, class Connection>
+          class OrderByType, class LimitType, class OffsetType, class ToType, class Connection>
   requires is_connection<Connection>
 Result<Ref<Connection>> create_as_impl(
     const Ref<Connection>& _conn, const dynamic::CreateAs::What _what,
     const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                     WhereType, GroupByType, OrderByType, LimitType, ToType>&
+                     WhereType, GroupByType, OrderByType, LimitType, OffsetType, ToType>&
         _as,
     const bool _or_replace, const bool _if_not_exists) {
   using TableTupleType =
@@ -31,9 +31,9 @@ Result<Ref<Connection>> create_as_impl(
 
   const auto query = transpilation::to_create_as<
       ValueType, TableTupleType, AliasType, FieldsType, TableOrQueryType,
-      JoinsType, WhereType, GroupByType, OrderByType, LimitType>(
+      JoinsType, WhereType, GroupByType, OrderByType, LimitType, OffsetType>(
       _what, _or_replace, _if_not_exists, _as.fields_, _as.from_, _as.joins_,
-      _as.where_, _as.limit_);
+      _as.where_, _as.limit_, _as.offset_);
 
   return _conn->execute(_conn->to_sql(query)).transform([&](const auto&) {
     return _conn;
@@ -42,12 +42,12 @@ Result<Ref<Connection>> create_as_impl(
 
 template <class ValueType, class TableOrQueryType, class AliasType,
           class FieldsType, class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ToType, class Connection>
+          class OrderByType, class LimitType, class OffsetType, class ToType, class Connection>
   requires is_connection<Connection>
 Result<Ref<Connection>> create_as_impl(
     const Result<Ref<Connection>>& _res, const dynamic::CreateAs::What _what,
     const SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                     WhereType, GroupByType, OrderByType, LimitType, ToType>&
+                     WhereType, GroupByType, OrderByType, LimitType, OffsetType, ToType>&
         _as,
     const bool _or_replace, const bool _if_not_exists) {
   return _res.and_then([&](const auto& _conn) {
@@ -58,10 +58,10 @@ Result<Ref<Connection>> create_as_impl(
 
 template <class ValueType, class TableOrQueryType, class AliasType,
           class FieldsType, class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ToType>
+          class OrderByType, class LimitType, class OffsetType, class ToType>
 struct CreateAs {
   using As = SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                        WhereType, GroupByType, OrderByType, LimitType, ToType>;
+                        WhereType, GroupByType, OrderByType, LimitType, OffsetType, ToType>;
 
   static_assert(
       requires(transpilation::extract_table_t<As, false> a) {
@@ -108,4 +108,3 @@ inline auto create_or_replace_view_as(const SelectFrom<Args...>& _as) {
 };  // namespace sqlgen
 
 #endif
-

@@ -26,13 +26,14 @@
 #include "to_group_by.hpp"
 #include "to_joins.hpp"
 #include "to_limit.hpp"
+#include "to_offset.hpp"
 #include "to_order_by.hpp"
 #include "to_table_or_query.hpp"
 
 namespace sqlgen::transpilation {
 
 template <class AliasT, class FieldsT, class TableOrQueryT, class JoinsT,
-          class WhereT, class GroupByT, class OrderByT, class LimitT>
+          class WhereT, class GroupByT, class OrderByT, class LimitT, class OffsetT>
 struct SelectFromTypes {
   using AliasType = AliasT;
   using FieldsType = FieldsT;
@@ -42,6 +43,7 @@ struct SelectFromTypes {
   using GroupByType = GroupByT;
   using OrderByType = OrderByT;
   using LimitType = LimitT;
+  using OffsetType = OffsetT;
 
   using TableTupleType = table_tuple_t<TableOrQueryType, AliasType, JoinsType>;
 };
@@ -50,7 +52,7 @@ template <class SelectFromT>
 dynamic::SelectFrom to_select_from(const auto& _fields,
                                    const auto& _table_or_query,
                                    const auto& _joins, const auto& _where,
-                                   const auto& _limit) {
+                                   const auto& _limit, const auto& _offset) {
   using TableTupleType = typename SelectFromT::TableTupleType;
   using AliasType = typename SelectFromT::AliasType;
   using FieldsType = typename SelectFromT::FieldsType;
@@ -75,7 +77,8 @@ dynamic::SelectFrom to_select_from(const auto& _fields,
       .where = to_condition<std::remove_cvref_t<TableTupleType>>(_where),
       .group_by = to_group_by<GroupByType>(),
       .order_by = to_order_by<OrderByType>(),
-      .limit = to_limit(_limit)};
+      .limit = to_limit(_limit),
+      .offset = to_offset(_offset)};
 }
 
 }  // namespace sqlgen::transpilation

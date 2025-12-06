@@ -17,6 +17,7 @@
 #include "internal/iterator_t.hpp"
 #include "is_connection.hpp"
 #include "limit.hpp"
+#include "offset.hpp"
 #include "order_by.hpp"
 #include "to.hpp"
 #include "transpilation/Join.hpp"
@@ -36,10 +37,10 @@ template <class SelectFromT, class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Ref<Connection>& _conn, const auto& _fields,
                       const auto& _table_or_query, const auto& _joins,
-                      const auto& _where, const auto& _limit) {
+                      const auto& _where, const auto& _limit, const auto& _offset) {
   if constexpr (internal::is_range_v<ContainerType>) {
     const auto query = transpilation::to_select_from<SelectFromT>(
-        _fields, _table_or_query, _joins, _where, _limit);
+        _fields, _table_or_query, _joins, _where, _limit, _offset);
     return _conn->template read<ContainerType>(query);
 
   } else {
@@ -66,7 +67,7 @@ auto select_from_impl(const Ref<Connection>& _conn, const auto& _fields,
     using RangeType = Range<IteratorType>;
 
     return select_from_impl<SelectFromT, RangeType>(
-               _conn, _fields, _table_or_query, _joins, _where, _limit)
+               _conn, _fields, _table_or_query, _joins, _where, _limit, _offset)
         .and_then(to_container);
   }
 }
@@ -75,17 +76,17 @@ template <class SelectFromT, class ContainerType, class Connection>
   requires is_connection<Connection>
 auto select_from_impl(const Result<Ref<Connection>>& _res, const auto& _fields,
                       const auto& _table_or_query, const auto& _joins,
-                      const auto& _where, const auto& _limit) {
+                      const auto& _where, const auto& _limit, const auto& _offset) {
   return _res.and_then([&](const auto& _conn) {
     return select_from_impl<SelectFromT, ContainerType>(
-        _conn, _fields, _table_or_query, _joins, _where, _limit);
+        _conn, _fields, _table_or_query, _joins, _where, _limit, _offset);
   });
 }
 
 template <class TableOrQueryT, class AliasT, class FieldsT,
           class JoinsT = Nothing, class WhereT = Nothing,
           class GroupByT = Nothing, class OrderByT = Nothing,
-          class LimitT = Nothing, class ToT = Nothing>
+          class LimitT = Nothing, class OffsetT = Nothing, class ToT = Nothing>
 struct SelectFrom {
   using TableOrQueryType = TableOrQueryT;
   using AliasType = AliasT;
@@ -95,12 +96,13 @@ struct SelectFrom {
   using GroupByType = GroupByT;
   using OrderByType = OrderByT;
   using LimitType = LimitT;
+  using OffsetType = OffsetT;
   using ToType = ToT;
 
   using SelectFromTypes =
       transpilation::SelectFromTypes<AliasType, FieldsType, TableOrQueryType,
                                      JoinsType, WhereType, GroupByType,
-                                     OrderByType, LimitType>;
+                                     OrderByType, LimitType, OffsetType>;
 
   auto operator()(const auto& _conn) const {
     using TableTupleType =
@@ -115,7 +117,7 @@ struct SelectFrom {
       using ContainerType = std::conditional_t<std::is_same_v<ToType, Nothing>,
                                                Range<IteratorType>, ToType>;
       return select_from_impl<SelectFromTypes, ContainerType>(
-          _conn, fields_, from_, joins_, where_, limit_);
+          _conn, fields_, from_, joins_, where_, limit_, offset_);
 
     } else {
       const auto extract_result = [](auto&& _vec) -> Result<ToType> {
@@ -130,7 +132,7 @@ struct SelectFrom {
 
       return select_from_impl<SelectFromTypes,
                               std::vector<std::remove_cvref_t<ToType>>>(
-                 _conn, fields_, from_, joins_, where_, limit_)
+                 _conn, fields_, from_, joins_, where_, limit_, offset_)
           .and_then(extract_result);
     }
   }
@@ -149,6 +151,8 @@ struct SelectFrom {
                   "You cannot call order_by(...) before a join.");
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit(...) before a join.");
+    static_assert(std::is_same_v<OffsetType, Nothing>,
+                  "You cannot call offset(...) before a join.");
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> before a join.");
 
@@ -158,7 +162,7 @@ struct SelectFrom {
                                          _alias, _how>>;
 
       return SelectFrom<TableOrQueryType, AliasType, FieldsType, NewJoinsType,
-                        WhereType, GroupByType, OrderByType, LimitType, ToType>{
+                        WhereType, GroupByType, OrderByType, LimitType, OffsetType, ToType>{
           .fields_ = _s.fields_,
           .from_ = _s.from_,
           .joins_ = NewJoinsType(_join)};
@@ -173,7 +177,7 @@ struct SelectFrom {
       using NewJoinsType = std::remove_cvref_t<decltype(joins)>;
 
       return SelectFrom<TableOrQueryType, AliasType, FieldsType, NewJoinsType,
-                        WhereType, GroupByType, OrderByType, LimitType, ToType>{
+                        WhereType, GroupByType, OrderByType, LimitType, OffsetType, ToType>{
           .fields_ = _s.fields_, .from_ = _s.from_, .joins_ = joins};
     }
   }
@@ -190,10 +194,12 @@ struct SelectFrom {
                   "You cannot call order_by(...) before where(...).");
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit(...) before where(...).");
+    static_assert(std::is_same_v<OffsetType, Nothing>,
+                  "You cannot call offset(...) before where(...).");
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> before where(...).");
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                      ConditionType, GroupByType, OrderByType, LimitType,
+                      ConditionType, GroupByType, OrderByType, LimitType, OffsetType,
                       ToType>{.fields_ = _s.fields_,
                               .from_ = _s.from_,
                               .joins_ = _s.joins_,
@@ -210,6 +216,8 @@ struct SelectFrom {
                   "You cannot call order_by(...) before group_by(...).");
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit(...) before group_by(...).");
+    static_assert(std::is_same_v<OffsetType, Nothing>,
+                  "You cannot call offset(...) before group_by(...).");
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> before group_by(...).");
     static_assert(sizeof...(ColTypes) != 0,
@@ -220,7 +228,7 @@ struct SelectFrom {
                       WhereType,
                       transpilation::group_by_t<TableTupleType,
                                                 typename ColTypes::ColType...>,
-                      OrderByType, LimitType, ToType>{.fields_ = _s.fields_,
+                      OrderByType, LimitType, OffsetType, ToType>{.fields_ = _s.fields_,
                                                       .from_ = _s.from_,
                                                       .joins_ = _s.joins_,
                                                       .where_ = _s.where_};
@@ -234,6 +242,8 @@ struct SelectFrom {
         "than one column).");
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit(...) before order_by(...).");
+    static_assert(std::is_same_v<OffsetType, Nothing>,
+                  "You cannot call offset(...) before order_by(...).");
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> before order_by(...).");
     static_assert(sizeof...(ColTypes) != 0,
@@ -247,7 +257,7 @@ struct SelectFrom {
         typename std::remove_cvref_t<ColTypes>::ColType...>;
 
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                      WhereType, GroupByType, NewOrderByType, LimitType,
+                      WhereType, GroupByType, NewOrderByType, LimitType, OffsetType,
                       ToType>{.fields_ = _s.fields_,
                               .from_ = _s.from_,
                               .joins_ = _s.joins_,
@@ -257,13 +267,27 @@ struct SelectFrom {
   friend auto operator|(const SelectFrom& _s, const Limit& _limit) {
     static_assert(std::is_same_v<LimitType, Nothing>,
                   "You cannot call limit twice.");
-    return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                      WhereType, GroupByType, OrderByType, Limit, ToType>{
+      return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                      WhereType, GroupByType, OrderByType, Limit, OffsetType, ToType>{
         .fields_ = _s.fields_,
         .from_ = _s.from_,
         .joins_ = _s.joins_,
         .where_ = _s.where_,
-        .limit_ = _limit};
+        .limit_ = _limit,
+        .offset_ = _s.offset_};
+  }
+
+  friend auto operator|(const SelectFrom& _s, const Offset& _offset) {
+    static_assert(std::is_same_v<OffsetType, Nothing>,
+                  "You cannot call offset twice.");
+    return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
+                      WhereType, GroupByType, OrderByType, LimitType, Offset, ToType>{
+        .fields_ = _s.fields_,
+        .from_ = _s.from_,
+        .joins_ = _s.joins_,
+        .where_ = _s.where_,
+        .limit_ = _s.limit_,
+        .offset_ = _offset};
   }
 
   template <class NewToType>
@@ -271,12 +295,13 @@ struct SelectFrom {
     static_assert(std::is_same_v<ToType, Nothing>,
                   "You cannot call to<...> twice.");
     return SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType,
-                      WhereType, GroupByType, OrderByType, LimitType,
+                      WhereType, GroupByType, OrderByType, LimitType, OffsetType,
                       NewToType>{.fields_ = _s.fields_,
                                  .from_ = _s.from_,
                                  .joins_ = _s.joins_,
                                  .where_ = _s.where_,
-                                 .limit_ = _s.limit_};
+                                 .limit_ = _s.limit_,
+                                 .offset_ = _s.offset_};
   }
 
   FieldsType fields_;
@@ -288,6 +313,8 @@ struct SelectFrom {
   WhereType where_;
 
   LimitType limit_;
+
+  OffsetType offset_;
 };
 
 namespace transpilation {
@@ -303,16 +330,16 @@ struct ExtractTable<
 
 template <class TableOrQueryType, class AliasType, class FieldsType,
           class JoinsType, class WhereType, class GroupByType,
-          class OrderByType, class LimitType, class ToType>
+          class OrderByType, class LimitType, class OffsetType, class ToType>
 struct ToTableOrQuery<
     SelectFrom<TableOrQueryType, AliasType, FieldsType, JoinsType, WhereType,
-               GroupByType, OrderByType, LimitType, ToType>> {
+               GroupByType, OrderByType, LimitType, OffsetType, ToType>> {
   dynamic::SelectFrom::TableOrQueryType operator()(const auto& _query) {
     using QueryType = std::remove_cvref_t<decltype(_query)>;
     return Ref<dynamic::SelectFrom>::make(
         transpilation::to_select_from<typename QueryType::SelectFromTypes>(
             _query.fields_, _query.from_, _query.joins_, _query.where_,
-            _query.limit_));
+            _query.limit_, _query.offset_));
   }
 };
 

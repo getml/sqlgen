@@ -139,7 +139,7 @@ class SQLGEN_API Connection {
         }));
 
     const auto select_from = dynamic::SelectFrom{
-        .table_or_query = _table, .fields = fields, .limit = dynamic::Limit{0}};
+        .table_or_query = _table, .fields = fields, .limit = dynamic::Limit{0}, .offset = dynamic::Offset{0}};
 
     return DuckDBResult::make(to_sql(select_from), conn_)
         .transform([&](const auto &_res) {
