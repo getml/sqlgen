@@ -27,16 +27,16 @@ class JSON {
   template <class U>
   JSON(JSON<U>&& _other) : value_(_other.get()) {}
 
-  template <class U, typename std::enable_if<std::is_convertible_v<U, T>,
-                                             bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, T>
   JSON(const U& _value) : value_(_value) {}
 
-  template <class U, typename std::enable_if<std::is_convertible_v<U, T>,
-                                             bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, T>
   JSON(U&& _value) noexcept : value_(std::forward<U>(_value)) {}
 
-  template <class U, typename std::enable_if<std::is_convertible_v<U, T>,
-                                             bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, T>
   JSON(const JSON<U>& _other) : value_(_other.value()) {}
 
   ~JSON() = default;
@@ -60,8 +60,8 @@ class JSON {
   }
 
   /// Assigns the underlying object.
-  template <class U, typename std::enable_if<std::is_convertible_v<U, T>,
-                                             bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, T>
   auto& operator=(const U& _value) {
     value_ = _value;
     return *this;

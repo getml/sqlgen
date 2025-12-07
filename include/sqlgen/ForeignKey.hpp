@@ -47,14 +47,12 @@ struct ForeignKey {
 
   ForeignKey(const ForeignKey& _other) = default;
 
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   ForeignKey(const U& _value) : value_(_value) {}
 
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   ForeignKey(U&& _value) noexcept : value_(std::forward<U>(_value)) {}
 
   ~ForeignKey() = default;
@@ -78,9 +76,8 @@ struct ForeignKey {
   }
 
   /// Assigns the underlying object.
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   auto& operator=(const U& _value) {
     value_ = _value;
     return *this;
