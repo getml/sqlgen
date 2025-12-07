@@ -36,19 +36,16 @@ struct PrimaryKey {
   template <class U, bool _other_auto_incr>
   PrimaryKey(PrimaryKey<U, _other_auto_incr>&& _other) : value_(_other.get()) {}
 
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   PrimaryKey(const U& _value) : value_(_value) {}
 
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   PrimaryKey(U&& _value) noexcept : value_(std::forward<U>(_value)) {}
 
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   PrimaryKey(const PrimaryKey<U>& _other) : value_(_other.value()) {}
 
   ~PrimaryKey() = default;
@@ -72,9 +69,8 @@ struct PrimaryKey {
   }
 
   /// Assigns the underlying object.
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   auto& operator=(const U& _value) {
     value_ = _value;
     return *this;

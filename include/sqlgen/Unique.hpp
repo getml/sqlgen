@@ -25,14 +25,12 @@ struct Unique {
 
   Unique(const Unique& _other) = default;
 
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   Unique(const U& _value) : value_(_value) {}
 
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   Unique(U&& _value) noexcept : value_(std::forward<U>(_value)) {}
 
   ~Unique() = default;
@@ -56,9 +54,8 @@ struct Unique {
   }
 
   /// Assigns the underlying object.
-  template <class U,
-            typename std::enable_if<std::is_convertible_v<U, ReflectionType>,
-                                    bool>::type = true>
+  template <class U>
+    requires std::is_convertible_v<U, ReflectionType>
   auto& operator=(const U& _value) {
     value_ = _value;
     return *this;
