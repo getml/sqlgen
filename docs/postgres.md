@@ -58,4 +58,94 @@ const auto minors = query(conn);
   - Error handling through `Result<T>`
   - Resource management through `Ref<T>`
   - Customizable connection parameters (host, port, database name, etc.)
+  - LISTEN/NOTIFY for real-time event notifications
+
+## LISTEN/NOTIFY
+
+PostgreSQL provides a simple publish-subscribe mechanism through `LISTEN` and `NOTIFY` commands. This allows database clients to receive real-time notifications when events occur, without polling. Any client can send a notification to a channel, and all clients listening on that channel will receive it asynchronously.
+
+> **Note:** You should use a dedicated connection for LISTEN/NOTIFY, separate from your main database activity and outside any connection pool. This is because the listening connection must remain open and persistent to receive notifications, and connection pools typically recycle connections which would lose the LISTEN state.
+
+### API
+
+The `Connection` class provides the following methods for listen/notify:
+
+```cpp
+// Subscribe to a notification channel
+rfl::Result<Nothing> listen(const std::string& channel) noexcept;
+
+// Unsubscribe from a notification channel
+rfl::Result<Nothing> unlisten(const std::string& channel) noexcept;
+
+// Send a notification to a channel with an optional payload
+rfl::Result<Nothing> notify(const std::string& channel,
+                            const std::string& payload = "") noexcept;
+
+// Consume input from the server (must be called before get_notifications)
+bool consume_input() noexcept;
+
+// Retrieve all pending notifications
+std::list<Notification> get_notifications() noexcept;
+```
+
+The `Notification` struct contains:
+
+```cpp
+struct Notification {
+    std::string channel;   // The channel name
+    std::string payload;   // The notification payload (may be empty)
+    int backend_pid;       // The PID of the notifying backend
+};
+```
+
+### Subscribing to Channels
+
+```cpp
+auto conn = sqlgen::postgres::connect(creds);
+if (!conn) {
+    // Handle error...
+    return;
+}
+
+// Subscribe to a channel
+auto result = (*conn)->listen("my_channel");
+if (!result) {
+    // Handle error...
+}
+```
+
+### Receiving Notifications
+
+To receive notifications, you must periodically call `consume_input()` to read data from the server, then `get_notifications()` to retrieve any pending notifications:
+
+```cpp
+while (running) {
+    // Consume any available input from the server
+    if (!(*conn)->consume_input()) {
+        // Connection error
+        break;
+    }
+
+    // Process any pending notifications
+    auto notifications = (*conn)->get_notifications();
+    for (const auto& notification : notifications) {
+        // Handle the notification
+        std::cout << "Channel: " << notification.channel
+                  << " Payload: " << notification.payload << std::endl;
+    }
+
+    // Sleep briefly before checking again
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+}
+```
+
+### Sending Notifications
+
+```cpp
+// Send a notification with a payload
+auto result = (*conn)->notify("my_channel", "event data here");
+if (!result) {
+    // Handle error...
+}
+```
 
