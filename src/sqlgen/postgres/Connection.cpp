@@ -41,6 +41,69 @@ Result<Nothing> Connection::end_write() {
   return Nothing{};
 }
 
+std::list<Notification> Connection::get_notifications() noexcept {
+  std::list<Notification> notices;
+
+  // Safe to call even if no data — just returns true
+  if (!PQconsumeInput(conn_.ptr())) {
+    // Note: In pure wait/consume pattern, this should rarely happen if socket is healthy
+    // But we don't error here — just skip
+    return notices;
+  }
+
+  PGnotify* notify;
+  while ((notify = PQnotifies(conn_.ptr())) != nullptr) {
+    notices.push_back({
+      .channel = std::string(notify->relname),
+      .payload = notify->extra[0] ? std::string(notify->extra) : "",
+      .backend_pid = notify->be_pid
+    });
+    PQfreemem(notify);
+  }
+
+  return notices;
+}
+
+rfl::Result<Nothing> Connection::listen(const std::string& channel) noexcept {
+  if (!is_valid_channel_name(channel)) {
+    return error("Invalid channel name: must be a PostgreSQL identifier");
+  }
+  const std::string sql = "LISTEN " + channel;
+  return execute(sql);
+}
+
+rfl::Result<Nothing> Connection::unlisten(const std::string& channel) noexcept {
+  if (channel == "*") {
+    return execute("UNLISTEN *");
+  }
+  if (!is_valid_channel_name(channel)) {
+    return error("Invalid channel name");
+  }
+  const std::string sql = "UNLISTEN " + channel;
+  return execute(sql);
+}
+
+rfl::Result<Nothing> Connection::notify(const std::string& channel, const std::string& payload) noexcept {
+  if (!is_valid_channel_name(channel)) {
+    return error("Invalid channel name");
+  }
+
+  auto* escaped_payload = PQescapeLiteral(conn_.ptr(), payload.c_str(), payload.size());
+  if (!escaped_payload) {
+    return error("Failed to escape NOTIFY payload");
+  }
+  const std::string sql = "NOTIFY " + channel + ", " + std::string(escaped_payload);
+  PQfreemem(escaped_payload);
+
+  auto result = execute(sql);
+  PQflush(conn_.ptr());
+  return result;
+}
+
+bool Connection::consume_input() noexcept {
+  return PQconsumeInput(conn_.ptr()) == 1;
+}
+
 Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
     const std::vector<std::vector<std::optional<std::string>>>&
@@ -160,5 +223,14 @@ Result<Nothing> Connection::write_impl(
   return Nothing{};
 }
 
-}  // namespace sqlgen::postgres
+bool Connection::is_valid_channel_name(const std::string& s) const noexcept {
+  if (s.empty()) return false;
+  const char first = s[0];
+  if (first != '_' && !std::isalpha(static_cast<unsigned char>(first)))
+    return false;
+  return std::all_of(s.begin() + 1, s.end(), [](char c) {
+    return c == '_' || std::isalnum(static_cast<unsigned char>(c));
+  });
+}
 
+}  // namespace sqlgen::postgres
