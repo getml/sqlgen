@@ -98,6 +98,37 @@ SET "first_name" = "last_name"
 WHERE "age" > 18;
 ```
 
+### Setting Nullable Values
+
+Columns can be set using std::optional<T> values. Passing std::nullopt will set the column to NULL in the database, and passing a std::optional<T> with a value will set the column to that value.
+
+```cpp
+using namespace sqlgen;
+using namespace sqlgen::literals;
+
+// set to NULL
+const auto query1 = update<Person>("age"_c.set(std::nullopt)) |
+                   where("first_name"_c == "Hugo");
+
+// set to a value
+const auto query2 = update<Person>("age"_c.set(std::optional<int>(11))) |
+                   where("first_name"_c == "Bart");
+
+query1(conn).and_then(query2).value();
+```
+
+This generates the following SQL:
+
+```sql
+UPDATE "Person"
+SET "age" = NULL
+WHERE "first_name" = 'Hugo';
+
+UPDATE "Person"
+SET "age" = 11
+WHERE "first_name" = 'Bart';
+```
+
 ## Example: Full Query Composition
 
 ```cpp
