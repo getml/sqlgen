@@ -45,7 +45,8 @@ TEST(duckdb, test_update_with_optional) {
 
   query1(conn).and_then(query2).and_then(query3).value();
 
-  const auto people2 = sqlgen::read<std::vector<Person>>(conn).value();
+  const auto people2 =
+      (sqlgen::read<std::vector<Person>> | order_by("id_c"))(conn).value();
 
   const std::string expected =
       R"([{"id":0,"first_name":"Homer","last_name":"Simpson","age":50},{"id":1,"first_name":"Bart","last_name":"Simpson","age":11},{"id":2,"first_name":"Lisa","last_name":"Simpson","age":8},{"id":3,"first_name":"Maggie","last_name":"Simpson","age":0},{"id":4,"first_name":"Simpson","last_name":"Simpson"}])";
