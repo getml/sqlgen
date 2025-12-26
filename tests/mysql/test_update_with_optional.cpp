@@ -31,13 +31,13 @@ TEST(mysql, test_update_with_optional) {
                                                       .password = "password",
                                                       .dbname = "mysql"};
 
+  using namespace sqlgen;
+  using namespace sqlgen::literals;
+
   const auto conn =
       sqlgen::mysql::connect(credentials).and_then(drop<Person> | if_exists);
 
   sqlgen::write(conn, people1);
-
-  using namespace sqlgen;
-  using namespace sqlgen::literals;
 
   const auto query1 = update<Person>("first_name"_c.set("last_name"_c),
                                      "age"_c.set(std::nullopt)) |
