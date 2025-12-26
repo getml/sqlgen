@@ -175,6 +175,9 @@ std::string column_or_value_to_sql(
     if constexpr (std::is_same_v<Type, dynamic::String>) {
       return "'" + escape_single_quote(_v.val) + "'";
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Null>) {
+      return "NULL";
+
     } else if constexpr (std::is_same_v<Type, dynamic::Duration>) {
       const auto unit =
           _v.unit == dynamic::TimeUnit::milliseconds
