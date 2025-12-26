@@ -33,16 +33,22 @@ TEST(sqlite, test_update_with_optional) {
   using namespace sqlgen;
   using namespace sqlgen::literals;
 
-  const auto query =
-      update<Person>("first_name"_c.set("last_name"_c), "age"_c.set(100)) |
-      where("first_name"_c == "Hugo");
+  const auto query1 = update<Person>("first_name"_c.set("last_name"_c),
+                                     "age"_c.set(std::nullopt)) |
+                      where("first_name"_c == "Hugo");
 
-  query(conn).value();
+  const auto query2 =
+      update<Person>("age"_c.set(50)) | where("first_name"_c == "Homer");
+
+  const auto query3 = update<Person>("age"_c.set(std::optional<int>(11))) |
+                      where("first_name"_c == "Bart");
+
+  query1(conn).and_then(query2).and_then(query3).value();
 
   const auto people2 = sqlgen::read<std::vector<Person>>(conn).value();
 
   const std::string expected =
-      R"([{"id":0,"first_name":"Homer","last_name":"Simpson","age":45},{"id":1,"first_name":"Bart","last_name":"Simpson","age":10},{"id":2,"first_name":"Lisa","last_name":"Simpson","age":8},{"id":3,"first_name":"Maggie","last_name":"Simpson","age":0},{"id":4,"first_name":"Simpson","last_name":"Simpson","age":100}])";
+      R"([{"id":0,"first_name":"Homer","last_name":"Simpson","age":50},{"id":1,"first_name":"Bart","last_name":"Simpson","age":11},{"id":2,"first_name":"Lisa","last_name":"Simpson","age":8},{"id":3,"first_name":"Maggie","last_name":"Simpson","age":0},{"id":4,"first_name":"Simpson","last_name":"Simpson"}])";
 
   EXPECT_EQ(rfl::json::write(people2), expected);
 }

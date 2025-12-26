@@ -145,6 +145,9 @@ std::string column_or_value_to_sql(
       return "INTERVAL '" + std::to_string(_v.val) + " " +
              rfl::enum_to_string(_v.unit) + "'";
 
+    } else if constexpr (std::is_same_v<Type, dynamic::Null>) {
+      return "NULL";
+
     } else if constexpr (std::is_same_v<Type, dynamic::Timestamp>) {
       return "to_timestamp(" + std::to_string(_v.seconds_since_unix) + ")";
 

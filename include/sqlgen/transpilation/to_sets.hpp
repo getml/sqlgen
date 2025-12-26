@@ -31,10 +31,9 @@ struct ToSet<T, Set<transpilation::Col<_name>, ToType>> {
   static_assert(
       all_columns_exist<T, transpilation::Col<_name>>(),
       "At least one column referenced in your SET query does not exist.");
-  static_assert(
-      std::is_convertible_v<remove_nullable_t<underlying_t<T, Col<_name>>>,
-                            remove_nullable_t<underlying_t<T, Value<ToType>>>>,
-      "Must be convertible.");
+  static_assert(std::is_convertible_v<underlying_t<T, Value<ToType>>,
+                                      underlying_t<T, Col<_name>>>,
+                "Must be convertible.");
 
   dynamic::Update::Set operator()(const auto& _set) const {
     return dynamic::Update::Set{

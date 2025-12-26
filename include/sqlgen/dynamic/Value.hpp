@@ -25,6 +25,8 @@ struct Integer {
   int64_t val;
 };
 
+struct Null {};
+
 struct String {
   std::string val;
 };
@@ -35,7 +37,7 @@ struct Timestamp {
 
 struct Value {
   using ReflectionType = rfl::TaggedUnion<"type", Duration, Boolean, Float,
-                                          Integer, String, Timestamp>;
+                                          Integer, Null, String, Timestamp>;
   const auto& reflection() const { return val; }
   ReflectionType val;
 };

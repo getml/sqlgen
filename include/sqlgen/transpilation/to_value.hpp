@@ -4,9 +4,11 @@
 #include <rfl.hpp>
 #include <type_traits>
 
+#include "../dynamic/Type.hpp"
 #include "../dynamic/Value.hpp"
 #include "Value.hpp"
 #include "has_reflection_method.hpp"
+#include "is_nullable.hpp"
 
 namespace sqlgen::transpilation {
 
@@ -17,7 +19,17 @@ template <class T>
 struct ToValue {
   dynamic::Value operator()(const T& _t) const {
     using Type = std::remove_cvref_t<T>;
-    if constexpr (std::is_floating_point_v<Type>) {
+    if constexpr (is_nullable_v<Type>) {
+      if (!_t) {
+        return dynamic::Value{dynamic::Null{}};
+      }
+      return ToValue<std::remove_cvref_t<decltype(*_t)>>{}(*_t);
+
+    } else if constexpr (std::is_same_v<Type, std::nullopt_t> ||
+                         std::is_same_v<Type, std::nullptr_t>) {
+      return dynamic::Value{dynamic::Null{}};
+
+    } else if constexpr (std::is_floating_point_v<Type>) {
       return dynamic::Value{dynamic::Float{.val = static_cast<double>(_t)}};
 
     } else if constexpr (std::is_same_v<Type, bool>) {
