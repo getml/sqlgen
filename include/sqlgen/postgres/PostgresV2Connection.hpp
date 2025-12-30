@@ -24,6 +24,15 @@ class SQLGEN_API PostgresV2Connection {
   static rfl::Result<PostgresV2Connection> make(
       const std::string& _conn_str) noexcept;
 
+  static rfl::Result<PostgresV2Connection> make(PGconn* _ptr) noexcept {
+    try {
+      return PostgresV2Connection(_ptr);
+    } catch (const std::exception& e) {
+      return rfl::error("Failed to connect to postgres: " +
+                        std::string(e.what()));
+    }
+  }
+
   PGconn* ptr() const { return ptr_.get(); }
 
  private:

@@ -41,6 +41,15 @@ class SQLGEN_API Iterator {
 
   Iterator& operator=(Iterator&& _other) noexcept;
 
+  static rfl::Result<Ref<Iterator>> make(const std::string& _sql,
+                                         const Conn& _conn) noexcept {
+    try {
+      return Ref<Iterator>::make(_sql, _conn);
+    } catch (const std::exception& e) {
+      return error(e.what());
+    }
+  }
+
  private:
   static std::string make_cursor_name() {
     // TODO: Create unique cursor names.
