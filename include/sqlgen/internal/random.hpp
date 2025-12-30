@@ -1,3 +1,6 @@
+#ifndef SQLGEN_INTERNAL_RANDOM_HPP
+#define SQLGEN_INTERNAL_RANDOM_HPP
+
 #include <random>
 #include <string>
 
@@ -11,3 +14,6 @@ inline std::string random() {
 }
 
 }  // namespace sqlgen::internal
+
+#endif  // SQLGEN_INTERNAL_RANDOM_HPP
+
