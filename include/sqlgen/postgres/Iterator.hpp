@@ -10,6 +10,7 @@
 
 #include "../Ref.hpp"
 #include "../Result.hpp"
+#include "../internal/random.hpp"
 #include "../sqlgen_api.hpp"
 #include "PostgresV2Connection.hpp"
 #include "PostgresV2Result.hpp"
@@ -43,8 +44,7 @@ class SQLGEN_API Iterator {
 
  private:
   static std::string make_cursor_name() {
-    // TODO: Create unique cursor names.
-    return "sqlgen_cursor";
+    return "sqlgen_cursor_" + internal::random();
   }
 
   /// Shuts the iterator down.
