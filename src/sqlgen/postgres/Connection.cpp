@@ -189,7 +189,7 @@ rfl::Result<Ref<Connection>> Connection::make(
 Result<Ref<Iterator>> Connection::read_impl(
     const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query) {
   const auto sql = _query.visit([](const auto& _q) { return to_sql_impl(_q); });
-  return Ref<Iterator>::make(sql, conn_);
+  return Iterator::make(sql, conn_);
 }
 
 Result<Nothing> Connection::rollback() noexcept { return execute("ROLLBACK;"); }
