@@ -27,6 +27,31 @@ CREATE TABLE IF NOT EXISTS "People"(
 );
 ```
 
+### Multiple Primary Keys
+
+You can define multiple primary keys by using `sqlgen::PrimaryKey` on multiple fields. This will create a composite primary key.
+
+```cpp
+struct Order {
+    sqlgen::PrimaryKey<int> order_id;
+    sqlgen::PrimaryKey<int> product_id;
+    int quantity;
+};
+```
+
+Now the generated SQL schema will look like this:
+
+```sql
+CREATE TABLE IF NOT EXISTS "Order"(
+    "order_id"   INTEGER NOT NULL, 
+    "product_id" INTEGER NOT NULL, 
+    "quantity"   INTEGER NOT NULL,
+    PRIMARY KEY("order_id", "product_id")
+);
+```
+
+Note that this is not supported in SQLite, as it does not support composite primary keys.
+
 ### Auto-incrementing Primary Keys
 
 You can define an auto-incrementing primary key by providing `sqlgen::auto_incr` as the second template argument to `sqlgen::PrimaryKey`. The underlying type of an auto-incrementing primary key must be an integral type.
