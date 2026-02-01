@@ -8,6 +8,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_varchar {
 
@@ -27,10 +28,7 @@ TEST(postgres, test_varchar) {
        Person{
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_insert_or_replace {
 
@@ -51,10 +52,7 @@ TEST(postgres, test_insert_or_replace) {
   using namespace sqlgen;
   using namespace sqlgen::literals;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   const auto people4 =
       sqlgen::postgres::connect(credentials)

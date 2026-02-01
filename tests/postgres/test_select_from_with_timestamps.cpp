@@ -9,6 +9,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_range_select_from_with_timestamps {
 
@@ -34,10 +35,7 @@ TEST(postgres, test_range_select_from_with_timestamps) {
               .last_name = "Simpson",
               .birthday = sqlgen::Timestamp<"%Y-%m-%d">("2010-01-01")}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

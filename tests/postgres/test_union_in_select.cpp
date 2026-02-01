@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "sqlgen/postgres/to_sql.hpp"
+#include "test_helpers.hpp"
 
 namespace test_union_in_select {
 
@@ -30,10 +31,7 @@ struct User3 {
 TEST(postgres, test_union_in_select) {
   using namespace sqlgen::literals;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   const auto conn = sqlgen::postgres::connect(credentials)
                         .and_then(sqlgen::drop<User1> | sqlgen::if_exists)

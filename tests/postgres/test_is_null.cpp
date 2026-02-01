@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_is_null {
 
@@ -26,10 +27,7 @@ TEST(postgres, test_is_null) {
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0},
        Person{.id = 4, .first_name = "Hugo", .last_name = "Simpson"}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

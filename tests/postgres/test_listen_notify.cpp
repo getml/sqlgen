@@ -6,6 +6,7 @@
 #include <thread>
 #include <string_view>
 #include <sqlgen/postgres.hpp>
+#include "test_helpers.hpp"
 
 namespace test_listen_notify {
 
@@ -35,10 +36,7 @@ TEST(postgres, basic_listen_notify) {
   using namespace sqlgen;
   using namespace sqlgen::postgres;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   auto listener_result = sqlgen::postgres::connect(credentials);
   auto sender_result = sqlgen::postgres::connect(credentials);
@@ -69,10 +67,7 @@ TEST(postgres, notify_without_listener_is_silent) {
   using namespace sqlgen;
   using namespace sqlgen::postgres;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   auto sender_result = sqlgen::postgres::connect(credentials);
 
@@ -89,10 +84,7 @@ TEST(postgres, InvalidChannelNameRejected) {
   using namespace sqlgen;
   using namespace sqlgen::postgres;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   auto listener_result = sqlgen::postgres::connect(credentials);
   auto sender_result = sqlgen::postgres::connect(credentials);
@@ -123,10 +115,7 @@ TEST(postgres, unlisten_star) {
   using namespace sqlgen;
   using namespace sqlgen::postgres;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   auto listener_result = sqlgen::postgres::connect(credentials);
 
@@ -149,10 +138,7 @@ TEST(postgres, multiple_notifications_in_burst) {
   using namespace sqlgen;
   using namespace sqlgen::postgres;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   auto listener_result = sqlgen::postgres::connect(credentials);
   auto sender_result = sqlgen::postgres::connect(credentials);

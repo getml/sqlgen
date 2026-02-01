@@ -5,6 +5,7 @@
 #include <rfl/json.hpp>
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
+#include "test_helpers.hpp"
 
 namespace test_timestamp {
 
@@ -25,10 +26,7 @@ TEST(postgres, test_timestamp) {
   using namespace sqlgen;
   using namespace sqlgen::literals;
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   const auto conn =
       sqlgen::postgres::connect(credentials).and_then(drop<Person> | if_exists);

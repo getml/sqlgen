@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_write_and_read_pool {
 
@@ -28,10 +29,7 @@ TEST(postgres, test_write_and_read_pool) {
 
   const auto pool_config = sqlgen::ConnectionPoolConfig{.size = 2};
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   const auto pool = sqlgen::make_connection_pool<sqlgen::postgres::Connection>(
       pool_config, credentials);

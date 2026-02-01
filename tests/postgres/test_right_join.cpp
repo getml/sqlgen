@@ -8,6 +8,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_right_join {
 
@@ -37,10 +38,7 @@ TEST(postgres, test_right_join) {
       Pet{.id = 3, .name = "Mr. Teeny", .owner_id = 99},
   });
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

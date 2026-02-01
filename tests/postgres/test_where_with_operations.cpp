@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_where_with_operations {
 
@@ -28,10 +29,7 @@ TEST(postgres, test_where_with_operations) {
        Person{
            .id = 4, .first_name = "Hugo", .last_name = "Simpson", .age = 10}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;
