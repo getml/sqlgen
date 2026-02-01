@@ -16,7 +16,9 @@ namespace sqlgen::postgres {
 Connection::Connection(const Conn& _conn) : conn_(_conn) {}
 
 Connection::Connection(const Credentials& _credentials)
-    : conn_(PostgresV2Connection::make(_credentials.to_str()).value()) {}
+    : conn_(PostgresV2Connection::make(_credentials.to_str(),
+                                       _credentials.notice_handler)
+                .value()) {}
 
 Result<Nothing> Connection::begin_transaction() noexcept {
   return execute("BEGIN TRANSACTION;");
@@ -182,7 +184,8 @@ Result<Nothing> Connection::insert_impl(
 
 rfl::Result<Ref<Connection>> Connection::make(
     const Credentials& _credentials) noexcept {
-  return PostgresV2Connection::make(_credentials.to_str())
+  return PostgresV2Connection::make(_credentials.to_str(),
+                                    _credentials.notice_handler)
       .transform([](auto&& _conn) { return Ref<Connection>::make(_conn); });
 }
 

@@ -149,3 +149,77 @@ if (!result) {
 }
 ```
 
+## Notice Processor
+
+PostgreSQL functions can emit NOTICE messages using `RAISE NOTICE` in PL/pgSQL. By default, libpq prints these to stderr. sqlgen allows you to capture these messages by providing a custom notice handler in the connection credentials.
+
+### Setting Up a Notice Handler
+
+```cpp
+#include <sqlgen/postgres.hpp>
+#include <iostream>
+
+// Create credentials with a notice handler
+const auto creds = sqlgen::postgres::Credentials{
+    .user = "myuser",
+    .password = "mypassword",
+    .host = "localhost",
+    .dbname = "mydatabase",
+    .notice_handler = [](const char* msg) {
+        std::cout << "[PostgreSQL Notice] " << msg;
+    }
+};
+
+auto conn = sqlgen::postgres::connect(creds);
+```
+
+### Integration with Logging Frameworks
+
+The notice handler can forward messages to your preferred logging framework:
+
+```cpp
+#include <spdlog/spdlog.h>
+
+const auto creds = sqlgen::postgres::Credentials{
+    .user = "myuser",
+    .password = "mypassword",
+    .host = "localhost",
+    .dbname = "mydatabase",
+    .notice_handler = [](const char* msg) {
+        // Remove trailing newline if present
+        std::string_view sv(msg);
+        if (!sv.empty() && sv.back() == '\n') {
+            sv.remove_suffix(1);
+        }
+        spdlog::info("PostgreSQL: {}", sv);
+    }
+};
+```
+
+### Using with Connection Pools
+
+The notice handler is set per-connection, so all connections in a pool will use the same handler:
+
+```cpp
+const auto creds = sqlgen::postgres::Credentials{
+    .user = "myuser",
+    .password = "mypassword",
+    .host = "localhost",
+    .dbname = "mydatabase",
+    .notice_handler = [](const char* msg) {
+        my_logger::log(msg);
+    }
+};
+
+auto pool = sqlgen::make_connection_pool<sqlgen::postgres::Connection>(
+    sqlgen::ConnectionPoolConfig{.size = 4},
+    creds
+);
+```
+
+### Notes
+
+- If no `notice_handler` is provided, libpq's default behavior (printing to stderr) is used
+- The handler receives the full message including any trailing newline
+- The handler should be thread-safe when used with connection pools, as multiple connections may invoke it concurrently
+
