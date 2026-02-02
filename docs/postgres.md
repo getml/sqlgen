@@ -2,9 +2,11 @@
 
 The `sqlgen::postgres` module provides a type-safe and efficient interface for interacting with PostgreSQL databases. It implements the core database operations through a connection-based API with support for prepared statements, transactions, and efficient data iteration.
 
-## Usage
+## Basic Usage
 
-### Basic Connection
+This section describes the key aspects needed in order to use the module.
+
+### Connection
 
 Create a connection to a PostgreSQL database using credentials:
 
@@ -42,7 +44,7 @@ const auto query = sqlgen::read<std::vector<Person>> |
 const auto minors = query(conn);
 ```
 
-## Notes
+### Notes
 
 - The module provides a type-safe interface for PostgreSQL operations
 - All operations return `sqlgen::Result<T>` for error handling
@@ -59,6 +61,10 @@ const auto minors = query(conn);
   - Resource management through `Ref<T>`
   - Customizable connection parameters (host, port, database name, etc.)
   - LISTEN/NOTIFY for real-time event notifications
+
+# Features
+
+This section describes more advanced aspects of the `sqlgen::postgres` module, which may not be necessary for a typical user.
 
 ## LISTEN/NOTIFY
 
@@ -148,7 +154,6 @@ if (!result) {
     // Handle error...
 }
 ```
-
 ## Notice Processor
 
 PostgreSQL functions can emit NOTICE messages using `RAISE NOTICE` in PL/pgSQL. By default, libpq prints these to stderr. sqlgen allows you to capture these messages by providing a custom notice handler in the connection credentials.
@@ -213,8 +218,7 @@ const auto creds = sqlgen::postgres::Credentials{
 
 auto pool = sqlgen::make_connection_pool<sqlgen::postgres::Connection>(
     sqlgen::ConnectionPoolConfig{.size = 4},
-    creds
-);
+    creds);
 ```
 
 ### Notes
@@ -223,3 +227,54 @@ auto pool = sqlgen::make_connection_pool<sqlgen::postgres::Connection>(
 - The handler receives the full message including any trailing newline
 - The handler should be thread-safe when used with connection pools, as multiple connections may invoke it concurrently
 
+## Parameterized Queries
+
+The `execute` method supports parameterized queries using PostgreSQL's `$1, $2, ...` placeholder syntax. This prevents SQL injection and allows safe execution of dynamic queries without needing to define custom types.
+
+*Note*: using parameterized queries in this manner is highly discouraged within `sqlgen`, and should be used only as a last resort. You should consider first using the type-safe API. However, there are cases where this is useful such as when calling stored procedures that do not return results.
+
+### Basic Usage
+
+```cpp
+auto conn = sqlgen::postgres::connect(creds);
+if (!conn) {
+    // Handle error...
+    return;
+}
+
+// Call a stored function with parameters
+auto result = (*conn)->execute(
+    "SELECT provision_tenant($1, $2)",
+    tenant_id,
+    user_email
+);
+```
+
+### Supported Parameter Types
+
+The following types are automatically converted to SQL parameters:
+
+- `std::string` - passed as-is
+- `const char*` / `char*` - converted to string (nullptr becomes NULL)
+- Numeric types (`int`, `long`, `double`, etc.) - converted via `std::to_string`
+- `bool` - converted to `"true"` or `"false"`
+- `std::optional<T>` - value or NULL if `std::nullopt`
+- `std::nullopt` / `nullptr` - NULL value
+
+### Handling NULL Values
+
+Use `std::optional` or `std::nullopt` to pass NULL values:
+
+```cpp
+std::optional<std::string> maybe_value = std::nullopt;
+auto result = (*conn)->execute(
+    "INSERT INTO data (nullable_field) VALUES ($1)",
+    maybe_value
+);
+```
+
+### Notes
+
+- Parameters are sent in text format and type inference is handled by PostgreSQL
+- This feature uses `PQexecParams` internally for safe parameter binding
+- The original `execute(sql)` overload without parameters remains available
