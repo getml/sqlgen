@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_insert_or_replace {
 
@@ -51,10 +52,7 @@ TEST(mysql, test_insert_or_replace) {
   using namespace sqlgen;
   using namespace sqlgen::literals;
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
 
   const auto people4 =
       sqlgen::mysql::connect(credentials)

@@ -8,6 +8,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_joins_nested {
 
@@ -42,10 +43,7 @@ TEST(mysql, test_joins_nested) {
                                  Relationship{.parent_id = 1, .child_id = 3},
                                  Relationship{.parent_id = 1, .child_id = 4}});
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

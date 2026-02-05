@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_enum_cross_table {
 enum class AccessRestriction { PUBLIC = 1, INTERNAL = 2, CONFIDENTIAL = 3 };
@@ -69,10 +70,7 @@ TEST(mysql, test_enum_cross_table) {
                .path = "/documents/powerplant/release_notes.txt"},
   });
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
   const auto conn = mysql::connect(credentials);
   conn.and_then(drop<Employee> | if_exists)
       .and_then(drop<Document> | if_exists);

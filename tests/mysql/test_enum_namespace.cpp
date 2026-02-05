@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_enum_namespace {
 namespace first {
@@ -36,10 +37,7 @@ TEST(mysql, test_enum_namespace) {
                   .enum_two = second::IdenticallyNamed::VALUE5},
   });
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
   const auto conn = mysql::connect(credentials);
   conn.and_then(drop<MultiStruct> | if_exists);
 
