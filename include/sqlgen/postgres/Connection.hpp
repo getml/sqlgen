@@ -3,13 +3,13 @@
 
 #include <libpq-fe.h>
 
+#include <list>
 #include <memory>
 #include <optional>
 #include <rfl.hpp>
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <list>
 
 #include "../Iterator.hpp"
 #include "../Ref.hpp"
@@ -37,21 +37,24 @@
 namespace sqlgen::postgres {
 
 enum class NotificationWaitResult {
- Ready, // Data available (possibly a NOTIFY)
- Timeout, // Timeout elapsed
- Error // I/O or connection error
+  Ready,    // Data available (possibly a NOTIFY)
+  Timeout,  // Timeout elapsed
+  Error     // I/O or connection error
 };
 
 struct Notification {
- std::string channel;
- std::string payload;
- int backend_pid;
+  std::string channel;
+  std::string payload;
+  int backend_pid;
 };
 
 class SQLGEN_API Connection {
   using Conn = PostgresV2Connection;
 
  public:
+  static constexpr bool supports_returning_ids = true;
+  static constexpr bool supports_multirow_returning_ids = true;
+
   Connection(const Conn& _conn);
 
   Connection(const Credentials& _credentials);
@@ -69,10 +72,14 @@ class SQLGEN_API Connection {
 
   template <class ItBegin, class ItEnd>
   Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
-                         ItEnd _end) noexcept {
+                         ItEnd _end,
+                         std::vector<std::optional<std::string>>*
+                             _returned_ids = nullptr) noexcept {
     return internal::write_or_insert(
-        [&](const auto& _data) { return insert_impl(_stmt, _data); }, _begin,
-        _end);
+        [&](const auto& _data) {
+          return insert_impl(_stmt, _data, _returned_ids);
+        },
+        _begin, _end);
   }
 
   template <class ContainerType>
@@ -103,17 +110,18 @@ class SQLGEN_API Connection {
 
   rfl::Result<Nothing> listen(const std::string& channel) noexcept;
 
-  rfl::Result<Nothing> unlisten(const std:: string& channel) noexcept;
+  rfl::Result<Nothing> unlisten(const std::string& channel) noexcept;
 
-  rfl::Result<Nothing> notify(const std::string& channel, const std::string& payload = "") noexcept;
+  rfl::Result<Nothing> notify(const std::string& channel,
+                              const std::string& payload = "") noexcept;
 
   bool consume_input() noexcept;
 
  private:
   Result<Nothing> insert_impl(
       const dynamic::Insert& _stmt,
-      const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept;
+      const std::vector<std::vector<std::optional<std::string>>>& _data,
+      std::vector<std::optional<std::string>>* _returned_ids) noexcept;
 
   Result<Ref<Iterator>> read_impl(
       const rfl::Variant<dynamic::SelectFrom, dynamic::Union>& _query);

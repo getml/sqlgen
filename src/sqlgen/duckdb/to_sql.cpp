@@ -514,8 +514,10 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
 
   stream << "INSERT ";
 
-  if (_stmt.or_replace) {
+  if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::replace) {
     stream << "OR REPLACE ";
+  } else if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::ignore) {
+    stream << "OR IGNORE ";
   }
 
   stream << "INTO ";
@@ -533,6 +535,13 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
                   return wrap_in_quotes(_name) + " AS " + wrap_in_quotes(_name);
                 })));
   stream << " FROM sqlgen_appended_data)";
+
+  if (_stmt.returning.size() != 0) {
+    stream << " RETURNING ";
+    stream << internal::strings::join(
+        ", ",
+        internal::collect::vector(_stmt.returning | transform(wrap_in_quotes)));
+  }
 
   stream << ";";
 

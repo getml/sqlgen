@@ -561,7 +561,15 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
 
   std::stringstream stream;
 
-  stream << "INSERT INTO ";
+  stream << "INSERT ";
+
+  if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::ignore) {
+      stream << "IGNORE ";
+    }
+  }
+
+  stream << "INTO ";
   if (_stmt.table.schema) {
     stream << wrap_in_quotes(*_stmt.table.schema) << ".";
   }
@@ -579,7 +587,7 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
       internal::collect::vector(_stmt.columns | transform(to_questionmark)));
   stream << ")";
   if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
-    if (_stmt.or_replace) {
+    if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::replace) {
       stream << " ON DUPLICATE KEY UPDATE ";
       stream << internal::strings::join(
           ", ",
