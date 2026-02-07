@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_enum_cross_table {
 enum class AccessRestriction { PUBLIC = 1, INTERNAL = 2, CONFIDENTIAL = 3 };
@@ -69,10 +70,7 @@ TEST(postgres, test_enum_cross_table) {
                .path = "/documents/powerplant/release_notes.txt"},
   });
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
   const auto conn = postgres::connect(credentials);
   conn.and_then(drop<Employee> | if_exists)
       .and_then(drop<Document> | if_exists);

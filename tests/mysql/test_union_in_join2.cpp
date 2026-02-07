@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "sqlgen/mysql/to_sql.hpp"
+#include "test_helpers.hpp"
 
 namespace test_union_in_join2 {
 
@@ -36,10 +37,7 @@ TEST(mysql, test_union_in_join2) {
   using namespace sqlgen;
   using namespace sqlgen::literals;
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
 
   const auto conn = sqlgen::mysql::connect(credentials)
                         .and_then(sqlgen::drop<User1> | sqlgen::if_exists)

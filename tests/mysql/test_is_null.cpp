@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_is_null {
 
@@ -26,10 +27,7 @@ TEST(mysql, test_is_null) {
            .id = 3, .first_name = "Maggie", .last_name = "Simpson", .age = 0},
        Person{.id = 4, .first_name = "Hugo", .last_name = "Simpson"}});
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

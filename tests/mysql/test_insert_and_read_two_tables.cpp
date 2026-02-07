@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_insert_and_read_two_tables {
 
@@ -36,10 +37,7 @@ TEST(mysql, test_insert_and_read_two_tables) {
                              Children{.id_parent = 0, .id_child = 2},
                              Children{.id_parent = 0, .id_child = 3}});
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

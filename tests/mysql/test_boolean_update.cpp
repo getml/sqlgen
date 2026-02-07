@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_boolean_update {
 
@@ -35,10 +36,7 @@ TEST(mysql, test_boolean_update) {
                                              .last_name = "Simpson",
                                              .has_children = false}});
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

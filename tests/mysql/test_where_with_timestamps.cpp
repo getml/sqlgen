@@ -8,6 +8,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/mysql.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_where_with_timestamps {
 
@@ -33,10 +34,7 @@ TEST(mysql, test_where_with_timestamps) {
                                   .last_name = "Simpson",
                                   .birthday = sqlgen::Date("2010-01-01")}});
 
-  const auto credentials = sqlgen::mysql::Credentials{.host = "localhost",
-                                                      .user = "sqlgen",
-                                                      .password = "password",
-                                                      .dbname = "mysql"};
+  const auto credentials = sqlgen::mysql::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;

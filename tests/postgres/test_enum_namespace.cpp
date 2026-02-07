@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_enum_namespace {
 namespace first {
@@ -36,10 +37,7 @@ TEST(postgres, test_enum_namespace) {
                   .enum_two = second::IdenticallyNamed::VALUE5},
   });
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
   const auto conn = postgres::connect(credentials);
   conn.and_then(drop<MultiStruct> | if_exists);
 

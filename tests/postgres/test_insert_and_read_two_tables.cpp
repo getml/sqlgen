@@ -7,6 +7,7 @@
 #include <sqlgen.hpp>
 #include <sqlgen/postgres.hpp>
 #include <vector>
+#include "test_helpers.hpp"
 
 namespace test_insert_and_read_two_tables {
 
@@ -36,10 +37,7 @@ TEST(postgres, test_insert_and_read_two_tables) {
                              Children{.id_parent = 0, .id_child = 2},
                              Children{.id_parent = 0, .id_child = 3}});
 
-  const auto credentials = sqlgen::postgres::Credentials{.user = "postgres",
-                                                         .password = "password",
-                                                         .host = "localhost",
-                                                         .dbname = "postgres"};
+  const auto credentials = sqlgen::postgres::test::make_credentials();
 
   using namespace sqlgen;
   using namespace sqlgen::literals;
