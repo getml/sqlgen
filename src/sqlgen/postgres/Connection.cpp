@@ -32,6 +32,14 @@ Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
   });
 }
 
+Result<Nothing> Connection::execute_params(
+    const std::string& _sql,
+    const std::vector<std::optional<std::string>>& _params) noexcept {
+  return PostgresV2Result::make(_sql, conn_, _params).transform([](auto&&) {
+    return Nothing{};
+  });
+}
+
 Result<Nothing> Connection::end_write() {
   if (PQputCopyEnd(conn_.ptr(), NULL) == -1) {
     return error(PQerrorMessage(conn_.ptr()));

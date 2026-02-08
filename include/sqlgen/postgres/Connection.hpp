@@ -67,6 +67,45 @@ class SQLGEN_API Connection {
 
   Result<Nothing> execute(const std::string& _sql) noexcept;
 
+  template <class... Args>
+  Result<Nothing> execute(const std::string& _sql, Args&&... _args) noexcept {
+    return execute_params(_sql, {to_param(std::forward<Args>(_args))...});
+  }
+
+ private:
+  template <class T>
+  static std::optional<std::string> to_param(const T& _val) {
+    if constexpr (std::is_same_v<std::decay_t<T>, std::nullopt_t>) {
+      return std::nullopt;
+    } else if constexpr (std::is_same_v<std::decay_t<T>, std::nullptr_t>) {
+      return std::nullopt;
+    } else if constexpr (std::is_same_v<std::decay_t<T>, std::string>) {
+      return _val;
+    } else if constexpr (std::is_same_v<std::decay_t<T>, const char*> ||
+                         std::is_same_v<std::decay_t<T>, char*>) {
+      return _val ? std::optional<std::string>(_val) : std::nullopt;
+    } else if constexpr (std::is_same_v<std::decay_t<T>, bool>) {
+      return _val ? "true" : "false";
+    } else if constexpr (std::is_arithmetic_v<std::decay_t<T>>) {
+      return std::to_string(_val);
+    } else {
+      static_assert(std::is_convertible_v<T, std::string>,
+                    "Parameter type must be convertible to string");
+      return std::string(_val);
+    }
+  }
+
+  template <class T>
+  static std::optional<std::string> to_param(const std::optional<T>& _val) {
+    return _val ? to_param(*_val) : std::nullopt;
+  }
+
+  Result<Nothing> execute_params(
+      const std::string& _sql,
+      const std::vector<std::optional<std::string>>& _params) noexcept;
+
+ public:
+
   template <class ItBegin, class ItEnd>
   Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
                          ItEnd _end) noexcept {

@@ -25,6 +25,10 @@ class SQLGEN_API PostgresV2Result {
   static rfl::Result<PostgresV2Result> make(
       const std::string& _query, const PostgresV2Connection& _conn) noexcept;
 
+  static rfl::Result<PostgresV2Result> make(
+      const std::string& _query, const PostgresV2Connection& _conn,
+      const std::vector<std::optional<std::string>>& _params) noexcept;
+
   static rfl::Result<PostgresV2Result> make(PGresult* _ptr) noexcept {
     try {
       return PostgresV2Result(_ptr);
