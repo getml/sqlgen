@@ -21,15 +21,23 @@ namespace sqlgen::transpilation {
 template <class T, class InsertOrWrite>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
-InsertOrWrite to_insert_or_write(bool or_replace) {
+InsertOrWrite to_insert_or_write(
+    const dynamic::Insert::ConflictPolicy _conflict_policy,
+    const bool _returning_auto_incr_ids = false) {
   using namespace std::ranges::views;
 
   using NamedTupleType = sqlgen::internal::remove_auto_incr_primary_t<
       rfl::named_tuple_t<std::remove_cvref_t<T>>>;
   using Fields = typename NamedTupleType::Fields;
 
+  using FullNamedTupleType = rfl::named_tuple_t<std::remove_cvref_t<T>>;
+  using FullFields = typename FullNamedTupleType::Fields;
+
   const auto columns = make_columns<Fields>(
       std::make_integer_sequence<int, rfl::tuple_size_v<Fields>>());
+
+  const auto full_columns = make_columns<FullFields>(
+      std::make_integer_sequence<int, rfl::tuple_size_v<FullFields>>());
 
   const auto get_name = [](const auto& _col) { return _col.name; };
 
@@ -52,12 +60,24 @@ InsertOrWrite to_insert_or_write(bool or_replace) {
       });
     };
 
-    result.or_replace = or_replace;
+    const auto is_auto_incr_primary = [](const auto& _c) {
+      return _c.type.visit([](const auto& _t) {
+        return _t.properties.primary && _t.properties.auto_incr;
+      });
+    };
+
+    result.conflict_policy = _conflict_policy;
     result.non_primary_keys = sqlgen::internal::collect::vector(
         columns | filter(is_non_primary) | transform(get_name));
-    if (or_replace) {
+
+    if (_conflict_policy == dynamic::Insert::ConflictPolicy::replace) {
       result.constraints = sqlgen::internal::collect::vector(
-          columns | filter(is_constraint) | transform(get_name));
+          full_columns | filter(is_constraint) | transform(get_name));
+    }
+
+    if (_returning_auto_incr_ids) {
+      result.returning = sqlgen::internal::collect::vector(
+          full_columns | filter(is_auto_incr_primary) | transform(get_name));
     }
   }
 
@@ -67,8 +87,24 @@ InsertOrWrite to_insert_or_write(bool or_replace) {
 template <class T, class InsertOrWrite>
   requires std::is_class_v<std::remove_cvref_t<T>> &&
            std::is_aggregate_v<std::remove_cvref_t<T>>
+InsertOrWrite to_insert_or_write(const bool _or_replace) {
+  if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    return to_insert_or_write<T, InsertOrWrite>(
+        _or_replace ? dynamic::Insert::ConflictPolicy::replace
+                    : dynamic::Insert::ConflictPolicy::none,
+        false);
+  } else {
+    return to_insert_or_write<T, InsertOrWrite>(
+        dynamic::Insert::ConflictPolicy::none, false);
+  }
+}
+
+template <class T, class InsertOrWrite>
+  requires std::is_class_v<std::remove_cvref_t<T>> &&
+           std::is_aggregate_v<std::remove_cvref_t<T>>
 InsertOrWrite to_insert_or_write() {
-  return to_insert_or_write<T, InsertOrWrite>(false);
+  return to_insert_or_write<T, InsertOrWrite>(
+      dynamic::Insert::ConflictPolicy::none, false);
 }
 
 }  // namespace sqlgen::transpilation

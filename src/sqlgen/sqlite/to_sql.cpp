@@ -420,7 +420,15 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   };
 
   std::stringstream stream;
-  stream << "INSERT INTO ";
+  stream << "INSERT ";
+
+  if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
+    if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::ignore) {
+      stream << "OR IGNORE ";
+    }
+  }
+
+  stream << "INTO ";
 
   if (_stmt.table.schema) {
     stream << wrap_in_quotes(*_stmt.table.schema) << ".";
@@ -439,7 +447,7 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
   stream << ")";
 
   if constexpr (std::is_same_v<InsertOrWrite, dynamic::Insert>) {
-    if (_stmt.or_replace) {
+    if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::replace) {
       stream << " ON CONFLICT (";
       stream << internal::strings::join(
           ", ", internal::collect::vector(_stmt.constraints));
@@ -449,6 +457,13 @@ std::string insert_or_write_to_sql(const InsertOrWrite& _stmt) noexcept {
       stream << internal::strings::join(
           ", ",
           internal::collect::vector(_stmt.columns | transform(as_excluded)));
+    }
+
+    if (_stmt.returning.size() != 0) {
+      stream << " RETURNING ";
+      stream << internal::strings::join(
+          ", ",
+          internal::collect::vector(_stmt.returning | transform(in_quotes)));
     }
   }
 

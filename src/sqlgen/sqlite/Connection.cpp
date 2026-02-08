@@ -18,7 +18,8 @@ Connection::~Connection() = default;
 
 Result<Nothing> Connection::actual_insert(
     const std::vector<std::vector<std::optional<std::string>>>& _data,
-    sqlite3_stmt* _stmt) const noexcept {
+    sqlite3_stmt* _stmt,
+    std::vector<std::optional<std::string>>* _returned_ids) const noexcept {
   for (const auto& row : _data) {
     const auto num_cols = static_cast<int>(row.size());
 
@@ -39,7 +40,32 @@ Result<Nothing> Connection::actual_insert(
     }
 
     auto res = sqlite3_step(_stmt);
-    if (res != SQLITE_OK && res != SQLITE_ROW && res != SQLITE_DONE) {
+
+    if (_returned_ids) {
+      if (res != SQLITE_ROW) {
+        return error("INSERT ... RETURNING did not return a row: " +
+                     std::string(sqlite3_errmsg(conn_.get())));
+      }
+
+      if (sqlite3_column_count(_stmt) < 1) {
+        return error("INSERT ... RETURNING did not produce any columns.");
+      }
+
+      if (sqlite3_column_type(_stmt, 0) == SQLITE_NULL) {
+        _returned_ids->emplace_back(std::nullopt);
+      } else {
+        const auto* value = sqlite3_column_text(_stmt, 0);
+        _returned_ids->emplace_back(
+            std::string(reinterpret_cast<const char*>(value)));
+      }
+
+      res = sqlite3_step(_stmt);
+      if (res != SQLITE_DONE) {
+        return error(
+            "INSERT ... RETURNING produced more than one row per "
+            "input row.");
+      }
+    } else if (res != SQLITE_OK && res != SQLITE_ROW && res != SQLITE_DONE) {
       return error(sqlite3_errmsg(conn_.get()));
     }
 
@@ -85,11 +111,12 @@ Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
 
 Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
-    const std::vector<std::vector<std::optional<std::string>>>&
-        _data) noexcept {
+    const std::vector<std::vector<std::optional<std::string>>>& _data,
+    std::vector<std::optional<std::string>>* _returned_ids) noexcept {
   const auto sql = to_sql_impl(_stmt);
-  return prepare_statement(sql).and_then(
-      [&](auto _p_stmt) { return actual_insert(_data, _p_stmt.get()); });
+  return prepare_statement(sql).and_then([&](auto _p_stmt) {
+    return actual_insert(_data, _p_stmt.get(), _returned_ids);
+  });
 }
 
 typename Connection::ConnPtr Connection::make_conn(const std::string& _fname) {
@@ -173,7 +200,7 @@ Result<Nothing> Connection::write_impl(
         ".write(...).");
   }
 
-  return actual_insert(_data, stmt_.get())
+  return actual_insert(_data, stmt_.get(), nullptr)
       .or_else([&](const auto& err) -> Result<Nothing> {
         rollback();
         return error(err.what());

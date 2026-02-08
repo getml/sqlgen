@@ -21,7 +21,12 @@ Connection::~Connection() = default;
 
 Result<Nothing> Connection::actual_insert(
     const std::vector<std::vector<std::optional<std::string>>>& _data,
-    MYSQL_STMT* _stmt) const noexcept {
+    MYSQL_STMT* _stmt,
+    std::vector<std::optional<std::string>>* _returned_ids) const noexcept {
+  if (_returned_ids && _data.size() > 1) {
+    return error("MySQL returning(ids) only supports single-row inserts.");
+  }
+
   const auto num_params = static_cast<size_t>(mysql_stmt_param_count(_stmt));
 
   std::vector<MYSQL_BIND> bind(num_params);
@@ -70,6 +75,11 @@ Result<Nothing> Connection::actual_insert(
     if (err) {
       return make_error(conn_);
     }
+
+    if (_returned_ids) {
+      _returned_ids->emplace_back(std::to_string(
+          static_cast<unsigned long long>(mysql_insert_id(conn_.get()))));
+    }
   }
 
   return Nothing{};
@@ -87,13 +97,14 @@ Result<Nothing> Connection::execute(const std::string& _sql) noexcept {
 
 Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
-    const std::vector<std::vector<std::optional<std::string>>>&
-        _data) noexcept {
+    const std::vector<std::vector<std::optional<std::string>>>& _data,
+    std::vector<std::optional<std::string>>* _returned_ids) noexcept {
   if (_data.size() == 0) {
     return Nothing{};
   }
-  return prepare_statement(_stmt).and_then(
-      [&](auto&& _stmt_ptr) { return actual_insert(_data, _stmt_ptr.get()); });
+  return prepare_statement(_stmt).and_then([&](auto&& _stmt_ptr) {
+    return actual_insert(_data, _stmt_ptr.get(), _returned_ids);
+  });
 }
 
 rfl::Result<Ref<Connection>> Connection::make(
@@ -186,11 +197,12 @@ Result<Nothing> Connection::write_impl(
         " You need to call .start_write(...) before you can call "
         ".write(...).");
   }
-  return actual_insert(_data, stmt_.get()).or_else([&](const auto& _err) {
-    rollback();
-    stmt_ = nullptr;
-    return error(_err.what());
-  });
+  return actual_insert(_data, stmt_.get(), nullptr)
+      .or_else([&](const auto& _err) {
+        rollback();
+        stmt_ = nullptr;
+        return error(_err.what());
+      });
 }
 
 Result<Nothing> Connection::end_write() {

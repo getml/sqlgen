@@ -62,7 +62,7 @@ TEST(mysql, test_insert_or_replace) {
           .and_then(insert(people1))
           .and_then(commit)
           .and_then(begin_transaction)
-          .and_then(insert_or_replace(people2))
+          .and_then(insert(std::ref(people2)) | or_replace)
           .and_then(commit)
           .and_then(sqlgen::read<std::vector<Person>> | order_by("id"_c))
           .value();

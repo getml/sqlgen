@@ -1,4 +1,4 @@
-# `sqlgen::insert`, `sqlgen::insert_or_replace`
+# `sqlgen::insert`, `sqlgen::insert_or_replace`, `sqlgen::returning`
 
 The `sqlgen::insert` interface provides a type-safe way to insert data from C++ containers or ranges into a SQL database. Unlike `sqlgen::write`, it does not create tables automatically and is designed to be used within transactions. It's particularly useful when you need fine-grained control over table creation and transaction boundaries. 
 
@@ -68,76 +68,67 @@ sqlgen::sqlite::connect("database.db")
     .value();
 ```
 
-### With Replacement (`insert_or_replace`)
+### Conflict Policies (`or_replace`, `or_ignore`)
 
-The `insert_or_replace` helper inserts rows and updates existing rows when a primary key or unique constraint would be violated by the insert. It is a thin wrapper over the same insertion paths used by `insert`, but it sets the internal `or_replace` flag so the transpiler emits backend-specific "upsert" SQL.
-
-Function signatures (examples):
+`insert(...)` supports typed conflict-policy tags:
 
 ```cpp
-// Use with an explicit connection (or a Result<Ref<Connection>>)
-template <class ContainerType>
-auto insert_or_replace(const auto& conn, const ContainerType& data);
-
-// Use as a pipeline element (returns a callable that accepts a connection)
-template <class ContainerType>
-auto insert_or_replace(const ContainerType& data);
-```
-
-Compile-time requirement
-
-- The table type must have a primary key or at least one unique constraint. This is enforced at compile time via a static_assert:
-
-  "The table must have a primary key or unique column for insert_or_replace(...) to work."
-
-Behavior notes
-
-- SQLite, PostgreSQL and DuckDB backends emit `ON CONFLICT (...) DO UPDATE ...` (using `excluded.*` to reference the incoming values).
-- MySQL backend emits `ON DUPLICATE KEY UPDATE` and uses `VALUES(...)` to reference incoming values.
-- The transpilation helper `to_insert_or_write<..., dynamic::Insert>(true)` is used internally to produce the correct SQL.
-
-Example:
-
-```cpp
-const auto people1 = std::vector<Person>({
-    Person{.id = 0, .first_name = "Homer", .last_name = "Simpson", .age = 45},
-    Person{.id = 1, .first_name = "Bart", .last_name = "Simpson", .age = 10}
-});
-
-const auto people2 = std::vector<Person>({
-    Person{.id = 1, .first_name = "Bartholomew", .last_name = "Simpson", .age = 10}
-});
-
 using namespace sqlgen;
 
-const auto result = sqlite::connect()
+insert(people, or_replace);
+insert(people, or_ignore);
+
+// Pipeline style is also supported (suggest):
+insert(people) | or_replace;
+insert(people) | or_ignore;
+```
+
+Behavior by backend:
+
+- SQLite: `OR REPLACE`, `OR IGNORE`
+- PostgreSQL: `ON CONFLICT (...) DO UPDATE ...`, `ON CONFLICT DO NOTHING`
+- DuckDB: `OR REPLACE`, `OR IGNORE`
+- MySQL: `ON DUPLICATE KEY UPDATE`, `INSERT IGNORE`
+
+Compile-time rules:
+
+- You can set at most one conflict policy (`or_replace` or `or_ignore`).
+- `or_replace` requires at least one primary key or unique constraint.
+
+### Returning Auto-generated IDs (`returning(ids)`)
+
+Use `returning(ids)` to collect auto-generated primary keys during `insert`:
+
+```cpp
+struct Person {
+  sqlgen::PrimaryKey<uint32_t, sqlgen::auto_incr> id;
+  std::string first_name;
+  int age;
+};
+
+auto ids = std::vector<uint32_t>{};
+
+sqlite::connect()
     .and_then(create_table<Person> | if_not_exists)
-    .and_then(insert(std::ref(people1)))
-    .and_then(insert_or_replace(std::ref(people2)))
+    .and_then(insert(people, returning(ids)))
     .value();
 ```
 
-Generated SQL (SQLite/Postgres/DuckDB style):
+Compile-time rules:
 
-```sql
-INSERT INTO "Person" ("id", "first_name", "last_name", "age") VALUES (?, ?, ?, ?)
-ON CONFLICT (id) DO UPDATE SET
-  id=excluded.id,
-  first_name=excluded.first_name,
-  last_name=excluded.last_name,
-  age=excluded.age;
-```
+- The target type must contain an auto-incrementing primary key.
+- `returning(ids)` cannot be combined with `or_ignore`.
+- The `ids` container must support `clear()` and `push_back(value_type)`.
+- On MySQL, `returning(ids)` is supported for single-object inserts only.
 
-Generated SQL (MySQL style):
+Backend behavior:
 
-```sql
-INSERT INTO `Person` (`id`, `first_name`, `last_name`, `age`) VALUES (?, ?, ?, ?)
-ON DUPLICATE KEY UPDATE
-  id=VALUES(id),
-  first_name=VALUES(first_name),
-  last_name=VALUES(last_name),
-  age=VALUES(age);
-```
+- SQLite/PostgreSQL/DuckDB: generated SQL uses `RETURNING`.
+- MySQL: no `RETURNING` SQL is emitted; IDs are read via the MySQL C API.
+
+### Backward Compatibility (`insert_or_replace`)
+
+`insert_or_replace(...)` is still available and works like before. Internally it is now a thin wrapper over `insert(..., or_replace)`.
 
 ## Example: Full Transaction Usage
 
@@ -259,11 +250,9 @@ While both `insert` and `write` can be used to add data to a database, they serv
 ## Notes
 
 - The `Result<Ref<Connection>>` type provides error handling; use `.value()` to extract the result (will throw an exception if there's an error) or handle errors as needed
-- The function has several overloads:
-  1. Takes a connection reference and iterators
-  2. Takes a `Result<Ref<Connection>>` and iterators
-  3. Takes a connection and a container directly
-  4. Takes a connection and a reference wrapper to a container
+- `insert(...)` accepts optional modifiers: `or_replace`, `or_ignore`, `returning(ids)`
+- Modifiers can be passed directly (`insert(data, or_replace)`) or in pipeline style (`insert(data) | or_replace`)
 - Unlike `write`, `insert` does not create tables automatically - you must create tables separately using `create_table`
 - The insert operation is atomic within a transaction
 - When using reference wrappers (`std::ref`), the data is not copied, which can be more efficient for large datasets
+- On MySQL, `returning(ids)` is limited to single-object inserts
