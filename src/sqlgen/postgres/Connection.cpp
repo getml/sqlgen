@@ -208,7 +208,10 @@ std::string Connection::to_buffer(
   const auto edit_field =
       [](const std::optional<std::string>& _field) -> std::string {
     if (!_field) {
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored "-Wpedantic"
       return "\e";
+      #pragma GCC diagnostic pop
     }
     if (_field->find("\t") != std::string::npos) {
       return "\a" + *_field + "\a";
