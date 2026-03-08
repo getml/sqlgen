@@ -61,13 +61,11 @@ Result<Nothing> Connection::actual_insert(
       }
     }
 
-    auto err = mysql_stmt_bind_param(_stmt, bind.data());
-    if (err) {
+    if (auto err = mysql_stmt_bind_param(_stmt, bind.data()); err) {
       return make_error(conn_);
     }
 
-    err = mysql_stmt_execute(_stmt);
-    if (err) {
+    if (auto err = mysql_stmt_execute(_stmt); err) {
       return make_error(conn_);
     }
   }
