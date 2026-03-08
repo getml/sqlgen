@@ -130,9 +130,9 @@ Result<Nothing> Connection::insert_impl(
 
   const auto sql = to_sql_impl(_stmt);
 
-  return PostgresV2Result::make(PQprepare(conn_.ptr(), name.c_str(),
-                                          sql.c_str(), _data.at(0).size(),
-                                          nullptr))
+  return PostgresV2Result::make(
+             PQprepare(conn_.ptr(), name.c_str(), sql.c_str(),
+                       static_cast<int>(_data.at(0).size()), nullptr))
       .and_then([&](auto&& res) -> Result<Nothing> {
         if (PQresultStatus(res.ptr()) != PGRES_COMMAND_OK) {
           return error("Generating prepared statement for '" + sql +
