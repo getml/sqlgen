@@ -65,6 +65,11 @@ class CacheImpl {
         });
   }
 
+  static void clear() {
+    std::unique_lock write_lock(mtx_);
+    cache_.clear();
+  }
+
   static const auto& cache() { return cache_; }
 
  private:
@@ -105,6 +110,12 @@ struct Cache {
   static const auto& cache(const Result<Ref<Connection>>& _res) {
     return CacheImpl<QueryT, std::remove_cvref_t<Connection>,
                      _max_size>::cache();
+  }
+
+  template <class Connection>
+    requires is_connection<Connection>
+  static void clear(const Result<Ref<Connection>>&) {
+    CacheImpl<QueryT, std::remove_cvref_t<Connection>, _max_size>::clear();
   }
 
   QueryT query_;

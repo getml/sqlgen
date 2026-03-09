@@ -50,6 +50,44 @@ To create a cache with a virtually unlimited size, you can specify a `max_size` 
 const auto cached_query = sqlgen::cache<0>(query);
 ```
 
+### Cache Invalidation
+
+The cache has no mechanism for determining if a cached result is still valid/up-to-date. Because of this, the cache should be explicitly `clear`ed before use any time another query is made that invalidates the cache.
+
+```cpp
+#include <sqlgen.hpp>
+
+struct User {
+  std::string name;
+  int age;
+};
+
+const auto conn = sqlgen::sqlite::connect();
+
+const auto user = User{.name = "John", .age = 30};
+sqlgen::write(conn, user);
+
+const auto user_b = User{.name = "Mary", .age = 25};
+sqlgen::write(conn, user_b);
+
+const auto query = sqlgen::read<std::vector<User>>;
+const auto cached_query = sqlgen::cache<100>(query);
+
+const auto users1 = cached_query(conn).value();
+// The cache size will now contain a result consisting of John & Mary
+
+const auto user_c = User{.name = "Bill", .age = 50};
+sqlgen::write(conn, user_c);
+
+// Because the query was previously cached, user2 will still only contain John & Mary while Bill will be absent.
+const auto users2 = cached_query(conn).value();
+
+cached_query.clear(conn);
+
+// Now, the query will be executed again since it's no longer cached. Afterwards, the cache will again store an up-to-date result and users3 will contain John, Mary, & Bill.
+const auto users3 = cached_query(conn).value();
+```
+
 ### Thread Safety and Concurrency
 
 The cache is thread-safe and can be accessed from multiple threads concurrently. A `std::shared_mutex` is used to protect the cache from data races.

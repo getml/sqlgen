@@ -33,20 +33,28 @@ TEST(mysql, test_cache) {
 
   const auto cached_query = sqlgen::cache<100>(query);
 
-  const auto user1 = conn.and_then(cache<100>(query)).value();
+  auto test_cache_population = [&]() {
+    const auto user1 = conn.and_then(cache<100>(query)).value();
 
-  EXPECT_EQ(cached_query.cache(conn).size(), 1);
+    EXPECT_EQ(cached_query.cache(conn).size(), 1);
 
-  const auto user2 = cached_query(conn).value();
-  const auto user3 = cached_query(conn).value();
+    const auto user2 = cached_query(conn).value();
+    const auto user3 = cached_query(conn).value();
 
-  EXPECT_EQ(user1.name, "John");
-  EXPECT_EQ(user1.age, 30);
-  EXPECT_EQ(user2.name, "John");
-  EXPECT_EQ(user2.age, 30);
-  EXPECT_EQ(cached_query.cache(conn).size(), 1);
-  EXPECT_EQ(user3.name, "John");
-  EXPECT_EQ(user3.age, 30);
+    EXPECT_EQ(user1.name, "John");
+    EXPECT_EQ(user1.age, 30);
+    EXPECT_EQ(user2.name, "John");
+    EXPECT_EQ(user2.age, 30);
+    EXPECT_EQ(cached_query.cache(conn).size(), 1);
+    EXPECT_EQ(user3.name, "John");
+    EXPECT_EQ(user3.age, 30);
+  };
+  test_cache_population();
+
+  // Test cache invalidation
+  cached_query.clear(conn);
+  EXPECT_EQ(cached_query.cache(conn).size(), 0);
+  test_cache_population();
 }
 
 }  // namespace test_cache
