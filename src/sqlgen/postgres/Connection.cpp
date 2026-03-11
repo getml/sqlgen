@@ -120,8 +120,8 @@ bool Connection::consume_input() noexcept {
 
 Result<Nothing> Connection::insert_impl(
     const dynamic::Insert& _stmt,
-    const std::vector<std::vector<std::optional<std::string>>>&
-        _data) noexcept {
+    const std::vector<std::vector<std::optional<std::string>>>& _data,
+    std::vector<std::optional<std::string>>* _returned_ids) noexcept {
   if (_data.size() == 0) {
     return Nothing{};
   }
@@ -172,7 +172,28 @@ Result<Nothing> Connection::insert_impl(
 
             const auto status = PQresultStatus(res.ptr());
 
-            if (status != PGRES_COMMAND_OK) {
+            if (_returned_ids) {
+              if (status != PGRES_TUPLES_OK) {
+                const auto err = error(
+                    std::string("Executing INSERT ... RETURNING failed: ") +
+                    PQresultErrorMessage(res.ptr()));
+                execute("DEALLOCATE " + name + ";");
+                return err;
+              }
+
+              if (PQnfields(res.ptr()) < 1 || PQntuples(res.ptr()) != 1) {
+                execute("DEALLOCATE " + name + ";");
+                return error(
+                    "INSERT ... RETURNING must return exactly one row "
+                    "and at least one column per input row.");
+              }
+
+              if (PQgetisnull(res.ptr(), 0, 0) == 1) {
+                _returned_ids->emplace_back(std::nullopt);
+              } else {
+                _returned_ids->emplace_back(PQgetvalue(res.ptr(), 0, 0));
+              }
+            } else if (status != PGRES_COMMAND_OK) {
               const auto err = error(std::string("Executing INSERT failed: ") +
                                      PQresultErrorMessage(res.ptr()));
               execute("DEALLOCATE " + name + ";");

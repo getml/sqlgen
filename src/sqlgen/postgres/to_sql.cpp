@@ -494,7 +494,7 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
                 transform(to_placeholder)));
   stream << ")";
 
-  if (_stmt.or_replace) {
+  if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::replace) {
     stream << " ON CONFLICT (";
     stream << internal::strings::join(
         ", ", internal::collect::vector(_stmt.constraints));
@@ -504,6 +504,15 @@ std::string insert_to_sql(const dynamic::Insert& _stmt) noexcept {
     stream << internal::strings::join(
         ", ",
         internal::collect::vector(_stmt.columns | transform(as_excluded)));
+  } else if (_stmt.conflict_policy == dynamic::Insert::ConflictPolicy::ignore) {
+    stream << " ON CONFLICT DO NOTHING";
+  }
+
+  if (_stmt.returning.size() != 0) {
+    stream << " RETURNING ";
+    stream << internal::strings::join(
+        ", ",
+        internal::collect::vector(_stmt.returning | transform(wrap_in_quotes)));
   }
 
   stream << ";";

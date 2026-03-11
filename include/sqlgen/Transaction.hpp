@@ -1,6 +1,9 @@
 #ifndef SQLGEN_TRANSACTION_HPP_
 #define SQLGEN_TRANSACTION_HPP_
 
+#include <optional>
+#include <vector>
+
 #include "Ref.hpp"
 #include "internal/iterator_t.hpp"
 #include "is_connection.hpp"
@@ -12,6 +15,11 @@ template <class _ConnType>
 class Transaction {
  public:
   using ConnType = _ConnType;
+
+  static constexpr bool supports_returning_ids =
+      ConnType::supports_returning_ids;
+  static constexpr bool supports_multirow_returning_ids =
+      ConnType::supports_multirow_returning_ids;
 
   Transaction(const Ref<ConnType>& _conn)
       : conn_(_conn), transaction_ended_(false) {}
@@ -57,9 +65,10 @@ class Transaction {
   }
 
   template <class ItBegin, class ItEnd>
-  Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
-                         ItEnd _end) {
-    return conn_->insert(_stmt, _begin, _end);
+  Result<Nothing> insert(
+      const dynamic::Insert& _stmt, ItBegin _begin, ItEnd _end,
+      std::vector<std::optional<std::string>>* _returned_ids = nullptr) {
+    return conn_->insert(_stmt, _begin, _end, _returned_ids);
   }
 
   Transaction& operator=(const Transaction& _other) = delete;

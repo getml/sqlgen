@@ -36,6 +36,9 @@ class SQLGEN_API Connection {
   using StmtPtr = std::shared_ptr<MYSQL_STMT>;
 
  public:
+  static constexpr bool supports_returning_ids = true;
+  static constexpr bool supports_multirow_returning_ids = false;
+
   Connection(const Credentials& _credentials);
 
   static rfl::Result<Ref<Connection>> make(
@@ -51,10 +54,14 @@ class SQLGEN_API Connection {
 
   template <class ItBegin, class ItEnd>
   Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
-                         ItEnd _end) noexcept {
+                         ItEnd _end,
+                         std::vector<std::optional<std::string>>*
+                             _returned_ids = nullptr) noexcept {
     return internal::write_or_insert(
-        [&](const auto& _data) { return insert_impl(_stmt, _data); }, _begin,
-        _end);
+        [&](const auto& _data) {
+          return insert_impl(_stmt, _data, _returned_ids);
+        },
+        _begin, _end);
   }
 
   template <class ContainerType>
@@ -85,12 +92,13 @@ class SQLGEN_API Connection {
   /// used by both .insert(...) and .write(...).
   Result<Nothing> actual_insert(
       const std::vector<std::vector<std::optional<std::string>>>& _data,
-      MYSQL_STMT* _stmt) const noexcept;
+      MYSQL_STMT* _stmt,
+      std::vector<std::optional<std::string>>* _returned_ids) const noexcept;
 
   Result<Nothing> insert_impl(
       const dynamic::Insert& _stmt,
-      const std::vector<std::vector<std::optional<std::string>>>&
-          _data) noexcept;
+      const std::vector<std::vector<std::optional<std::string>>>& _data,
+      std::vector<std::optional<std::string>>* _returned_ids) noexcept;
 
   static ConnPtr make_conn(const Credentials& _credentials);
 

@@ -21,7 +21,7 @@ struct ValueType<T> {
 template <class ContainerType>
   requires std::ranges::input_range<ContainerType>
 struct ValueType<ContainerType> {
-  using Type = std::remove_cvref_t<typename ContainerType::value_type>;
+  using Type = std::remove_cvref_t<std::ranges::range_value_t<ContainerType>>;
 };
 
 template <class T>

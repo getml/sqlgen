@@ -22,6 +22,11 @@ class Session {
   using Connection = _Connection;
   using ConnPtr = Ref<Connection>;
 
+  static constexpr bool supports_returning_ids =
+      Connection::supports_returning_ids;
+  static constexpr bool supports_multirow_returning_ids =
+      Connection::supports_multirow_returning_ids;
+
   Session(const Ref<Connection>& _conn, const Ref<std::atomic_flag>& _flag)
       : conn_(_conn), flag_(_flag.ptr()) {}
 
@@ -47,9 +52,10 @@ class Session {
   }
 
   template <class ItBegin, class ItEnd>
-  Result<Nothing> insert(const dynamic::Insert& _stmt, ItBegin _begin,
-                         ItEnd _end) {
-    return conn_->insert(_stmt, _begin, _end);
+  Result<Nothing> insert(
+      const dynamic::Insert& _stmt, ItBegin _begin, ItEnd _end,
+      std::vector<std::optional<std::string>>* _returned_ids = nullptr) {
+    return conn_->insert(_stmt, _begin, _end, _returned_ids);
   }
 
   Session& operator=(const Session& _other) = delete;

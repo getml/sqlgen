@@ -35,9 +35,9 @@ struct ToSQL;
 template <class ValueType, class TableOrQueryType, class AliasType,
           class FieldsType, class JoinsType, class WhereType, class GroupByType,
           class OrderByType, class LimitType, class OffsetType, class ToType>
-struct ToSQL<
-    CreateAs<ValueType, TableOrQueryType, AliasType, FieldsType, JoinsType,
-             WhereType, GroupByType, OrderByType, LimitType, OffsetType, ToType>> {
+struct ToSQL<CreateAs<ValueType, TableOrQueryType, AliasType, FieldsType,
+                      JoinsType, WhereType, GroupByType, OrderByType, LimitType,
+                      OffsetType, ToType>> {
   dynamic::Statement operator()(const auto& _create_as) const {
     using TableTupleType =
         transpilation::table_tuple_t<ValueType, AliasType, JoinsType>;
@@ -82,19 +82,24 @@ struct ToSQL<Drop<T>> {
   }
 };
 
-template <class T>
-struct ToSQL<Insert<T>> {
+template <class T, dynamic::Insert::ConflictPolicy _conflict_policy,
+          class IDsType>
+struct ToSQL<Insert<T, _conflict_policy, IDsType>> {
   dynamic::Statement operator()(const auto&) const {
-    return to_insert_or_write<T, dynamic::Insert>();
+    constexpr bool has_returning = !std::is_void_v<IDsType>;
+    return to_insert_or_write<T, dynamic::Insert>(_conflict_policy,
+                                                  has_returning);
   }
 };
 
 template <class ContainerType, class WhereType, class OrderByType,
           class LimitType, class OffsetType>
-struct ToSQL<Read<ContainerType, WhereType, OrderByType, LimitType, OffsetType>> {
+struct ToSQL<
+    Read<ContainerType, WhereType, OrderByType, LimitType, OffsetType>> {
   dynamic::Statement operator()(const auto& _read) const {
     return read_to_select_from<value_t<ContainerType>, WhereType, OrderByType,
-                               LimitType, OffsetType>(_read.where_, _read.limit_, _read.offset_);
+                               LimitType, OffsetType>(
+        _read.where_, _read.limit_, _read.offset_);
   }
 };
 
