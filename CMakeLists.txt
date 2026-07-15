@@ -144,7 +144,9 @@ if (SQLGEN_SQLITE3 OR SQLGEN_CHECK_HEADERS)
     endif()
 endif()
 
-find_package(reflectcpp CONFIG REQUIRED)
+if(NOT TARGET reflectcpp::reflectcpp)
+    find_package(reflectcpp CONFIG REQUIRED)
+endif()
 
 target_link_libraries(sqlgen PUBLIC reflectcpp::reflectcpp)
 
