@@ -477,7 +477,7 @@ get_people(conn, "Homer' OR '1'='1");  // SQL injection attempt
 
 ## Documentation
 
-For detailed documentation, visit our [documentation page](docs/README.md).
+For detailed documentation, visit our [documentation page](https://getml.github.io/sqlgen/).
 
 ## Contributing
 
