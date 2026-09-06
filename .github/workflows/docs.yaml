@@ -1,8 +1,9 @@
 name: Deploy documentation to Github Pages
 
-on:
-  push:
-    branches: ["main"]
+on: [push, pull_request]
+#on:
+#  push:
+#    branches: ["main"]
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
