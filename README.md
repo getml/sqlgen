@@ -8,7 +8,7 @@
 [![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://shields.io/)
 [![Conan Center](https://img.shields.io/conan/v/sqlgen)](https://conan.io/center/recipes/sqlgen)
 
-**📖 Documentation**: [Click here](docs/README.md)
+**📖 Documentation**: [Click here](https://getml.github.io/sqlgen/)
 
 ![image](docs/content/sqlgen.png)
 
