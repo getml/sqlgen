@@ -1,7 +1,6 @@
 name: Deploy documentation to Github Pages
 
 on: [push, pull_request]
-
 #on:
 #  push:
 #    branches: ["main"]
