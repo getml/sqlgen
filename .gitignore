@@ -19,6 +19,7 @@
 # Fortran module files
 *.mod
 *.smod
+!docs/**/*.mod
 
 # Compiled Static libraries
 *.lai
@@ -35,4 +36,7 @@
 build/
 vcpkg_installed/
 CMakeUserPresets.json
+
+docs/public/
+*.lock
 
