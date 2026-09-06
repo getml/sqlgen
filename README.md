@@ -1,4 +1,4 @@
-# ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) sqlgen 
+# ![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white) sqlgen
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/getml/reflect-cpp/graphs/commit-activity)
@@ -9,6 +9,8 @@
 [![Conan Center](https://img.shields.io/conan/v/sqlgen)](https://conan.io/center/recipes/sqlgen)
 
 **📖 Documentation**: [Click here](docs/README.md)
+
+![image](docs/content/sqlgen.png)
 
 **sqlgen** is a modern, type-safe ORM and SQL query generator for C++20, inspired by Python's [SQLAlchemy](https://github.com/sqlalchemy/sqlalchemy)/[SQLModel](https://github.com/fastapi/sqlmodel) and Rust's [Diesel](https://github.com/diesel-rs/diesel). It provides a fluent, composable interface for database operations with compile-time type checking and SQL injection protection.
 
@@ -24,9 +26,9 @@ Together, reflect-cpp and sqlgen enable reliable and efficient ETL pipelines.
 - 🚀 **High Performance**: Efficient batch operations and prepared statements
 - 📦 **Modern C++**: Leverages C++20 features for a clean, expressive API
 - 🔌 **Multiple Backends**: Support for PostgreSQL and SQLite
-- 🔍 **Reflection Integration**: Seamless integration with [reflect-cpp](https://github.com/getml/reflect-cpp) 
+- 🔍 **Reflection Integration**: Seamless integration with [reflect-cpp](https://github.com/getml/reflect-cpp)
 
-## Supported databases 
+## Supported databases
 
 The following table lists the databases currently supported by sqlgen and the underlying libraries used:
 
@@ -41,7 +43,7 @@ The following table lists the databases currently supported by sqlgen and the un
 
 ### Install using vcpkg or Conan
 
-You can install the latest release of sqlgen 
+You can install the latest release of sqlgen
 using either [vcpkg](https://vcpkg.io/en/package/sqlgen) or [Conan](https://conan.io/center/recipes/sqlgen).
 
 ### Build using vcpkg
@@ -68,11 +70,11 @@ cmake --build build -j 4  # gcc, clang
 cmake --build build --config Release -j 4  # MSVC
 ```
 
-This will build the static library. To build the shared library 
+This will build the static library. To build the shared library
 add `-DBUILD_SHARED_LIBS=ON -DVCPKG_TARGET_TRIPLET=...` to the first line.
-Run `./vcpkg/vcpkg help triplets` to view all supported triplets. 
-Common triplets for shared libraries are `x64-linux-dynamic`, 
-`arm64-osx-dynamic` or `x64-osx-dynamic`.   
+Run `./vcpkg/vcpkg help triplets` to view all supported triplets.
+Common triplets for shared libraries are `x64-linux-dynamic`,
+`arm64-osx-dynamic` or `x64-osx-dynamic`.
 
 Add `-DSQLGEN_MYSQL=ON` to support MySQL/MariaDB. Add `-DSQLGEN_DUCKDB=ON` to support DuckDB.
 
@@ -102,7 +104,7 @@ conan build . --build=missing -s compiler.cppstd=gnu20
 ```
 
 This will build the static library. To build the shared library,
-add `-o */*:shared=True`. 
+add `-o */*:shared=True`.
 
 Add `-o sqlgen/*:with_mysql=True` to support MySQL/MariaDB.
 
@@ -130,14 +132,14 @@ struct User {
 int main() {
     // Connect to SQLite database
     const auto conn = sqlgen::sqlite::connect("test.db");
-    
+
     // Create and insert a user
     const auto user = User{.name = "John", .age = 30};
     sqlgen::write(conn, user);
-    
+
     // Read all users
     const auto users = sqlgen::read<std::vector<User>>(conn).value();
-    
+
     for (const auto& u : users) {
         std::cout << u.name << " is " << u.age << " years old\n";
     }
@@ -218,7 +220,7 @@ CREATE TABLE IF NOT EXISTS "Person" (
     "email" TEXT
 );
 
-INSERT INTO "Person" ("first_name", "last_name", "age", "email") 
+INSERT INTO "Person" ("first_name", "last_name", "age", "email")
 VALUES (?, ?, ?, ?);
 COMMIT;
 ```
@@ -285,7 +287,7 @@ const std::vector<Children> children = get_children(conn).value();
 
 Generated SQL:
 ```sql
-SELECT 
+SELECT
     "last_name",
     COUNT(*) as "num_children",
     MAX("age") as "max_age",
@@ -322,15 +324,15 @@ const auto get_people =
 
 Generated SQL:
 ```sql
-SELECT t1."last_name" AS "last_name", 
-       t1."first_name" AS "first_name_parent", 
-       t3."first_name" AS "first_name_child", 
-       t1."age" - t3."age" AS "parent_age_at_birth" 
-FROM "Person" t1 
-INNER JOIN "Relationship" t2 
-ON t1."id" = t2."parent_id" 
+SELECT t1."last_name" AS "last_name",
+       t1."first_name" AS "first_name_parent",
+       t3."first_name" AS "first_name_child",
+       t1."age" - t3."age" AS "parent_age_at_birth"
+FROM "Person" t1
+INNER JOIN "Relationship" t2
+ON t1."id" = t2."parent_id"
 INNER JOIN "Person" t3
-ON t3."id" = t2."child_id" 
+ON t3."id" = t2."child_id"
 ORDER BY t1."id", t3."id"
 ```
 
@@ -363,26 +365,26 @@ const auto get_people =
       ("age"_t1 - "age"_t2) | as<"parent_age_at_birth">) |
   inner_join<"t2">(
     get_children, // Use the subquery as the source
-    "id"_t1 == "id"_t2) | 
+    "id"_t1 == "id"_t2) |
   order_by("id"_t1, "id"_t2) | to<std::vector<ParentAndChild>>;
 ```
 
 Generated SQL:
 ```sql
-SELECT t1."last_name" AS "last_name", 
-    t1."first_name" AS "first_name_parent", 
-    t2."first_name" AS "first_name_child", 
-    t1."age" - t2."age" AS "parent_age_at_birth" 
-FROM "Person" t1 
+SELECT t1."last_name" AS "last_name",
+    t1."first_name" AS "first_name_parent",
+    t2."first_name" AS "first_name_child",
+    t1."age" - t2."age" AS "parent_age_at_birth"
+FROM "Person" t1
 INNER JOIN (
-    SELECT t1."parent_id" AS "id", 
-           t2."first_name" AS "first_name", 
-           t2."age" AS "age" 
-    FROM "Relationship" t1 
+    SELECT t1."parent_id" AS "id",
+           t2."first_name" AS "first_name",
+           t2."age" AS "age"
+    FROM "Relationship" t1
     INNER JOIN "Person" t2
     ON t2."id" = t1."child_id"
-) t2 
-ON t1."id" = t2."id" 
+) t2
+ON t1."id" = t2."id"
 ORDER BY t1."id", t2."id"
 ```
 
@@ -412,27 +414,27 @@ const auto get_people = select_from<"t1">(
     "last_name"_t1 | as<"last_name">,
     "first_name"_t1 | as<"first_name_parent">,
     "first_name"_t2 | as<"first_name_child">,
-    ("age"_t1 - "age"_t2) | as<"parent_age_at_birth">) | 
- inner_join<Person, "t2">("id"_t1 == "id"_t2) | 
+    ("age"_t1 - "age"_t2) | as<"parent_age_at_birth">) |
+ inner_join<Person, "t2">("id"_t1 == "id"_t2) |
  order_by("id"_t1, "id"_t2) | to<std::vector<ParentAndChild>>;
 ```
 
 Generated SQL:
 ```sql
-SELECT t1."last_name" AS "last_name", 
-       t1."first_name" AS "first_name_parent", 
-       t2."first_name" AS "first_name_child", 
-       (t1."age") - (t2."age") AS "parent_age_at_birth" 
+SELECT t1."last_name" AS "last_name",
+       t1."first_name" AS "first_name_parent",
+       t2."first_name" AS "first_name_child",
+       (t1."age") - (t2."age") AS "parent_age_at_birth"
 FROM (
-    SELECT t2."child_id" AS "id", 
-           t1."first_name" AS "first_name", 
-           t1."last_name" AS "last_name", 
-           t1."age" AS "age" 
-    FROM "Person" t1 
+    SELECT t2."child_id" AS "id",
+           t1."first_name" AS "first_name",
+           t1."last_name" AS "last_name",
+           t1."age" AS "age"
+    FROM "Person" t1
     INNER JOIN "Relationship" t2
     ON t1."id" = t2."parent_id"
-) t1 
-INNER JOIN "Person" t2 
+) t1
+INNER JOIN "Person" t2
 ON t1."id" = t2."id"
 ORDER BY t1."id", t2."id"
 ```
@@ -446,26 +448,26 @@ sqlgen provides comprehensive compile-time checks and runtime protection:
 const auto query = read<std::vector<Person>> |
                    where("color"_c == "blue");
 
-// Compile-time error: Cannot compare column "age" to a string 
+// Compile-time error: Cannot compare column "age" to a string
 const auto query = read<std::vector<Person>> |
                    where("age"_c == "Homer");
 
-// Compile-time error: "age" must be aggregated or included in GROUP BY 
+// Compile-time error: "age" must be aggregated or included in GROUP BY
 const auto query = select_from<Person>(
     "last_name"_c,
-    "age"_c 
+    "age"_c
 ) | group_by("last_name"_c);
 
-// Compile-time error: Cannot add string and int 
+// Compile-time error: Cannot add string and int
 const auto query = select_from<Person>(
-    "last_name"_c + "age"_c 
+    "last_name"_c + "age"_c
 );
 
 // Runtime protection against SQL injection
-std::vector<Person> get_people(const auto& conn, 
+std::vector<Person> get_people(const auto& conn,
                               const sqlgen::AlphaNumeric& first_name) {
     using namespace sqlgen;
-    return (read<std::vector<Person>> | 
+    return (read<std::vector<Person>> |
             where("first_name"_c == first_name))(conn).value();
 }
 
