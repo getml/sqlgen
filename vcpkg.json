@@ -13,10 +13,10 @@
           "name": "duckdb",
           "version>=": "1.4.2"
         },
-	{
-	  "name":"icu",
-	  "version>=":"78.1"
-	}
+        {
+          "name": "icu",
+          "version>=": "78.1"
+        }
       ]
     },
     "mysql": {
@@ -43,7 +43,9 @@
         {
           "name": "sqlite3",
           "version>=": "3.49.1",
-          "features": ["math"]
+          "features": [
+            "math"
+          ]
         }
       ]
     },
